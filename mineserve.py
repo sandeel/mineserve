@@ -39,7 +39,7 @@ class Server(db.Model):
                 UserData = user_data,
                 KeyName = 'id_rsa',
                 IamInstanceProfile={
-                    'Name': 'CodeDeployDemo-EC2-Instance-Profile'
+                    'Name': 'mineserve-agent'
                     }
         )
         self.instance_id = response['Instances'][0]['InstanceId']
