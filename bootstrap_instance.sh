@@ -41,6 +41,7 @@ git clone git@github.com:Tiiffi/mcrcon.git
 cd mcrcon
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 
+cd $HOME
 ./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
 
 # clone repo
