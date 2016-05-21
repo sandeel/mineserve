@@ -33,7 +33,15 @@ cd $HOME
 : > .gitconfig
 echo "[credential]" > .gitconfig
 echo '  helper = !aws codecommit credential-helper $@' >> .gitconfig
-echo "  UseHttpPath = true" >> .gitconfig
+echo "  UseHttpPath = true" >> .gitconfigo
+
+# install mcrcon
+cd $HOME
+git clone git@github.com:Tiiffi/mcrcon.git
+cd mcrcon
+gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
+
+./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
 
 # clone repo
 HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
