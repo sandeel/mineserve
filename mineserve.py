@@ -28,12 +28,20 @@ class Server(db.Model):
         self.id = str(uuid.uuid4())
         self.user_id = user.id
 
+        self.instance_id = self.start_instance()
+
+        now = datetime.datetime.now()
+        now_plus_10 = now + datetime.timedelta(minutes = 10)
+        self.expiry_date = now_plus_10
+
+    def start_instance(self):
+        # create the instance
         bootstrap_file = f = open('bootstrap_instance.sh', 'r')
         user_data = bootstrap_file.read()
         client = boto3.client('ec2', region_name='us-west-2')
         response = client.run_instances(
                 ImageId='ami-9abea4fb',
-                InstanceType='t2.micro',
+                InstanceType='m4.large',
                 MinCount = 1,
                 MaxCount = 1,
                 UserData = user_data,
@@ -42,12 +50,12 @@ class Server(db.Model):
                     'Name': 'mineserve-agent'
                     }
         )
-        self.instance_id = response['Instances'][0]['InstanceId']
+        instance_id = response['Instances'][0]['InstanceId']
 
         # tag the instance
         response = client.create_tags(
             Resources=[
-                self.instance_id,
+                instance_id,
             ],
             Tags=[
                 {
@@ -61,9 +69,7 @@ class Server(db.Model):
             ]
         )
 
-        now = datetime.datetime.now()
-        now_plus_10 = now + datetime.timedelta(minutes = 10)
-        self.expiry_date = now_plus_10
+        return instance_id
 
 
 class User(db.Model):

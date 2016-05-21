@@ -10,6 +10,7 @@ curl https://gitlab.com/itxtech/genisys/builds/1452305/artifacts/file/Genisys_1.
 
 # compile working git version
 apt-get -y install build-essential fakeroot dpkg-dev  
+rm -Rf /root/git-openssl
 mkdir /root/git-openssl
 cd /root/git-openssl 
 apt-get source git
@@ -27,10 +28,14 @@ rm -R git*
 apt-get -y install python-pip
 pip install awscli
 cd $HOME
+: > .gitconfig
 echo "[credential]" > .gitconfig
 echo '  helper = !aws codecommit credential-helper $@' >> .gitconfig
 echo "  UseHttpPath = true" >> .gitconfig
 
 # clone repo
 HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
-git clone $HTTPS_REPO_URL
+git clone https://chromium.googlesource.com/chromium/tools/depot_tools
+export PATH=`pwd`/depot_tools:"$PATH"
+rm -Rf mineserve
+git-retry -v clone ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
