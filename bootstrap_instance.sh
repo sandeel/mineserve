@@ -6,10 +6,6 @@ HOME=/home/ubuntu
 cd $HOME
 curl -sSL https://get.docker.com/ | sh
 
-# get phar
-curl https://gitlab.com/itxtech/genisys/builds/1461919/artifacts/file/Genisys_1.1dev-93aea9c.phar -o genisys.phar
-
-
 # compile working git version
 apt-get -y install build-essential fakeroot dpkg-dev  
 rm -Rf /root/git-openssl
@@ -35,18 +31,27 @@ echo "[credential]" > .gitconfig
 echo '  helper = !aws codecommit credential-helper $@' >> .gitconfig
 echo "  UseHttpPath = true" >> .gitconfigo
 
-# install mcrcon
-cd $HOME
-git clone git@github.com:Tiiffi/mcrcon.git
-cd mcrcon
-gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
-
-cd $HOME
-./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
-
 # clone repo
 HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
 git clone https://chromium.googlesource.com/chromium/tools/depot_tools
 export PATH=`pwd`/depot_tools:"$PATH"
 rm -Rf mineserve
 git-retry -v clone ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
+
+docker stop new-atlas6
+
+# get phar
+curl https://gitlab.com/itxtech/genisys/builds/1461919/artifacts/file/Genisys_1.1dev-93aea9c.phar -o genisys.phar
+
+# start or run container
+docker run -itd --name new-atlas6 -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped --volumes-from atlas-prime itxtech/docker-env-genisys || docker start new-atlas6
+
+# install mcrcon
+cd $HOME
+rm -r mcrcon
+git retry -v clone https://github.com/Tiiffi/mcrcon.git
+cd mcrcon
+gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
+
+cd $HOME
+./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
