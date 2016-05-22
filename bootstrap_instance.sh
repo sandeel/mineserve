@@ -36,7 +36,7 @@ HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
 git clone https://chromium.googlesource.com/chromium/tools/depot_tools
 export PATH=`pwd`/depot_tools:"$PATH"
 rm -Rf mineserve
-git-retry -v clone https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
+git-retry -v clone https://github.com/sandeel/mineserve.git
 
 docker stop atlas
 
