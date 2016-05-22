@@ -22,7 +22,6 @@ class Server(db.Model):
     id = db.Column(db.String, primary_key=True)
     instance_id = db.Column(db.String)
     op = db.Column(db.String)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     expiry_date = db.Column(db.DateTime)
 
     def __init__(self, op):
@@ -62,10 +61,6 @@ class Server(db.Model):
                 {
                     'Key': 'mineserv_role',
                     'Value': 'container_agent'
-                },
-                {
-                    'Key': 'user_id',
-                    'Value': self.user_id
                 },
             ]
         )

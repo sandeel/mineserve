@@ -29,7 +29,7 @@ cd $HOME
 : > .gitconfig
 echo "[credential]" > .gitconfig
 echo '  helper = !aws codecommit credential-helper $@' >> .gitconfig
-echo "  UseHttpPath = true" >> .gitconfigo
+echo "  UseHttpPath = true" >> .gitconfig
 
 # clone repo
 HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
