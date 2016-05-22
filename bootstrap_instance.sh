@@ -36,15 +36,15 @@ HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
 git clone https://chromium.googlesource.com/chromium/tools/depot_tools
 export PATH=`pwd`/depot_tools:"$PATH"
 rm -Rf mineserve
-git-retry -v clone ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
+git-retry -v clone https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
 
-docker stop new-atlas6
+docker stop atlas
 
 # get phar
 curl https://gitlab.com/itxtech/genisys/builds/1461919/artifacts/file/Genisys_1.1dev-93aea9c.phar -o genisys.phar
 
 # start or run container
-docker run -itd --name new-atlas6 -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/mineserve/server.properties:/srv/genisys/server.properties -v /home/ubuntu/mineserve/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start new-atlas6
+docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/mineserve/server.properties:/srv/genisys/server.properties -v /home/ubuntu/mineserve/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
 
 # install mcrcon
 cd $HOME
