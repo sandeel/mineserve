@@ -38,7 +38,10 @@ gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 cd $HOME
 #./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
 
-echo "0 */1 * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
+# set up cron to phone home
+pip install xrcon
+pip install requests
+echo "*/1 * * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
 
 echo "Going down for reboot..."
 reboot
