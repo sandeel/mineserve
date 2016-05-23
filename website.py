@@ -98,7 +98,7 @@ def server_data():
     instance_id = request.args['instance_id']
     server = Server.query.filter_by(instance_id=instance_id).first()
     return jsonify({
-            "expiry_date": server.expiry_date),
+            "expiry_date": str(server.expiry_date),
             "op": server.op,
             })
 
