@@ -1,6 +1,6 @@
 import requests
 import datetime
-from xrcon.client import XRcon
+from subprocess import Popen
 
 print("Getting instance id...")
 instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
@@ -32,9 +32,4 @@ elif hours_left < 1:
     print("WARNING. Server will be terminated in less than an hour unless topped-up. All data will be lost.")
 elif hours_left < 5:
     message =("WARNING. 5 hours credit remaining on this server.")
-    rcon = XRcon('localhost', 19132, 'password')
-    rcon.connect() # create socket
-    try:
-        data = rcon.execute('say '+message) # on python3 data would be bytes type
-    finally:
-        rcon.close()
+    Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'password', 'say '+message])
