@@ -38,4 +38,6 @@ gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 cd $HOME
 #./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
 
+
+echo "Going down for reboot..."
 reboot
