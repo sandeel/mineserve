@@ -39,7 +39,6 @@ cd $HOME
 #./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
 
 # set up cron to phone home
-pip install xrcon
 pip install requests
 echo "*/1 * * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
 
