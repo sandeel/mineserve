@@ -1,19 +1,40 @@
 import requests
 import datetime
+from xrcon.client import XRcon
 
-echo "Getting instance id..."
+print("Getting instance id...")
 instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
-echo "Instance id is "+instance_id
+print("Instance id is "+instance_id)
+print("Getting region...")
+region = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document').json()['region']
+print("Region is "+region)
 
-echo "Getting server data for instance..."
+print("Getting server data for instance...")
 r = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server_data?instance_id='+instance_id)
 
 expiry_date = datetime.datetime.strptime(r.json()['expiry_date'], "%Y-%m-%d %H:%M:%S.%f")
-echo "Expiry date is "+expiry date
+print("Expiry date is %s" % expiry_date)
 
+td = expiry_date - datetime.datetime.now()
+
+seconds_left = td.seconds
 hours_left = td.seconds // 3600
 
-if hours_left < 1:
-    echo "..."
+
+if seconds_left < 0:
+    client = boto3.client('ec2', region_name=region)
+    response = client.terminate_instances(
+        InstanceIds=[
+	    instance_id,
+        ]
+)
+elif hours_left < 1:
+    print("WARNING. Server will be terminated in less than an hour unless topped-up. All data will be lost.")
 elif hours_left < 5:
-    echo "WARNING. 5 hours credit remaining. Terminated server will be irretrievable."
+    message =("WARNING. 5 hours credit remaining on this server.")
+    rcon = XRcon('localhost', 19132, 'password')
+    rcon.connect() # create socket
+    try:
+        data = rcon.execute('say '+message) # on python3 data would be bytes type
+    finally:
+        rcon.close()
