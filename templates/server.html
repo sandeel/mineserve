@@ -1,0 +1,67 @@
+{% extends "layout.html" %}
+{% block body %}
+      <div class="container">
+{% if topped_up_message %}
+    <div class="row">
+      <div class="col s12 m5">
+        <div class="card-panel teal">
+		<span class="white-text">{{ topped_up_message }}</span>
+        </div>
+      </div>
+    </div>
+{% endif %}
+      <div class="row">
+        <div class="col s12 m6">
+  <ul class="collection">
+    <li class="collection-item avatar">
+      <i class="material-icons circle">vpn_key</i>
+      <span class="title">Id</span>
+      <p>{{ id }} <br>
+      </p>
+    </li>
+    <li class="collection-item avatar">
+      <i class="material-icons circle">language</i>
+      <span class="title">IP address</span>
+      <p>{{ ip }} <br>
+      </p>
+    </li>
+    <li class="collection-item avatar">
+      <i class="material-icons circle">av_timer</i>
+      <span class="title">Time Left</span>
+      <p>{{ time_remaining }} <br>
+      </p>
+    </li>
+  </ul>
+
+
+
+
+      <table>
+        <thead>
+          <tr>
+              <th data-field="id">Time</th>
+              <th data-field="name">Price</th>
+              <th data-field="price"></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>30 days</td>
+            <td>$40.00</td>
+            <td>
+		  <form action="" method="post">
+		    <script src="https://checkout.stripe.com/v2/checkout.js" class="stripe-button" data-key="{{ key }}"></script>
+		  </form>
+	    </td>
+          </tr>
+        </tbody>
+      </table>
+
+
+	</div>
+
+        
+      </div>
+      </div>
+{% endblock %}

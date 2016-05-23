@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div class="section no-pad-bot" id="index-banner">
+    <div class="container">
+      <br><br>
+      <h1 class="header center orange-text">Adventure Servers</h1>
+      <div class="row center">
+	      <h4 class="header col s12 light"><strong>Premium<strong> Minecraft Pocket Server hosting</h4>
+      </div>
+      <div class="row center">
+	      <h5 class="header col s12 light">Try a free 24-hour trial.</h5>
+      </div>
+        <form action="create-server" method="post" class="col s12">
+	  <div class="row center">
+	    <div class="input-field col s6">
+              <input placeholder="Minecraft Name" id="minecraft_name" name="minecraft_name" type="text" class="validate">
+	    </div> <div class="input-field col s6"> <input placeholder="Email" id="email" name="email" type="email" class="validate">
+	    </div>
+         </div>
+         <div class="row center">
+           <input type="submit" id="download-button" class="btn-large waves-effect waves-light orange" value="Launch Now"</input>
+         </div>
+        </form> 
+      <br><br>
+    </div>
+  </div>
+
+
+  <div class="container">
+    <div class="section">
+
+      <!--   Icon Section   -->
+      <div class="row">
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center light-blue-text"><i class="material-icons">flash_on</i></h2>
+            <h5 class="center">Lightning fast. Lag-free.</h5>
+
+            <p class="light">We did most of the heavy lifting for you to provide a default stylings that incorporate our custom components. Additionally, we refined animations and transitions to provide a smoother experience for developers.</p>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center light-blue-text"><i class="material-icons">group</i></h2>
+            <h5 class="center">Awesome support.</h5>
+
+            <p class="light">By utilizing elements and principles of Material Design, we were able to create a framework that incorporates components and animations that provide more feedback to users. Additionally, a single underlying responsive system across all platforms allow for a more unified user experience.</p>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center light-blue-text"><i class="material-icons">settings</i></h2>
+            <h5 class="center">Pay-as-you-Go model.</h5>
+
+            <p class="light">Keep it simple, stupid. First 24 hours are free. Top up the account thereafter to add more days.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <br><br>
+
+    <div class="section">
+
+    </div>
+  </div>
+{% endblock %}
