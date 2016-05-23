@@ -74,7 +74,8 @@ class Server(db.Model):
                 KeyName = 'id_rsa',
                 IamInstanceProfile={
                     'Name': 'mineserve-agent'
-                    }
+                    },
+                SecurityGroupIds=['sg-cf668aa9'],
         )
         instance_id = response['Instances'][0]['InstanceId']
 
