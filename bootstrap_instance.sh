@@ -6,30 +6,12 @@ HOME=/home/ubuntu
 cd $HOME
 curl -sSL https://get.docker.com/ | sh
 
-# compile working git version
-apt-get -y install build-essential fakeroot dpkg-dev  
-rm -Rf /root/git-openssl
-mkdir /root/git-openssl
-cd /root/git-openssl 
-apt-get source git
-apt-get -y build-dep git  
-apt-get -y install libcurl4-openssl-dev  
-dpkg-source -x git_*.dsc                 
-cd git-*                
-sed -i s/libcurl4-gnutls-dev/libcurl4-openssl-dev/g debian/control
-sed -i "s/TEST =test//g" debian/rules                             
-dpkg-buildpackage -rfakeroot -b      
-dpkg -i ../git_*_amd64.deb
-rm -R git*
+# install git
+apt-get install -y git
 
-# configure git
+# pip
 apt-get -y install python-pip
 pip install awscli
-cd $HOME
-: > .gitconfig
-echo "[credential]" > .gitconfig
-echo '  helper = !aws codecommit credential-helper $@' >> .gitconfig
-echo "  UseHttpPath = true" >> .gitconfig
 
 # clone repo
 HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
