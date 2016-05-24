@@ -21,7 +21,7 @@ td = expiry_date - datetime.datetime.now()
 seconds_left = td.seconds
 hours_left = td.seconds // 3600
 
-if datetime.expiry() < datetime.datetime.now():
+if expiry_date < datetime.datetime.now():
     print("Server expired. Terminating instance.")
     client = boto3.client('ec2', region_name=region)
     response = client.terminate_instances(
