@@ -1,0 +1,133 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "CloudFormation template",
+    "Resources" : {
+        "AdventureServersVpc" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : "10.0.0.0/16"
+            }
+        },
+        "AdventureServersWebsite" : {
+            "Type" : "AWS::ElasticBeanstalk::Application"
+        },
+        "ElasticBeanstalkEnvironment" : {
+            "Type" : "AWS::ElasticBeanstalk::Environment",
+            "DependsOn": "AdventureServersWebsite",
+            "Properties" : {
+                "ApplicationName" : { "Ref" : "AdventureServersWebsite" },
+                "SolutionStackName" : "64bit Amazon Linux 2016.03 v2.1.0 running Python 3.4",
+                "OptionSettings": [
+                    {
+                        "Namespace": "aws:elasticbeanstalk:environment",
+                        "OptionName": "ServiceRole",
+                        "Value": { "Ref": "ElasticBeanstalkServiceRole" }
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:launchconfiguration",
+                        "OptionName": " IamInstanceProfile",
+                        "Value": { "Ref": "ElasticBeanstalkInstanceProfile" }
+                    }
+                ]
+            }
+        },
+        "ElasticBeanstalkInstanceProfile" : {
+            "Type" : "AWS::IAM::InstanceProfile",
+            "Properties" : {
+                "Path" : "/",
+                "Roles" : ["MyExistingRole"]
+            }
+        },
+        "ElasticBeanstalkServiceRolePolicy" : {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName" : "ElasticBeanstalkServiceRolePolicy",
+                "PolicyDocument" : {
+                    "Version": "2012-10-17",
+                    "Statement": [ {
+                    "Effect": "Allow",
+                    "Action": [
+                        "elasticloadbalancing:DescribeInstanceHealth",
+                        "ec2:DescribeInstances",
+                        "ec2:DescribeInstanceStatus",
+                        "ec2:GetConsoleOutput",
+                        "ec2:AssociateAddress",
+                        "ec2:DescribeAddresses",
+                        "ec2:DescribeSecurityGroups",
+                        "sqs:GetQueueAttributes",
+                        "sqs:GetQueueUrl",
+                        "autoscaling:DescribeAutoScalingGroups",
+                        "autoscaling:DescribeAutoScalingInstances",
+                        "autoscaling:DescribeScalingActivities",
+                        "autoscaling:DescribeNotificationConfigurations"
+                    ],
+                    "Resource": ["*"]
+                    } ]
+                },
+                "Roles" : [ { "Ref": "ElasticBeanstalkServiceRole"} ]
+            }
+        },
+        "ElasticBeanstalkInstanceProfilePolicy" : {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName" : "ElasticBeanstalkServiceRolePolicy",
+                "PolicyDocument" : {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Sid": "BucketAccess",
+                          "Action": [
+                            "s3:Get*",
+                            "s3:List*",
+                            "s3:PutObject"
+                          ],
+                          "Effect": "Allow",
+                          "Resource": [
+                            "arn:aws:s3:::elasticbeanstalk-*",
+                            "arn:aws:s3:::elasticbeanstalk-*/*"
+                          ]
+                        }
+                      ]
+                },
+                "Roles" : [ { "Ref": "ElasticBeanstalkServiceRole"} ]
+            }
+        },
+        "ElasticBeanstalkServiceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version" : "2012-10-17",
+                    "Statement": [ {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [ "ec2.amazonaws.com" ]
+                        },
+                        "Action": [ "sts:AssumeRole" ]
+                    } ]
+                }
+            }
+        },
+        "ElasticBeanstalkInstanceProfileRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version" : "2012-10-17",
+                    "Statement": [ {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [ "ec2.amazonaws.com" ]
+                        },
+                        "Action": [ "sts:AssumeRole" ]
+                    } ]
+                }
+            }
+        },
+        "ElasticBeanstalkInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [ { "Ref": "ElasticBeanstalkInstanceProfileRole" } ]
+         }
+        }
+    }
+}

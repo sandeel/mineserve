@@ -1,7 +1,6 @@
 from flask import Flask, request, redirect
 import flask.ext.login as flask_login
 from flask_sqlalchemy import SQLAlchemy
-import bcrypt
 import uuid
 import boto3
 import datetime
@@ -59,6 +58,18 @@ class Server(db.Model):
             InstanceIds=[
                 self.instance_id
             ])['Reservations'][0]['Instances'][0]['PublicIpAddress']
+
+    @property
+    def status(self):
+        client = boto3.client('ec2', region_name=app.config['aws_region'])
+        instance_status =  client.describe_instance_status(
+            InstanceIds=[
+                self.instance_id
+            ])['InstanceStatuses']
+        if instance_status:
+            return instance_status[0].get('InstanceStatus').get('Status')
+        else:
+            return 'Spinning up'
 
     def start_instance(self):
         # create the instance
@@ -127,6 +138,7 @@ def server(server_id):
                 id=server.id,
                 ip=server.ip_address,
                 key=stripe_keys['publishable_key'],
+                status=server.status,
                 )
 
     amount = 4000
