@@ -40,6 +40,7 @@ cd $HOME
 
 # set up cron to phone home
 pip install requests
+pip install boto3
 echo "*/1 * * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
 
 echo "Going down for reboot..."

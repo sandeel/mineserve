@@ -1,6 +1,7 @@
 import requests
 import datetime
 from subprocess import Popen
+import boto3
 
 print("Getting instance id...")
 instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
@@ -20,8 +21,8 @@ td = expiry_date - datetime.datetime.now()
 seconds_left = td.seconds
 hours_left = td.seconds // 3600
 
-
-if seconds_left < 0:
+if datetime.expiry() < datetime.datetime.now():
+    print("Server expired. Terminating instance.")
     client = boto3.client('ec2', region_name=region)
     response = client.terminate_instances(
         InstanceIds=[
