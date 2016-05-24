@@ -25,7 +25,7 @@
                     },
                     {
                         "Namespace": "aws:autoscaling:launchconfiguration",
-                        "OptionName": " IamInstanceProfile",
+                        "OptionName": "IamInstanceProfile",
                         "Value": { "Ref": "ElasticBeanstalkInstanceProfile" }
                     }
                 ]
