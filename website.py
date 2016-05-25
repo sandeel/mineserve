@@ -39,12 +39,15 @@ class Server(db.Model):
     instance_id = db.Column(db.String)
     op = db.Column(db.String)
     expiry_date = db.Column(db.DateTime)
+    creation_date = db.Column(db.DateTime)
 
     def __init__(self, op):
         self.id = str(uuid.uuid4())
         self.op = op
 
         self.instance_id = self.start_instance()
+
+        self.creation_date=datetime.datetime.now()
 
         # give 5 hours and 1 minute free
         now = datetime.datetime.now()
@@ -124,38 +127,58 @@ def create_server():
         new_server = Server(op=request.form['minecraft_name'])
         db.session.add(new_server)
         db.session.commit()
+
         return redirect("/server/"+new_server.id)
     return render_template('create_server.html')
 
 @app.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
-    if request.method == 'GET':
-        server = Server.query.filter_by(id=server_id).first()
-        td = server.expiry_date - datetime.datetime.now()
-        days, hours, minutes = td.days, td.seconds // 3600, td.seconds // 60 % 60
-        return render_template('server.html',
-                time_remaining=str(days)+' days, '+str(hours)+' hours, '+str(minutes)+' minutes',
-                id=server.id,
-                ip=server.ip_address,
-                key=stripe_keys['publishable_key'],
-                status=server.status,
-                )
+    server = Server.query.filter_by(id=server_id).first()
+    message = """
+    """
 
-    amount = 4000
+    topped_up_message = None
 
-    customer = stripe.Customer.create(
-        card=request.form['stripeToken'],
-        metadata={ "server_id": server_id }
-    )
+    if (datetime.datetime.now() - server.creation_date).seconds < 3600:
+        new_server_message = message
+    else:
+        new_server_message = None
+            
+    if request.method == 'POST':
 
-    charge = stripe.Charge.create(
-        customer=customer.id,
-        amount=amount,
-        currency='usd',
-        description='Flask Charge'
-    )
+        amount = 4000
 
-    return render_template('server.html', topped_up_message="Top-up successful. 30 days added.")
+        customer = stripe.Customer.create(
+            card=request.form['stripeToken'],
+            metadata={ "server_id": server_id }
+        )
+
+        charge = stripe.Charge.create(
+            customer=customer.id,
+            amount=amount,
+            currency='usd',
+            description='Flask Charge',
+            metadata={"server_id": server.id}
+        )
+
+        server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
+        db.session.add(server)
+        db.session.commit()
+
+        topped_up_message = "Topped up by 30 days."
+
+    td = server.expiry_date - datetime.datetime.now()
+    days, hours, minutes = td.days, td.seconds // 3600, td.seconds // 60 % 60
+
+    return render_template('server.html',
+            time_remaining=str(days)+' days, '+str(hours)+' hours, '+str(minutes)+' minutes',
+            id=server.id,
+            ip=server.ip_address,
+            key=stripe_keys['publishable_key'],
+            status=server.status,
+            new_server_message=new_server_message,
+            topped_up_message=topped_up_message,
+            )
 
 if __name__ == '__main__':
     app.run("0.0.0.0", debug=True)

@@ -1,68 +1,79 @@
 {% extends "layout.html" %}
 {% block body %}
       <div class="container">
-{% if topped_up_message %}
+      <br><br>
+{% if new_server_message %}
     <div class="row">
-      <div class="col s12 m5">
-        <div class="card-panel teal">
-		<span class="white-text">{{ topped_up_message }}</span>
+      <div class="col s12">
+        <div class="card-panel">
+		<span class="black-text">
+            Your new server is spinning up and will be ready in a few minutes!<br>
+            Please keep note of the server ID so you can find this page again.<br>
+            While waiting, why not check out the getting started guide?<br>
+        </span>
         </div>
       </div>
     </div>
 {% endif %}
+{% if topped_up_message %}
+    <div class="row">
+      <div class="col s12 m5">
+        <div class="card-panel">
+		<span class="black-text">{{ topped_up_message }}</span>
+        </div>
+      </div>
+    </div>
+{% endif %}
+
       <div class="row">
-        <div class="col s12 m6">
-  <ul class="collection">
-    <li class="collection-item avatar">
-      <i class="material-icons circle">vpn_key</i>
-      <span class="title">Id</span>
-      <p>{{ id }} <br>
-      </p>
-    </li>
-    <li class="collection-item avatar">
-      <i class="material-icons circle">language</i>
-      <span class="title">Status</span>
-      <p>{{ status }} <br>
-      </p>
-    </li>
-    <li class="collection-item avatar">
-      <i class="material-icons circle">language</i>
-      <span class="title">IP address</span>
-      <p>{{ ip }} <br>
-      </p>
-    </li>
-    <li class="collection-item avatar">
-      <i class="material-icons circle">av_timer</i>
-      <span class="title">Time Left</span>
-      <p>{{ time_remaining }} <br>
-      </p>
-    </li>
-  </ul>
+        <div class="col s12">
 
+      <ul class="collection">
+          <li class="collection-item dismissable"><div><strong>Id:</strong>    {{ id }}<span class="secondary-content"><i class="material-icons circle">vpn_key</i></span></div></li>
+          <li class="collection-item dismissable"><div><strong>Status:</strong> {{ status }}<span class="secondary-content"><i class="material-icons">send</i></span></div></li>
+          <li class="collection-item dismissable"><div><strong>IP address:</strong> {{ ip }}<span class="secondary-content"><i class="material-icons">language</i></span></div></li>
+          <li class="collection-item dismissable"><div><strong>Time remaining:</strong> {{ time_remaining }}<span class="secondary-content"><i class="material-icons">av_timer</i></span></div></li>
+      </ul>
 
+      <div section>
 
+          <h3>Top-up</h3>
+{% if new_server_message %}
+    <div class="row">
+      <div class="col s12">
+        <div class="card-panel">
+		<span class="black-text">
+            Your new server has five hours of "credit".
+            You can add more time by choosing one of the options below.
+        </span>
+        </div>
+      </div>
+    </div>
+{% endif %}
 
-      <table>
-        <thead>
-          <tr>
-              <th data-field="id">Time</th>
-              <th data-field="name">Price</th>
-              <th data-field="price"></th>
-          </tr>
-        </thead>
+          <table>
+            <thead>
+              <tr>
+                  <th data-field="id">Time</th>
+                  <th data-field="name">Price</th>
+                  <th data-field="price"></th>
+              </tr>
+            </thead>
 
-        <tbody>
-          <tr>
-            <td>30 days</td>
-            <td>$40.00</td>
-            <td>
-		  <form action="" method="post">
-		    <script src="https://checkout.stripe.com/v2/checkout.js" class="stripe-button" data-key="{{ key }}"></script>
-		  </form>
-	    </td>
-          </tr>
-        </tbody>
-      </table>
+            <tbody>
+              <tr>
+                <td>30 days</td>
+                <td>$40.00</td>
+                <td>
+              <form action="" method="post">
+                <script src="https://checkout.stripe.com/v2/checkout.js" class="stripe-button" data-key="{{ key }}"></script>
+              </form>
+            </td>
+              </tr>
+            </tbody>
+          </table>
+
+    </div>
 
 
 	</div>
