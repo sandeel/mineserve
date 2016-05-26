@@ -15,6 +15,18 @@
       </div>
     </div>
 {% endif %}
+{% if server_key %}
+    <div class="row">
+      <div class="col s12">
+        <div class="card-panel">
+		<span class="black-text">
+            Your server key is <strong>{{ server_key }}</strong>.<u>Keep this secret</u>
+            If you want to allow friends to view and top up the server, shared only the URL that doesn't contain the server key, ie. /server/{{ id }}
+        </span>
+        </div>
+      </div>
+    </div>
+{% endif %}
 {% if topped_up_message %}
     <div class="row">
       <div class="col s12 m5">
