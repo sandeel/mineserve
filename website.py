@@ -16,11 +16,17 @@ from flask_admin.contrib.sqla import filters
 import bcrypt
 import random
 import string
+from flask_script import Manager
+from flask_migrate import Migrate, MigrateCommand
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 app.config['aws_region'] = 'us-west-2'
+app.config['BETA'] = True
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+manager = Manager(app)
+manager.add_command('db', MigrateCommand)
 
 
 # stripe setup
@@ -64,9 +70,11 @@ class Server(db.Model):
     op = db.Column(db.String)
     expiry_date = db.Column(db.DateTime)
     creation_date = db.Column(db.DateTime)
+    progenitor_email = db.Column(db.String)
 
-    def __init__(self, op):
+    def __init__(self, progenitor_email, op):
         self.id = str(uuid.uuid4())
+        self.progenitor_email = progenitor_email
         self.op = op
 
         self.instance_id = self.start_instance()
@@ -118,7 +126,7 @@ class Server(db.Model):
         client = boto3.client('ec2', region_name='us-west-2')
         response = client.run_instances(
                 ImageId='ami-9abea4fb',
-                InstanceType='t2.small',
+                InstanceType='t2.micro',
                 MinCount = 1,
                 MaxCount = 1,
                 UserData = user_data,
@@ -211,12 +219,14 @@ def server(server_id):
             new_server_message=new_server_message,
             topped_up_message=topped_up_message,
             server_key=server_key,
+            beta=app.config['BETA'],
             )
 
 @app.route("/create-server", methods=["GET","POST"])
 def create_server():
     if request.method == "POST":
-        new_server = Server(op=request.form['minecraft_name'])
+        new_server = Server(progenitor_email=request.form['email'],
+                            op=request.form['minecraft_name'])
         db.session.add(new_server)
         db.session.commit()
 
@@ -233,6 +243,6 @@ admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 
 
 if __name__ == '__main__':
-    app.run("0.0.0.0", debug=True)
+    manager.run()
 
 

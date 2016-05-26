@@ -49,19 +49,21 @@
 
       <div section>
 
-          <h3>Top-up</h3>
-{% if new_server_message %}
-    <div class="row">
-      <div class="col s12">
-        <div class="card-panel">
-		<span class="black-text">
-            Your new server has five hours of "credit".
-            You can add more time by choosing one of the options below.
-        </span>
+{% if not beta %}
+  <h3>Top-up</h3>
+
+    {% if new_server_message %}
+        <div class="row">
+          <div class="col s12">
+            <div class="card-panel">
+            <span class="black-text">
+                Your new server has five hours of "credit".
+                You can add more time by choosing one of the options below.
+            </span>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-{% endif %}
+    {% endif %}
 
           <table>
             <thead>
@@ -84,6 +86,20 @@
               </tr>
             </tbody>
           </table>
+{% else %}
+  <div section>
+      <form action="server" method="post">
+	    <div class="row">
+        <label for="promo-code">Enter Promo code to top up</label>
+	    <div class="input-field"><input placeholder="promo code" id="promo-code" name="promo-code" type="text"></div>
+        </div>
+        <button class="btn waves-effect waves-light" type="submit" name="action">Submit
+          <i class="material-icons right">send</i>
+        </button>
+      </form> 
+  </div>
+{% endif %}
+
 
     </div>
 
