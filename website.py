@@ -60,6 +60,19 @@ class PromoCodeAdmin(sqla.ModelView):
 
     form_choices = { 'reward_code': [ ('0', 'BetaTest'),],}
 
+# Customized log admin
+class LogAdmin(sqla.ModelView):
+    column_default_sort = ('date', True)
+
+class LogEntry(db.Model):
+    __tablename__ = 'logentry'
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime)
+    message = db.Column(db.String)
+
+    def __init__(self, message):
+        self.date = datetime.datetime.now()
+        self.message = message
 
 class Server(db.Model):
 
@@ -74,6 +87,10 @@ class Server(db.Model):
 
     def __init__(self, progenitor_email, op):
         self.id = str(uuid.uuid4())
+
+        db.session.add(LogEntry('Creating server with ID '+self.id+' User\'s email address is '+progenitor_email))
+        db.session.commit()
+
         self.progenitor_email = progenitor_email
         self.op = op
 
@@ -168,39 +185,71 @@ def landing_page():
 
 @app.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
-    server = Server.query.filter_by(id=server_id).first()
-    message = """
-    """
-    topped_up_message = None
-
-    if (datetime.datetime.now() - server.creation_date).seconds < 3600:
-        new_server_message = message
-    else:
-        new_server_message = None
             
+    topped_up_message = None
+    new_server_key= None
+    promo_code_applied=False
+
     if request.method == 'POST':
 
-        amount = 4000
-
-        customer = stripe.Customer.create(
-            card=request.form['stripeToken'],
-            metadata={ "server_id": server_id }
-        )
-
-        charge = stripe.Charge.create(
-            customer=customer.id,
-            amount=amount,
-            currency='usd',
-            description='Flask Charge',
-            metadata={"server_id": server.id}
-        )
-
-        server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
-        db.session.add(server)
+        db.session.add(LogEntry('Customer has requested a new server'))
         db.session.commit()
-        new_server_key= None
 
-        topped_up_message = "Topped up by 30 days."
+        if server_id == 'new':
+            # if server doesn't exist create it
+            new_server = Server(progenitor_email=request.form['email'],
+                                op=request.form['minecraft_name'])
+            db.session.add(new_server)
+            db.session.commit()
+            new_server_key= new_server.server_key
+            server_id = new_server.id
+            return redirect('/server/'+server_id)
+
+        elif request.form.get('stripeToken', None):
+
+            amount = 4000
+
+            customer = stripe.Customer.create(
+                card=request.form['stripeToken'],
+                metadata={ "server_id": server_id }
+            )
+
+            charge = stripe.Charge.create(
+                customer=customer.id,
+                amount=amount,
+                currency='usd',
+                description='Flask Charge',
+                metadata={"server_id": server.id}
+            )
+
+            server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
+            db.session.add(server)
+            db.session.commit()
+
+            topped_up_message = "Topped up by 30 days."
+
+        elif request.form['promo-code']:
+            server = Server.query.filter_by(id=server_id).first()
+            promo_code = PromoCode.query.filter_by(code=request.form['promo-code']).first()
+
+            if promo_code and not promo_code.activated:
+                server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
+                db.session.add(server)
+
+                promo_code_applied=True
+                promo_code.activated=True
+                db.session.add(promo_code)
+
+                db.session.add(LogEntry('Promo Code '+promo_code.code+' applied to server '+server.id))
+
+                db.session.commit()
+
+    server = Server.query.filter_by(id=server_id).first()
+
+    if (datetime.datetime.now() - server.creation_date).seconds < 3600:
+        new_server = True
+    else:
+        new_server = False
 
     td = server.expiry_date - datetime.datetime.now()
     days, hours, minutes = td.days, td.seconds // 3600, td.seconds // 60 % 60
@@ -216,33 +265,18 @@ def server(server_id):
             ip=server.ip_address,
             key=stripe_keys['publishable_key'],
             status=server.status,
-            new_server_message=new_server_message,
+            new_server=True,
             topped_up_message=topped_up_message,
             server_key=server_key,
             beta=app.config['BETA'],
             )
 
-@app.route("/create-server", methods=["GET","POST"])
-def create_server():
-    if request.method == "POST":
-        new_server = Server(progenitor_email=request.form['email'],
-                            op=request.form['minecraft_name'])
-        db.session.add(new_server)
-        db.session.commit()
-
-
-        return redirect('/server/'+new_server.id+'?server_key='+new_server.server_key)
-    return render_template('create_server.html')
-
-
-
 # Create admin
 admin = admin.Admin(app, name='Example: SQLAlchemy', template_mode='bootstrap3')
 admin.add_view(sqla.ModelView(Server,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
+admin.add_view(LogAdmin(LogEntry,db.session))
 
 
 if __name__ == '__main__':
     manager.run()
-
-
