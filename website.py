@@ -170,6 +170,36 @@ class Server(db.Model):
 
         return instance_id
 
+@app.route("/phone_home", methods=["GET"])
+def phone_home():
+    instance_id = request.args['instance_id']
+    server = Server.query.filter_by(instance_id=instance_id).first()
+
+    td = server.expiry_date - datetime.datetime.now()
+
+    seconds_left = td.seconds
+    hours_left = td.seconds // 3600
+
+    server_message = ''
+
+    if server.expiry_date < datetime.datetime.now():
+        db.session.add(LogEntry('Server '+server.id+' expired, terminating...'))
+        db.session.commit()
+        client = boto3.client('ec2', region_name=region)
+        response = client.terminate_instances(
+            InstanceIds=[
+                instance_id,
+            ]
+    )
+    elif hours_left < 1:
+        server_message = "WARNING. Server will be terminated in less than an hour unless topped-up. All data will be lost."
+    elif hours_left < 5:
+        server_message ="WARNING. 5 hours credit remaining on this server."
+
+    return jsonify({
+            "server_message": server_message
+            })
+
 @app.route("/server_data", methods=["GET"])
 def server_data():
     instance_id = request.args['instance_id']
