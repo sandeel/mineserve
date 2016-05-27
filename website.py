@@ -293,7 +293,7 @@ cd mcrcon
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 
 #op the user
-/home/ubuntu/mcrcon/mcrcon -c -H localhost -P 19132 -p password "op """+server.op"""+"
+/home/ubuntu/mcrcon/mcrcon -c -H localhost -P 19132 -p password "op """+server.op+""""
 
 # set up cron to phone home
 pip install requests
