@@ -109,11 +109,85 @@ class Properties(db.Model):
 
     #properties
     server_name = db.Column(db.String)
+    motd = db.Column(db.String)
+    server_port = db.Column(db.String)
+    memory_limit= db.Column(db.String)
+    gamemode = db.Column(db.String)
+    max_players = db.Column(db.String)
+    spawn_protection = db.Column(db.String)
+    level_name = db.Column(db.String)
+    level_type = db.Column(db.String)
+    announce_player_achievements = db.Column(db.String)
+    white_list = db.Column(db.String)
+    enable_query = db.Column(db.String)
+    enable_rcon = db.Column(db.String)
+    allow_flight = db.Column(db.String)
+    spawn_animals = db.Column(db.String)
+    spawn_mobs = db.Column(db.String)
+    force_gamemode = db.Column(db.String)
+    hardcore = db.Column(db.String)
+    pvp = db.Column(db.String)
+    difficulty = db.Column(db.String)
+    generator_settings = db.Column(db.String)
+    level_seed = db.Column(db.String)
+    rcon_password = db.Column(db.String)
+    auto_save = db.Column(db.String)
+
+    def __init__(self):
+
+        # set the default properties
+        self.server_name = 'The Server'
+        self.motd = 'Adventure Servers Server'
+        self.server_port = '19132'
+        self.memory_limit = ''
+        self.gamemode = '0'
+        self.max_players = '60'
+        self.spawn_protection = '16'
+        self.level_name = 'world'
+        self.level_type = 'DEFAULT'
+        self.announce_player_achievements = 'on'
+        self.white_list = 'off'
+        self.enable_query = 'on'
+        self.enable_rcon = 'on'
+        self.allow_flight = 'off'
+        self.spawn_animals = 'on'
+        self.spawn_mobs = 'off'
+        self.force_gamemode = 'on'
+        self.hardcore = 'off'
+        self.pvp = 'on'
+        self.difficulty = '1'
+        self.generator_settings = ''
+        self.level_seed = ''
+        self.rcon_password = 'password'
+        self.auto_save = 'yes'
 
     def generate_file(self):
 
         file = ""
-        file += 'server-name: '+self.server_name
+        file += 'server-name='+self.server_name+'\n'
+        file += 'motd='+self.motd+'\n'
+        file += 'server-port='+self.server_port+'\n'
+        file += 'memory-limit='+self.memory_limit+'\n'
+        file += 'gamemode='+self.gamemode+'\n'
+        file += 'max-players='+self.max_players+'\n'
+        file += 'spawn-sprotection'+self.spawn_protection+'\n'
+        file += 'level-name='+self.level_name+'\n'
+        file += 'level-type='+self.level_type+'\n'
+        file += 'announce-player-achievements='+self.announce_player_achievements+'\n'
+        file += 'white-list='+self.white_list+'\n'
+        file +=  'enable-query='+self.enable_query+'\n'
+        file += 'enable-rcon='+self.enable_rcon+'\n'
+        file += 'allow-flight='+self.allow_flight+'\n'
+        file += 'spawn-animals='+ self.spawn_animals+'\n'
+        file += 'spawn-mobs='+self.spawn_mobs+'\n'
+        file += 'force-gamemode='+self.force_gamemode+'\n'
+        file += 'hardcore='+self.hardcore+'\n'
+        file += 'pvp='+self.pvp+'\n'
+        file += 'difficulty='+self.difficulty+'\n'
+        file += 'generator-settings='+self.generator_settings+'\n'
+        file += 'level-seed='+self.level_seed+'\n'
+        file += 'rcon-password='+self.rcon_password+'\n'
+        file += 'auto-save='+self.auto_save+'\n'
 
         return file
 
@@ -174,16 +248,64 @@ class Server(db.Model):
             return 'Spinning up'
 
     def start_instance(self):
+
+        userdata = """
+        #!/bin/bash
+
+        HOME=/home/ubuntu
+
+        # install docker
+        cd $HOME
+        curl -sSL https://get.docker.com/ | sh
+
+        # install git
+        apt-get install -y git
+
+        # pip
+        apt-get -y install python-pip
+        pip install awscli
+
+        # clone repo
+        HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools
+        export PATH=`pwd`/depot_tools:"$PATH"
+        rm -Rf mineserve
+        git-retry -v clone https://github.com/sandeel/mineserve.git
+
+        docker stop atlas
+
+        # get phar
+        curl https://gitlab.com/itxtech/genisys/builds/1461919/artifacts/file/Genisys_1.1dev-93aea9c.phar -o genisys.phar
+
+        # start or run container
+        docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/mineserve/server.properties:/srv/genisys/server.properties -v /home/ubuntu/mineserve/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
+
+        # install mcrcon
+        cd $HOME
+        rm -r mcrcon
+        git retry -v clone https://github.com/Tiiffi/mcrcon.git
+        cd mcrcon
+        gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
+
+        cd $HOME
+        #./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
+
+        # set up cron to phone home
+        pip install requests
+        pip install boto3
+        echo "*/1 * * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
+
+        echo "Going down for reboot..."
+        """
+reboot
         # create the instance
-        bootstrap_file = f = open('bootstrap_instance.sh', 'r')
-        user_data = bootstrap_file.read()
         client = boto3.client('ec2', region_name='us-west-2')
         response = client.run_instances(
                 ImageId='ami-9abea4fb',
                 InstanceType='t2.micro',
                 MinCount = 1,
                 MaxCount = 1,
-                UserData = user_data,
+                UserData = userdata,
                 KeyName = 'id_rsa',
                 IamInstanceProfile={
                     'Name': 'mineserve-agent'
@@ -386,5 +508,8 @@ admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(LogAdmin(LogEntry,db.session))
 
+
 if __name__ == '__main__':
     manager.run()
+
+
