@@ -13,6 +13,16 @@ print("Region is "+region)
 print("Phoning home...")
 server_message = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/api/v0.1/phone_home?instance_id='+instance_id).json()['server_message']
 
+Popen(['cp', '/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'])
+Popen(['curl', 'http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/'+server_id+'/properties', '-o', '/home/ubuntu/server.properties'])
+
+if !filecmp.cmp('/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'):
+    print("New config file, rebooting")
+    client = boto3.client('ec2', region_name=region)
+    client.reboot_instances(InstanceIds=[instance_id,])
+
+server_message = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/api/v0.1/phone_home?instance_id='+instance_id).json()['server_message']
+
 if server_message:
     print('Sending server message: '+server_message)
 

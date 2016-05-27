@@ -87,8 +87,8 @@ class User(db.Model):
 
     def __init__(self, email):
         # generate a password to give the user and store the hash
-        self.password = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(8))
-        self.hashed_password = bcrypt.hashpw(self.password, bcrypt.gensalt())
+        self.password = str(''.join(random.SystemRandom().choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(8)))
+        self.hashed_password = bcrypt.hashpw(self.password.encode('utf-8'), bcrypt.gensalt())
         self.email = email
 
     def check_password(self, password):
@@ -249,55 +249,61 @@ class Server(db.Model):
 
     def start_instance(self):
 
-        userdata = """
-        #!/bin/bash
+        userdata = """#!/bin/bash
 
-        HOME=/home/ubuntu
+HOME=/home/ubuntu
 
-        # install docker
-        cd $HOME
-        curl -sSL https://get.docker.com/ | sh
+# install docker
+cd $HOME
+curl -sSL https://get.docker.com/ | sh
 
-        # install git
-        apt-get install -y git
+# install git
+apt-get install -y git
 
-        # pip
-        apt-get -y install python-pip
-        pip install awscli
+# pip
+apt-get -y install python-pip
+pip install awscli
 
-        # clone repo
-        HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
-        git clone https://chromium.googlesource.com/chromium/tools/depot_tools
-        export PATH=`pwd`/depot_tools:"$PATH"
-        rm -Rf mineserve
-        git-retry -v clone https://github.com/sandeel/mineserve.git
+# clone repo
+HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
+git clone https://chromium.googlesource.com/chromium/tools/depot_tools
+export PATH=`pwd`/depot_tools:"$PATH"
+rm -Rf mineserve
+git-retry -v clone https://github.com/sandeel/mineserve.git
 
-        docker stop atlas
+docker stop atlas
 
-        # get phar
-        curl https://gitlab.com/itxtech/genisys/builds/1461919/artifacts/file/Genisys_1.1dev-93aea9c.phar -o genisys.phar
+# get phar
+curl https://gitlab.com/itxtech/genisys/builds/1461919/artifacts/file/Genisys_1.1dev-93aea9c.phar -o genisys.phar
 
-        # start or run container
-        docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/mineserve/server.properties:/srv/genisys/server.properties -v /home/ubuntu/mineserve/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
+#get server properties
+INSTANCE_ID=curl http://169.254.169.254/latest/meta-data/instance-id
+SERVER_ID="""+self.id+"""
 
-        # install mcrcon
-        cd $HOME
-        rm -r mcrcon
-        git retry -v clone https://github.com/Tiiffi/mcrcon.git
-        cd mcrcon
-        gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
+curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/$SERVER_ID/properties -o server.properties
 
-        cd $HOME
-        #./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
+# start or run container
+docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/mineserve/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
 
-        # set up cron to phone home
-        pip install requests
-        pip install boto3
-        echo "*/1 * * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
+# install mcrcon
+cd $HOME
+rm -r mcrcon
+git retry -v clone https://github.com/Tiiffi/mcrcon.git
+cd mcrcon
+gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 
-        echo "Going down for reboot..."
-        """
+cd $HOME
+#./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
+
+# set up cron to phone home
+pip install requests
+pip install boto3
+echo "*/1 * * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
+
+echo "Going down for reboot..."
 reboot
+        """
+
         # create the instance
         client = boto3.client('ec2', region_name='us-west-2')
         response = client.run_instances(
