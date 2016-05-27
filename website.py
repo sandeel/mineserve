@@ -25,7 +25,7 @@ from flask import make_response
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 app.config['aws_region'] = 'us-west-2'
-app.config['BETA'] = False
+app.config['BETA'] = True
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 manager = Manager(app)
@@ -211,8 +211,6 @@ class Server(db.Model):
         self.progenitor_email = progenitor_email
         self.op = op
 
-        self.instance_id = self.start_instance()
-
         self.creation_date=datetime.datetime.now()
 
         # give 5 hours and 5 minutes free
@@ -222,6 +220,8 @@ class Server(db.Model):
 
         self.properties = Properties()
         self.properties.server_name = 'Dan server'
+
+        self.instance_id = self.start_instance()
 
 
     def __str__(self):
@@ -292,8 +292,8 @@ git retry -v clone https://github.com/Tiiffi/mcrcon.git
 cd mcrcon
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 
-cd $HOME
-#./mcrcon/mcrcon -c -H localhost -P 19132 -p password "say hello"
+#op the user
+/home/ubuntu/mcrcon/mcrcon -c -H localhost -P 19132 -p password "op """+server.op"""+"
 
 # set up cron to phone home
 pip install requests
@@ -448,6 +448,8 @@ def server(server_id):
             # if server doesn't exist create it
             new_server = Server(progenitor_email=request.form['email'],
                                 op=request.form['minecraft_name'])
+            new_server.apply_promo_code(request.form['promo_code'])
+            new_server.op=request.form['minecraft_name']
             db.session.add(new_server)
             server_id = new_server.id
 
