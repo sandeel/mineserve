@@ -170,7 +170,7 @@ class Server(db.Model):
 
         return instance_id
 
-@app.route("/phone_home", methods=["GET"])
+@app.route("/api/v0.1/phone_home", methods=["GET"])
 def phone_home():
     instance_id = request.args['instance_id']
     server = Server.query.filter_by(instance_id=instance_id).first()
