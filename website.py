@@ -282,8 +282,11 @@ SERVER_ID="""+self.id+"""
 
 curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/$SERVER_ID/properties -o server.properties
 
+#op the user
+echo """+self.op+""" > /home/ubuntu/ops.txt
+
 # start or run container
-docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/mineserve/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
+docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/mineserve/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
 
 # install mcrcon
 cd $HOME
@@ -291,9 +294,6 @@ rm -r mcrcon
 git retry -v clone https://github.com/Tiiffi/mcrcon.git
 cd mcrcon
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
-
-#op the user
-/home/ubuntu/mcrcon/mcrcon -c -H localhost -P 19132 -p password "op """+self.op+""""
 
 # set up cron to phone home
 pip install requests
@@ -448,7 +448,7 @@ def server(server_id):
             # if server doesn't exist create it
             new_server = Server(progenitor_email=request.form['email'],
                                 op=request.form['minecraft_name'])
-            new_server.apply_promo_code(request.form['promo_code'])
+            new_server.apply_promo_code(request.form['promo-code'])
             new_server.op=request.form['minecraft_name']
             db.session.add(new_server)
             server_id = new_server.id

@@ -3,6 +3,8 @@ import datetime
 from subprocess import Popen
 import boto3
 import filecmp
+import time
+from random import randint
 
 print("Getting instance id...")
 instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
@@ -10,6 +12,10 @@ print("Instance id is "+instance_id)
 print("Getting region...")
 region = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document').json()['region']
 print("Region is "+region)
+
+seconds = randint(0,3300)
+print("Waiting "+seconds+" seconds before phoning home...")
+time.sleep(seconds)
 
 print("Phoning home...")
 server_message = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/api/v0.1/phone_home?instance_id='+instance_id).json()['server_message']
