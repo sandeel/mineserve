@@ -16,6 +16,7 @@ server_message = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazon
 
 server_id = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server_data?instance_id='+instance_id).json()['id']
 
+Popen(['rm', '-f', '/home/ubuntu/server.properties.bk'])
 Popen(['cp', '/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'])
 Popen(['curl', 'http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/'+server_id+'/properties', '-o', '/home/ubuntu/server.properties'])
 
