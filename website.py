@@ -98,9 +98,9 @@ class Server(db.Model):
 
         self.creation_date=datetime.datetime.now()
 
-        # give 5 hours and 1 minute free
+        # give 5 hours and 5 minutes free
         now = datetime.datetime.now()
-        now_plus_5_hours = now + datetime.timedelta(minutes=301)
+        now_plus_5_hours = now + datetime.timedelta(minutes=305)
         self.expiry_date = now_plus_5_hours
 
         # generate a random key to give the customer and store the hash
@@ -175,6 +175,8 @@ def phone_home():
     instance_id = request.args['instance_id']
     server = Server.query.filter_by(instance_id=instance_id).first()
 
+    db.session.add(LogEntry('Server '+server.id+' phoned home.'))
+
     td = server.expiry_date - datetime.datetime.now()
 
     seconds_left = td.seconds
@@ -183,8 +185,9 @@ def phone_home():
     server_message = ''
 
     if server.expiry_date < datetime.datetime.now():
+
         db.session.add(LogEntry('Server '+server.id+' expired, terminating...'))
-        db.session.commit()
+
         client = boto3.client('ec2', region_name=region)
         response = client.terminate_instances(
             InstanceIds=[
@@ -193,8 +196,21 @@ def phone_home():
     )
     elif hours_left < 1:
         server_message = "WARNING. Server will be terminated in less than an hour unless topped-up. All data will be lost."
+    elif hours_left < 2:
+        server_message = "WARNING. Server will be terminated in two hours unless topped-up. All data will be lost."
+    elif hours_left < 3:
+        server_message = "WARNING. Server will be terminated in three hours unless topped-up. All data will be lost."
+    elif hours_left < 4:
+        server_message ="WARNING. 4 hours credit remaining on this server."
     elif hours_left < 5:
         server_message ="WARNING. 5 hours credit remaining on this server."
+
+    if server_message:
+        db.session.add(LogEntry('Server message \"'+server_message+'\" returned to server '+server.id))
+    else:
+        db.session.add(LogEntry('No server message returned for server '+server.id))
+
+    db.session.commit()
 
     return jsonify({
             "server_message": server_message
