@@ -2,6 +2,7 @@ import requests
 import datetime
 from subprocess import Popen
 import boto3
+import filecmp
 
 print("Getting instance id...")
 instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
@@ -13,10 +14,12 @@ print("Region is "+region)
 print("Phoning home...")
 server_message = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/api/v0.1/phone_home?instance_id='+instance_id).json()['server_message']
 
+server_id = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server_data?instance_id='+instance_id).json()['id']
+
 Popen(['cp', '/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'])
 Popen(['curl', 'http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/'+server_id+'/properties', '-o', '/home/ubuntu/server.properties'])
 
-if !filecmp.cmp('/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'):
+if not filecmp.cmp('/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'):
     print("New config file, rebooting")
     client = boto3.client('ec2', region_name=region)
     client.reboot_instances(InstanceIds=[instance_id,])
