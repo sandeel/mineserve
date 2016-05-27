@@ -18,15 +18,20 @@ import random
 import string
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
+import flask.ext.login as flask_login
+from flask import Response
+from flask import make_response
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 app.config['aws_region'] = 'us-west-2'
-app.config['BETA'] = True
+app.config['BETA'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
 
 
 # stripe setup
@@ -74,16 +79,54 @@ class LogEntry(db.Model):
         self.date = datetime.datetime.now()
         self.message = message
 
+
+class User(db.Model):
+    __tablename__ = 'user'
+    email = db.Column(db.String, primary_key=True)
+    hashed_password = db.Column(db.String)
+
+    def __init__(self, email):
+        # generate a password to give the user and store the hash
+        self.password = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(8))
+        self.hashed_password = bcrypt.hashpw(self.password, bcrypt.gensalt())
+        self.email = email
+
+    def check_password(self, password):
+        if bcrypt.hashpw(password, hashed) == self.hashed_password:
+            return True
+        else:
+            return False
+
+# Customized user admin view
+class UserAdmin(sqla.ModelView):
+    column_display_pk=True
+
+class Properties(db.Model):
+    __tablename__ = 'properties'
+    id = db.Column(db.Integer, primary_key=True)
+    server_id = db.Column(db.String, db.ForeignKey('server.id'))
+    server = db.relationship("Server", back_populates="properties")
+
+    #properties
+    server_name = db.Column(db.String)
+
+    def generate_file(self):
+
+        file = ""
+        file += 'server-name: '+self.server_name
+
+        return file
+
 class Server(db.Model):
 
     __tablename__ = 'server'
     id = db.Column(db.String, primary_key=True)
     instance_id = db.Column(db.String)
-    hashed_server_key = db.Column(db.String)
     op = db.Column(db.String)
     expiry_date = db.Column(db.DateTime)
     creation_date = db.Column(db.DateTime)
     progenitor_email = db.Column(db.String)
+    properties = db.relationship("Properties", uselist=False, back_populates="server")
 
     def __init__(self, progenitor_email, op):
         self.id = str(uuid.uuid4())
@@ -103,18 +146,12 @@ class Server(db.Model):
         now_plus_5_hours = now + datetime.timedelta(minutes=305)
         self.expiry_date = now_plus_5_hours
 
-        # generate a random key to give the customer and store the hash
-        self.server_key = str(uuid.uuid4())
-        self.hashed_server_key = bcrypt.hashpw(self.server_key, bcrypt.gensalt())
+        self.properties = Properties()
+        self.properties.server_name = 'Dan server'
+
 
     def __str__(self):
         return self.id
-
-    def check_server_key(self, server_key):
-        if bcrypt.hashpw(server_key, hashed) == self.hashed_server_key:
-            return True
-        else:
-            return False
 
     @property
     def ip_address(self):
@@ -169,6 +206,24 @@ class Server(db.Model):
         )
 
         return instance_id
+
+    def apply_promo_code(self,promo_code):
+        promo_code = PromoCode.query.filter_by(code=promo_code).first()
+
+        if promo_code and not promo_code.activated:
+            self.expiry_date = self.expiry_date + datetime.timedelta(days=30)
+            db.session.add(self)
+
+            promo_code.activated=True
+            db.session.add(promo_code)
+
+            db.session.add(LogEntry('Promo Code '+promo_code.code+' applied to server '+self.id))
+
+            db.session.commit()
+
+# Customized server admin
+class ServerAdmin(sqla.ModelView):
+    column_display_pk=True
 
 @app.route("/api/v0.1/phone_home", methods=["GET"])
 def phone_home():
@@ -227,31 +282,52 @@ def server_data():
 
 @app.route("/", methods=["GET"])
 def landing_page():
-    return render_template('landing_page.html')
+    return render_template('landing_page.html', beta_test=app.config['BETA'])
+
+@app.route("/server/<server_id>/properties", methods=["GET"])
+def server_properties(server_id):
+    server = Server.query.filter_by(id=server_id).first()
+    response = make_response(server.properties.generate_file())
+    response.headers["content-type"] = "text/plain"
+    response.content_type = "text/plain"
+    return response
 
 @app.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
             
     topped_up_message = None
-    new_server_key= None
     promo_code_applied=False
+    invalid_promo_code=False
 
     if request.method == 'POST':
 
-        db.session.add(LogEntry('Customer has requested a new server'))
-        db.session.commit()
-
         if server_id == 'new':
+
+            # if beta need promo code
+            if app.config['BETA']:
+                if not request.form['promo-code']:
+                        return Response('Need promo code', 401)
+
+            if User.query.filter_by(email=request.form['email']).first():
+                return 'That user already has a server'
+            else:
+                user = User(email=request.form['email'])
+                db.session.add(user)
+
+            db.session.add(LogEntry('Customer has requested a new server'))
+
             # if server doesn't exist create it
             new_server = Server(progenitor_email=request.form['email'],
                                 op=request.form['minecraft_name'])
             db.session.add(new_server)
-            db.session.commit()
-            new_server_key= new_server.server_key
             server_id = new_server.id
+
+            db.session.commit()
             return redirect('/server/'+server_id)
 
         elif request.form.get('stripeToken', None):
+
+            server = Server.query.filter_by(id=server_id).first()
 
             amount = 4000
 
@@ -276,19 +352,10 @@ def server(server_id):
 
         elif request.form['promo-code']:
             server = Server.query.filter_by(id=server_id).first()
-            promo_code = PromoCode.query.filter_by(code=request.form['promo-code']).first()
-
-            if promo_code and not promo_code.activated:
-                server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
-                db.session.add(server)
-
+            if server.apply_promo_code(request.form['promo-code']):
                 promo_code_applied=True
-                promo_code.activated=True
-                db.session.add(promo_code)
-
-                db.session.add(LogEntry('Promo Code '+promo_code.code+' applied to server '+server.id))
-
-                db.session.commit()
+            else:
+                invalid_promo_code=True
 
     server = Server.query.filter_by(id=server_id).first()
 
@@ -300,11 +367,6 @@ def server(server_id):
     td = server.expiry_date - datetime.datetime.now()
     days, hours, minutes = td.days, td.seconds // 3600, td.seconds // 60 % 60
 
-    if not request.args:
-        server_key = None
-    else:
-        server_key = request.args['server_key']
-
     return render_template('server.html',
             time_remaining=str(days)+' days, '+str(hours)+' hours, '+str(minutes)+' minutes',
             id=server.id,
@@ -313,16 +375,16 @@ def server(server_id):
             status=server.status,
             new_server=True,
             topped_up_message=topped_up_message,
-            server_key=server_key,
             beta=app.config['BETA'],
+            invalid_promo_code=invalid_promo_code,
             )
 
 # Create admin
 admin = admin.Admin(app, name='Example: SQLAlchemy', template_mode='bootstrap3')
-admin.add_view(sqla.ModelView(Server,db.session))
+admin.add_view(ServerAdmin(Server,db.session))
+admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(LogAdmin(LogEntry,db.session))
-
 
 if __name__ == '__main__':
     manager.run()
