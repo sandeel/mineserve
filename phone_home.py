@@ -5,6 +5,7 @@ import boto3
 import filecmp
 import time
 from random import randint
+import subprocess
 
 print("Getting instance id...")
 instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
@@ -31,7 +32,7 @@ Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'pa
 
 # check if properties have changed
 Popen(['cp', '/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'])
-Popen(['curl', 'http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/'+server_id+'/properties', '-o', '/home/ubuntu/server.properties'])
+subprocess.call(['curl', 'http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/'+server_id+'/properties', '-o', '/home/ubuntu/server.properties'])
 
 properties0 = open("/home/ubuntu/server.properties","r")
 properties1 = open("/home/ubuntu/server.properties.bk","r")
@@ -46,5 +47,6 @@ for i,lines2 in enumerate(properties1):
         time.sleep(60)
         client = boto3.client('ec2', region_name=region)
         client.reboot_instances(InstanceIds=[instance_id,])
-
+    else:
+        print("line "+  str(i) +" matches")
 
