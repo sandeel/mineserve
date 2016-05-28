@@ -24,7 +24,7 @@ from flask import make_response
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
-app.config['aws_region'] = 'us-west-2'
+app.config['AWS_REGION'] = 'us-west-2'
 app.config['BETA'] = True
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -54,7 +54,7 @@ class PromoCode(db.Model):
     activated = db.Column(db.Boolean)
     reward_code = db.Column(db.String)
     
-    def __init__(self, reward_code):
+    def __init__(self, reward_code='BetaTest'):
         self.code = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.activated = False
         self.reward_code = reward_code
@@ -133,8 +133,8 @@ class Properties(db.Model):
     rcon_password = db.Column(db.String)
     auto_save = db.Column(db.String)
 
-    def __init__(self):
-
+    def __init__(self,):
+        
         # set the default properties
         self.server_name = 'The Server'
         self.motd = 'Adventure Servers Server'
@@ -200,9 +200,12 @@ class Server(db.Model):
     expiry_date = db.Column(db.DateTime)
     creation_date = db.Column(db.DateTime)
     progenitor_email = db.Column(db.String)
-    properties = db.relationship("Properties", uselist=False, back_populates="server")
+    game = db.Column(db.String)
+    server_type = db.Column(db.String)
+    size = db.Column(db.String)
+    properties = db.relationship("Properties", back_populates="server")
 
-    def __init__(self, progenitor_email, op):
+    def __init__(self, progenitor_email, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='micro'):
         self.id = str(uuid.uuid4())
 
         db.session.add(LogEntry('Creating server with ID '+self.id+' User\'s email address is '+progenitor_email))
@@ -218,8 +221,14 @@ class Server(db.Model):
         now_plus_5_hours = now + datetime.timedelta(minutes=305)
         self.expiry_date = now_plus_5_hours
 
+        # instantiate default properties
         self.properties = Properties()
-        self.properties.server_name = 'Dan server'
+        self.properties.server_name = server_name
+        self.properties.motd = server_name
+
+        self.size=size
+        self.server_type = server_type
+        self.game = game
 
         self.instance_id = self.start_instance()
 
@@ -229,7 +238,7 @@ class Server(db.Model):
 
     @property
     def ip_address(self):
-        client = boto3.client('ec2', region_name=app.config['aws_region'])
+        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
         return client.describe_instances(
             InstanceIds=[
                 self.instance_id
@@ -237,15 +246,16 @@ class Server(db.Model):
 
     @property
     def status(self):
-        client = boto3.client('ec2', region_name=app.config['aws_region'])
-        instance_status =  client.describe_instance_status(
-            InstanceIds=[
-                self.instance_id
-            ])['InstanceStatuses']
-        if instance_status:
-            return instance_status[0].get('InstanceStatus').get('Status')
-        else:
-            return 'Spinning up'
+        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
+        try:
+            instance_status =  client.describe_instance_status(
+                InstanceIds=[
+                    self.instance_id
+                ])['InstanceStatuses'][0].get('InstanceStatus').get('Status')
+        except:
+            instance_status = 'Unknown'
+
+        return instance_status
 
     def start_instance(self):
 
@@ -305,10 +315,10 @@ reboot
         """
 
         # create the instance
-        client = boto3.client('ec2', region_name='us-west-2')
+        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
         response = client.run_instances(
                 ImageId='ami-9abea4fb',
-                InstanceType='t2.micro',
+                InstanceType='t2.'+self.size,
                 MinCount = 1,
                 MaxCount = 1,
                 UserData = userdata,
@@ -317,6 +327,13 @@ reboot
                     'Name': 'mineserve-agent'
                     },
                 SecurityGroupIds=['sg-cf668aa9'],
+                DisableApiTermination=True,
+                BlockDeviceMappings=[{
+                        'DeviceName': '/dev/sda1',
+                        'Ebs': {
+                            'VolumeSize': 28,
+                            }
+                        }]
         )
         instance_id = response['Instances'][0]['InstanceId']
 
@@ -352,6 +369,18 @@ reboot
 # Customized server admin
 class ServerAdmin(sqla.ModelView):
     column_display_pk=True
+    inline_models = [Properties,]
+    
+    column_list = (
+        'id',
+        'instance_id',
+        'status',
+        'creation_date',
+        'expiry_date',
+        'size',
+        'progenitor_email',
+    )
+
 
 @app.route("/api/v0.1/phone_home", methods=["GET"])
 def phone_home():
@@ -439,19 +468,21 @@ def server(server_id):
 
             if User.query.filter_by(email=request.form['email']).first():
                 return 'That user already has a server'
-            else:
-                user = User(email=request.form['email'])
-                db.session.add(user)
 
             db.session.add(LogEntry('Customer has requested a new server'))
 
             # if server doesn't exist create it
             new_server = Server(progenitor_email=request.form['email'],
-                                op=request.form['minecraft_name'])
+                                op=request.form['minecraft_name'],
+                                server_name=request.form['server_name'])
             new_server.apply_promo_code(request.form['promo-code'])
             new_server.op=request.form['minecraft_name']
             db.session.add(new_server)
             server_id = new_server.id
+
+            # create the user
+            user = User(email=request.form['email'])
+            db.session.add(user)
 
             db.session.commit()
             return redirect('/server/'+server_id)
