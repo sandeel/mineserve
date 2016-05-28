@@ -63,7 +63,7 @@ class PromoCode(db.Model):
 class PromoCodeAdmin(sqla.ModelView):
     column_display_pk=True
 
-    form_choices = { 'reward_code': [ ('0', 'BetaTest'),],}
+    form_choices = { 'reward_code': [ ('BetaTest', 'BetaTest'),],}
 
 # Customized log admin
 class LogAdmin(sqla.ModelView):
@@ -390,7 +390,7 @@ def phone_home():
 
     td = server.expiry_date - datetime.datetime.now()
 
-    seconds_left = td.seconds
+    seconds_left = td.total_seconds()
     hours_left = td.seconds // 3600
 
     server_message = ''
