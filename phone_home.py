@@ -14,7 +14,7 @@ region = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/d
 print("Region is "+region)
 
 seconds = randint(0,3300)
-print("Waiting "+seconds+" seconds before phoning home...")
+print("Waiting "+str(seconds)+" seconds before phoning home...")
 time.sleep(seconds)
 
 print("Phoning home...")
@@ -40,4 +40,3 @@ if open('/home/ubuntu/server.properties','r').read() != open('/home/ubuntu/serve
     client = boto3.client('ec2', region_name=region)
     client.reboot_instances(InstanceIds=[instance_id,])
 
-exit 0

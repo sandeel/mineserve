@@ -79,7 +79,6 @@ class LogEntry(db.Model):
         self.date = datetime.datetime.now()
         self.message = message
 
-
 class User(db.Model):
     __tablename__ = 'user'
     email = db.Column(db.String, primary_key=True)
@@ -105,7 +104,6 @@ class Properties(db.Model):
     __tablename__ = 'properties'
     id = db.Column(db.Integer, primary_key=True)
     server_id = db.Column(db.String, db.ForeignKey('server.id'))
-    server = db.relationship("Server", back_populates="_properties")
 
     #properties
     server_name = db.Column(db.String)
@@ -133,7 +131,9 @@ class Properties(db.Model):
     rcon_password = db.Column(db.String)
     auto_save = db.Column(db.String)
 
-    def __init__(self,):
+    def __init__(self, server_id):
+
+        self.server_id = server_id
         
         # set the default properties
         self.server_name = 'The Server'
@@ -203,7 +203,7 @@ class Server(db.Model):
     game = db.Column(db.String)
     server_type = db.Column(db.String)
     size = db.Column(db.String)
-    _properties = db.relationship("Properties", back_populates="server")
+    properties = db.relationship("Properties", backref="server", uselist=False)
 
     def __init__(self, progenitor_email, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='micro'):
         self.id = str(uuid.uuid4())
@@ -222,7 +222,7 @@ class Server(db.Model):
         self.expiry_date = now_plus_5_hours
 
         # instantiate default properties
-        self._properties.append(Properties())
+        self.properties = Properties(server_id = self.id)
         self.properties.server_name = server_name
         self.properties.motd = server_name
 
@@ -231,10 +231,6 @@ class Server(db.Model):
         self.game = game
 
         self.instance_id = self.start_instance()
-
-    @property
-    def properties(self):
-        return self._properties[0]
 
     def __str__(self):
         return self.id
@@ -372,7 +368,6 @@ reboot
 # Customized server admin
 class ServerAdmin(sqla.ModelView):
     column_display_pk=True
-    inline_models = [Properties,]
     
     column_list = (
         'id',
@@ -550,6 +545,7 @@ admin.add_view(ServerAdmin(Server,db.session))
 admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(LogAdmin(LogEntry,db.session))
+admin.add_view(sqla.ModelView(Properties,db.session))
 
 
 if __name__ == '__main__':
