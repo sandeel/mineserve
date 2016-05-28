@@ -27,16 +27,24 @@ server_message = requests.get('http://ec2-52-30-111-108.eu-west-1.compute.amazon
 if server_message:
     print('Sending server message: '+server_message)
 
-    Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'password', 'say '+server_message])
+Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'password', 'say '+server_message])
 
+# check if properties have changed
 Popen(['cp', '/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'])
 Popen(['curl', 'http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/'+server_id+'/properties', '-o', '/home/ubuntu/server.properties'])
 
-if open('/home/ubuntu/server.properties','r').read() != open('/home/ubuntu/server.properties.bk','r').read():
-    message = "Server configuration changed, rebooting in one minute."
-    print(message)
-    Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'password', 'say '+message])
-    time.sleep(60)
-    client = boto3.client('ec2', region_name=region)
-    client.reboot_instances(InstanceIds=[instance_id,])
+properties0 = open("/home/ubuntu/server.properties","r")
+properties1 = open("/home/ubuntu/server.properties.bk","r")
+
+lines1 =properties0.readlines()
+
+for i,lines2 in enumerate(properties1):
+    if lines2 != lines1[i]:
+        message = "Server configuration changed, rebooting in one minute."
+        print(message)
+        Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'password', 'say '+message])
+        time.sleep(60)
+        client = boto3.client('ec2', region_name=region)
+        client.reboot_instances(InstanceIds=[instance_id,])
+
 
