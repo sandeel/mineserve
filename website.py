@@ -256,6 +256,19 @@ class Server(db.Model):
 
         return instance_status
 
+    @property
+    def ip(self):
+        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
+        try:
+            instance_status =  client.describe_instances(
+                InstanceIds=[
+                    self.instance_id
+                ])['Reservations'][0]['Instances'][0]['PublicIpAddress']
+        except:
+            instance_status = 'Unknown'
+
+        return instance_status
+
     def start_instance(self):
 
         userdata = """#!/bin/bash
@@ -374,6 +387,7 @@ class ServerAdmin(sqla.ModelView):
         'id',
         'instance_id',
         'status',
+        'ip',
         'creation_date',
         'expiry_date',
         'size',
@@ -399,7 +413,7 @@ def phone_home():
 
         db.session.add(LogEntry('Server '+server.id+' expired, terminating...'))
 
-        client = boto3.client('ec2', region_name=region)
+        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
         response = client.terminate_instances(
             InstanceIds=[
                 instance_id,
