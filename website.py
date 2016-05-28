@@ -308,10 +308,10 @@ gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 # set up cron to phone home
 pip install requests
 pip install boto3
-#echo "*/1 * * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
+echo "*/1 * * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
 
 echo "Going down for reboot..."
-#reboot
+reboot
         """
 
         # create the instance
