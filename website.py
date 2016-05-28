@@ -289,7 +289,8 @@ curl https://gitlab.com/itxtech/genisys/builds/1461919/artifacts/file/Genisys_1.
 INSTANCE_ID=curl http://169.254.169.254/latest/meta-data/instance-id
 SERVER_ID="""+self.id+"""
 
-curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/$SERVER_ID/properties -o server.properties
+curl http://ec2-52-30-111-108c.eu-west-1.compute.amazonaws.com:5000/server/$SERVER_ID/properties -o server.properties
+cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
 
 #op the user
 echo """+self.op+""" > /home/ubuntu/ops.txt

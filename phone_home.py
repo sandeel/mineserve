@@ -31,7 +31,6 @@ if server_message:
 Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'password', 'say '+server_message])
 
 # check if properties have changed
-Popen(['cp', '/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'])
 subprocess.call(['curl', 'http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/'+server_id+'/properties', '-o', '/home/ubuntu/server.properties'])
 
 properties0 = open("/home/ubuntu/server.properties","r")
@@ -45,6 +44,7 @@ for i,lines2 in enumerate(properties1):
         print(message)
         Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'password', 'say '+message])
         time.sleep(60)
+        Popen(['cp', '/home/ubuntu/server.properties', '/home/ubuntu/server.properties.bk'])
         client = boto3.client('ec2', region_name=region)
         client.reboot_instances(InstanceIds=[instance_id,])
     else:
