@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, url_for, redirect, render_template, request, abort
 import flask.ext.login as flask_login
 from flask_sqlalchemy import SQLAlchemy
 import uuid
@@ -21,6 +21,10 @@ from flask_migrate import Migrate, MigrateCommand
 import flask.ext.login as flask_login
 from flask import Response
 from flask import make_response
+from flask_security import Security, SQLAlchemyUserDatastore, \
+    UserMixin, RoleMixin, login_required, current_user
+from flask_security.utils import encrypt_password
+from flask_admin import helpers as admin_helpers
 
 application = Flask(__name__)
 application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
@@ -28,6 +32,9 @@ application.config['AWS_REGION'] = os.environ['ADVSRVS_AWS_REGION']
 application.config['BETA'] = (os.environ['ADVSRVS_BETA'] == 'True')
 application.config['SG_ID'] = os.environ['ADVSRVS_SG_ID']
 application.config['CONTAINER_AGENT_SUBNET'] = os.environ['ADVSRVS_CONTAINER_AGENT_SUBNET']
+application.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
+application.config['SECURITY_PASSWORD_SALT'] = 'mine'
+
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)
 manager = Manager(application)
@@ -47,6 +54,71 @@ stripe.api_key = stripe_keys['secret_key']
 
 application.secret_key = 'super secret'
 
+roles_users = db.Table(
+    'roles_users',
+    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
+)
+
+class Role(db.Model, RoleMixin):
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    description = db.Column(db.String(255))
+
+    def __str__(self):
+        return self.name
+
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True)
+    password = db.Column(db.String(255))
+    active = db.Column(db.Boolean())
+    confirmed_at = db.Column(db.DateTime())
+    roles = db.relationship('Role', secondary=roles_users,
+                            backref=db.backref('users', lazy='dynamic'))
+
+    def __str__(self):
+        return self.email
+
+# Create customized model view class
+class ProtectedModelView(sqla.ModelView):
+
+    def is_accessible(self):
+        if not current_user.is_active or not current_user.is_authenticated:
+            return False
+
+        if current_user.has_role('superuser'):
+            return True
+
+        return False
+
+    def _handle_view(self, name, **kwargs):
+        """
+        Override builtin _handle_view in order to redirect users when a view is not accessible.
+        """
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                # permission denied
+                abort(403)
+            else:
+                # login
+                return redirect(url_for('security.login', next=request.url))
+
+# Setup Flask-Security
+user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+security = Security(application, user_datastore)
+
+# define a context processor for merging flask-admin's template context into the
+# flask-security views.
+@security.context_processor
+def security_context_processor():
+    return dict(
+        admin_base_template=admin.base_template,
+        admin_view=admin.index_view,
+        h=admin_helpers,
+    )
+
 class PromoCode(db.Model):
     code = db.Column(db.String, primary_key=True)
     activated = db.Column(db.Boolean)
@@ -58,13 +130,13 @@ class PromoCode(db.Model):
         self.reward_code = reward_code
 
 # Customized promo code admin
-class PromoCodeAdmin(sqla.ModelView):
+class PromoCodeAdmin(ProtectedModelView):
     column_display_pk=True
 
     form_choices = { 'reward_code': [ ('BetaTest', 'BetaTest'),],}
 
 # Customized log admin
-class LogAdmin(sqla.ModelView):
+class LogAdmin(ProtectedModelView):
     column_default_sort = ('date', True)
 
 class LogEntry(db.Model):
@@ -77,25 +149,8 @@ class LogEntry(db.Model):
         self.date = datetime.datetime.now()
         self.message = message
 
-class User(db.Model):
-    __tablename__ = 'user'
-    email = db.Column(db.String, primary_key=True)
-    hashed_password = db.Column(db.String)
-
-    def __init__(self, email):
-        # generate a password to give the user and store the hash
-        self.password = str(''.join(random.SystemRandom().choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(8)))
-        self.hashed_password = bcrypt.hashpw(self.password.encode('utf-8'), bcrypt.gensalt())
-        self.email = email
-
-    def check_password(self, password):
-        if bcrypt.hashpw(password, hashed) == self.hashed_password:
-            return True
-        else:
-            return False
-
 # Customized user admin view
-class UserAdmin(sqla.ModelView):
+class UserAdmin(ProtectedModelView):
     column_display_pk=True
 
 class Properties(db.Model):
@@ -379,7 +434,7 @@ reboot
             db.session.commit()
 
 # Customized server admin
-class ServerAdmin(sqla.ModelView):
+class ServerAdmin(ProtectedModelView):
     column_display_pk=True
     
     column_list = (
@@ -562,12 +617,12 @@ def server(server_id):
             )
 
 # Create admin
-admin = admin.Admin(application, name='Example: SQLAlchemy', template_mode='bootstrap3')
+admin = admin.Admin(application, name='MineServe Admin', template_mode='bootstrap3')
 admin.add_view(ServerAdmin(Server,db.session))
 admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(LogAdmin(LogEntry,db.session))
-admin.add_view(sqla.ModelView(Properties,db.session))
+admin.add_view(ProtectedModelView(Properties,db.session))
 
 
 if __name__ == '__main__':
