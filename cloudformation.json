@@ -209,6 +209,12 @@
                 "Path": "/",
                 "Roles": [ { "Ref": "ElasticBeanstalkInstanceProfileRole" } ]
          }
+        },
+        "HostedZone": {
+            "Type": "AWS::Route53::HostedZone",
+            "Properties": {
+                "Name": "adventureservers.com"
+            }
         }
     }
 }
