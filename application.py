@@ -24,8 +24,8 @@ from flask import make_response
 
 application = Flask(__name__)
 application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
-application.config['AWS_REGION'] os.getenv('ADVSRVS_AWS_REGION')
-application.config['BETA'] = os.getenv('ADVSRVS_BETA')
+application.config['AWS_REGION'] = os.getenv('ADVSRVS_AWS_REGION')
+application.config['BETA'] = (os.getenv('ADVSRVS_BETA') == 'True')
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)
 manager = Manager(application)
@@ -36,8 +36,8 @@ login_manager.init_app(application)
 
 # stripe setup
 stripe_keys = {
-  'secret_key': os.environ['SECRET_KEY'],
-  'publishable_key': os.environ['PUBLISHABLE_KEY']
+  'secret_key': os.environ['STRIPE_SECRET_KEY'],
+  'publishable_key': os.environ['STRIPE_PUBLISHABLE_KEY']
   }
 
 stripe.api_key = stripe_keys['secret_key']

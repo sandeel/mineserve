@@ -5,7 +5,20 @@
         "KeyPair" : {
             "Description" : "Amazon EC2 Key Pair",
             "Type" : "AWS::EC2::KeyPair::KeyName"
-        
+        },
+        "Beta" : {
+            "Type" : "String",
+            "Description" : "Whether application is live or beta",
+            "AllowedValues" : ["True", "False"]
+        },
+        "StripeSecretKey" : {
+            "Type" : "String",
+            "Description" : "Stripe secret key",
+            "NoEcho" : "true"
+        },
+        "StripePublishableKey" : {
+            "Type" : "String",
+            "Description" : "Stripe publishable key"
         }
     },
     "Resources" : {
@@ -108,6 +121,26 @@
                         "Namespace": "aws:autoscaling:launchconfiguration",
                         "OptionName": "IamInstanceProfile",
                         "Value": { "Ref": "ElasticBeanstalkInstanceProfile" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_AWS_REGION",
+                        "Value": { "Ref": "AWS::Region" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "BETA",
+                        "Value": { "Ref": "Beta" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "STRIPE_SECRET_KEY",
+                        "Value": { "Ref": "StripeSecretKey" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "STRIPE_PUBLISHABLE_KEY",
+                        "Value": { "Ref": "StripePublishableKey" }
                     }
                 ]
             }
