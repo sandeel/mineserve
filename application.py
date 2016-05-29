@@ -561,5 +561,3 @@ admin.add_view(sqla.ModelView(Properties,db.session))
 
 if __name__ == '__main__':
     manager.run()
-
-
