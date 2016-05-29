@@ -33,6 +33,7 @@ manager.add_command('db', MigrateCommand)
 login_manager = flask_login.LoginManager()
 login_manager.init_app(application)
 
+db.create_all()
 
 # stripe setup
 stripe_keys = {
