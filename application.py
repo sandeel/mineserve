@@ -26,6 +26,8 @@ application = Flask(__name__)
 application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 application.config['AWS_REGION'] = os.getenv('ADVSRVS_AWS_REGION')
 application.config['BETA'] = (os.getenv('ADVSRVS_BETA') == 'True')
+application.config['SG_ID'] = os.getenv('ADVSRVS_SG_ID')
+application.config['CONTAINER_AGENT_SUBNET'] = os.getenv('ADVSRVS_CONTAINER_AGENT_SUBNET')
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)
 manager = Manager(application)
@@ -335,14 +337,15 @@ reboot
                 IamInstanceProfile={
                     'Name': 'mineserve-agent'
                     },
-                SecurityGroupIds=['sg-cf668aa9'],
+                SecurityGroupIds=[application.config['SG_ID']],
                 DisableApiTermination=True,
                 BlockDeviceMappings=[{
                         'DeviceName': '/dev/sda1',
                         'Ebs': {
                             'VolumeSize': 28,
                             }
-                        }]
+                        }],
+                SubnetId=application.config['CONTAINER_AGENT_SUBNET']
         )
         instance_id = response['Instances'][0]['InstanceId']
 

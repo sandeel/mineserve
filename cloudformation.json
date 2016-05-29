@@ -129,7 +129,17 @@
                     },
                     {
                         "Namespace": "aws:elasticbeanstalk:application:environment",
-                        "OptionName": "BETA",
+                        "OptionName": "ADVSRVS_SG_ID",
+                        "Value": { "Ref": "ContainerAgentSG" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_CONTAINER_AGENT_SUBNET",
+                        "Value": { "Ref": "PublicSubnet" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_BETA",
                         "Value": { "Ref": "Beta" }
                     },
                     {
@@ -144,6 +154,25 @@
                     }
                 ]
             }
+        },
+        "ContainerAgentSG" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Allow http to client host",
+                "VpcId" : {"Ref" : "Vpc"},
+                "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "19132",
+                    "ToPort" : "19132",
+                    "CidrIp" : "0.0.0.0/0"
+                 },
+                 {
+                    "IpProtocol" : "udp",
+                    "FromPort" : "19132",
+                    "ToPort" : "19132",
+                    "CidrIp" : "0.0.0.0/0"
+                 }]
+           }
         },
         "ElasticBeanstalkInstanceProfile" : {
             "Type" : "AWS::IAM::InstanceProfile",
@@ -247,13 +276,6 @@
             "Type": "AWS::Route53::HostedZone",
             "Properties": {
                 "Name": "adventureservers.com"
-            }
-        },
-        "DatabaseSubnetGroup": {
-            "Type" : "AWS::RDS::DBSubnetGroup",
-            "Properties" : {
-                "DBSubnetGroupDescription" : "Database subnet",
-                "SubnetIds" : [ { "Ref": "PrivateSubnet" } ]
             }
         }
    }
