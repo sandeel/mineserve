@@ -23,7 +23,7 @@ from flask import Response
 from flask import make_response
 
 application = Flask(__name__)
-application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 application.config['AWS_REGION'] = os.getenv('ADVSRVS_AWS_REGION')
 application.config['BETA'] = (os.getenv('ADVSRVS_BETA') == 'True')
 db = SQLAlchemy(application)

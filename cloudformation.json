@@ -248,6 +248,13 @@
             "Properties": {
                 "Name": "adventureservers.com"
             }
+        },
+        "DatabaseSubnetGroup": {
+            "Type" : "AWS::RDS::DBSubnetGroup",
+            "Properties" : {
+                "DBSubnetGroupDescription" : "Database subnet",
+                "SubnetIds" : [ { "Ref": "PrivateSubnet" } ]
+            }
         }
-    }
-}
+   }
+}   
