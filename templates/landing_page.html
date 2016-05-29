@@ -18,14 +18,20 @@
           {% endif %}
       </div>
 
-      <form action="server/new" method="post" class="col s12">
+
+        {% if form_error %}
+      <div class="row center">
+        <div class="card-panel col s12 red darken-1">{{ form_error }}</div>
+      </div>
+        {% endif %}
+      <form action="" method="post" class="col s12">
 	    <div class="row center">
         {% if beta_test %}
-        <div class="input-field col s6 offset-s3"><input placeholder="Promo Code" id="promo-code" name="promo-code" type="text"></div>
+        <div class="input-field col s6 offset-s3"><input placeholder="Promo Code" id="promo-code" name="promo-code" type="text" class="validate" required></div>
         {% endif %}
-	    <div class="input-field col s6 offset-s3"><input placeholder="Minecraft Name" id="minecraft_name" name="minecraft_name" type="text" class="validate"></div>
-	    <div class="input-field col s6 offset-s3"><input placeholder="Server Name" id="server_name" name="server_name" type="text" class="validate"></div>
-        <div class="input-field col s6 offset-s3"><input placeholder="Your email" id="email" name="email" type="email" class="validate"></div>
+	    <div class="input-field col s6 offset-s3"><input placeholder="Minecraft Name" id="minecraft_name" name="minecraft_name" type="text" class="validate" required></div>
+	    <div class="input-field col s6 offset-s3"><input placeholder="Server Name" id="server_name" name="server_name" type="text" class="validate" required></div>
+        <div class="input-field col s6 offset-s3"><input placeholder="Your email" id="email" name="email" type="email" class="validate" required></div>
       </div>
         <div class="row center"><input type="submit" id="download-button" class="btn-large waves-effect waves-light orange" value="Launch Now"</input></div>
         </form> 

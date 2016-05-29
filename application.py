@@ -24,10 +24,10 @@ from flask import make_response
 
 application = Flask(__name__)
 application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-application.config['AWS_REGION'] = os.getenv('ADVSRVS_AWS_REGION')
-application.config['BETA'] = (os.getenv('ADVSRVS_BETA') == 'True')
-application.config['SG_ID'] = os.getenv('ADVSRVS_SG_ID')
-application.config['CONTAINER_AGENT_SUBNET'] = os.getenv('ADVSRVS_CONTAINER_AGENT_SUBNET')
+application.config['AWS_REGION'] = os.environ['ADVSRVS_AWS_REGION']
+application.config['BETA'] = (os.environ['ADVSRVS_BETA'] == 'True')
+application.config['SG_ID'] = os.environ['ADVSRVS_SG_ID']
+application.config['CONTAINER_AGENT_SUBNET'] = os.environ['ADVSRVS_CONTAINER_AGENT_SUBNET']
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)
 manager = Manager(application)
@@ -404,7 +404,7 @@ def phone_home():
     td = server.expiry_date - datetime.datetime.now()
 
     seconds_left = td.total_seconds()
-    hours_left = td.seconds // 3600
+    hours_left = seconds_left // 3600
 
     server_message = ''
 
@@ -450,36 +450,25 @@ def server_data():
             "op": server.op,
             })
 
-@application.route("/", methods=["GET"])
+@application.route("/", methods=["GET", "POST"])
 def landing_page():
-    return render_template('landing_page.html', beta_test=application.config['BETA'])
+    if request.method == "POST":
 
-@application.route("/server/<server_id>/properties", methods=["GET"])
-def server_properties(server_id):
-    server = Server.query.filter_by(id=server_id).first()
-    response = make_response(server.properties.generate_file())
-    response.headers["content-type"] = "text/plain"
-    response.content_type = "text/plain"
-    return response
-
-@application.route("/server/<server_id>", methods=["GET","POST"])
-def server(server_id):
-            
-    topped_up_message = None
-    promo_code_applied=False
-    invalid_promo_code=False
-
-    if request.method == 'POST':
-
-        if server_id == 'new':
+            # validate entered data
+            if not request.form['email']:
+                return render_template('landing_page.html', form_error="Please enter your email address.", beta_test=application.config['BETA'])
+            if not request.form['server_name']:
+                return render_template('landing_page.html', form_error="Please enter a name for your server.", beta_test=application.config['BETA'])
+            if not request.form['minecraft_name']:
+                return render_template('landing_page.html', form_error="Please enter your Minecraft name.", beta_test=application.config['BETA'])
 
             # if beta need promo code
             if application.config['BETA']:
                 if not request.form['promo-code']:
-                        return Response('Need promo code', 401)
+                        return render_template('landing_page.html', form_error="Promo code required.", beta_test=application.config['BETA'])
 
-            if User.query.filter_by(email=request.form['email']).first():
-                return 'That user already has a server'
+                if User.query.filter_by(email=request.form['email']).first():
+                    return render_template('landing_page.html', form_error="That user already has a beta server.", beta_test=application.config['BETA'])
 
             db.session.add(LogEntry('Customer has requested a new server'))
 
@@ -498,8 +487,27 @@ def server(server_id):
 
             db.session.commit()
             return redirect('/server/'+server_id)
+    else:
+        return render_template('landing_page.html', beta_test=application.config['BETA'])
 
-        elif request.form.get('stripeToken', None):
+@application.route("/server/<server_id>/properties", methods=["GET"])
+def server_properties(server_id):
+    server = Server.query.filter_by(id=server_id).first()
+    response = make_response(server.properties.generate_file())
+    response.headers["content-type"] = "text/plain"
+    response.content_type = "text/plain"
+    return response
+
+@application.route("/server/<server_id>", methods=["GET","POST"])
+def server(server_id):
+            
+    topped_up_message = None
+    promo_code_applied=False
+    invalid_promo_code=False
+
+    if request.method == 'POST':
+
+        if request.form.get('stripeToken', None):
 
             server = Server.query.filter_by(id=server_id).first()
 
