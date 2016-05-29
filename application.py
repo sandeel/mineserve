@@ -22,16 +22,16 @@ import flask.ext.login as flask_login
 from flask import Response
 from flask import make_response
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
-app.config['AWS_REGION'] = 'us-west-2'
-app.config['BETA'] = True
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-manager = Manager(app)
+application = Flask(__name__)
+application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+application.config['AWS_REGION'] os.getenv('ADVSRVS_AWS_REGION')
+application.config['BETA'] = os.getenv('ADVSRVS_BETA')
+db = SQLAlchemy(application)
+migrate = Migrate(application, db)
+manager = Manager(application)
 manager.add_command('db', MigrateCommand)
 login_manager = flask_login.LoginManager()
-login_manager.init_app(app)
+login_manager.init_app(application)
 
 
 # stripe setup
@@ -42,12 +42,7 @@ stripe_keys = {
 
 stripe.api_key = stripe_keys['secret_key']
 
-
-app.secret_key = 'super secret'
-
-login_manager = flask_login.LoginManager()
-
-login_manager.init_app(app)
+application.secret_key = 'super secret'
 
 class PromoCode(db.Model):
     code = db.Column(db.String, primary_key=True)
@@ -237,7 +232,7 @@ class Server(db.Model):
 
     @property
     def ip_address(self):
-        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         return client.describe_instances(
             InstanceIds=[
                 self.instance_id
@@ -245,7 +240,7 @@ class Server(db.Model):
 
     @property
     def status(self):
-        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         try:
             instance_status =  client.describe_instance_status(
                 InstanceIds=[
@@ -258,7 +253,7 @@ class Server(db.Model):
 
     @property
     def ip(self):
-        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         try:
             instance_status =  client.describe_instances(
                 InstanceIds=[
@@ -321,14 +316,14 @@ gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 # set up cron to phone home
 pip install requests
 pip install boto3
-echo "0 */1 * * * ubuntu python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
+echo "0 */1 * * * root python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
 
 echo "Going down for reboot..."
 reboot
         """
 
         # create the instance
-        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         response = client.run_instances(
                 ImageId='ami-9abea4fb',
                 InstanceType='t2.'+self.size,
@@ -395,7 +390,7 @@ class ServerAdmin(sqla.ModelView):
     )
 
 
-@app.route("/api/v0.1/phone_home", methods=["GET"])
+@application.route("/api/v0.1/phone_home", methods=["GET"])
 def phone_home():
     instance_id = request.args['instance_id']
     server = Server.query.filter_by(instance_id=instance_id).first()
@@ -413,7 +408,7 @@ def phone_home():
 
         db.session.add(LogEntry('Server '+server.id+' expired, terminating...'))
 
-        client = boto3.client('ec2', region_name=app.config['AWS_REGION'])
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         response = client.terminate_instances(
             InstanceIds=[
                 instance_id,
@@ -441,7 +436,7 @@ def phone_home():
             "server_message": server_message
             })
 
-@app.route("/server_data", methods=["GET"])
+@application.route("/server_data", methods=["GET"])
 def server_data():
     instance_id = request.args['instance_id']
     server = Server.query.filter_by(instance_id=instance_id).first()
@@ -451,11 +446,11 @@ def server_data():
             "op": server.op,
             })
 
-@app.route("/", methods=["GET"])
+@application.route("/", methods=["GET"])
 def landing_page():
-    return render_template('landing_page.html', beta_test=app.config['BETA'])
+    return render_template('landing_page.html', beta_test=application.config['BETA'])
 
-@app.route("/server/<server_id>/properties", methods=["GET"])
+@application.route("/server/<server_id>/properties", methods=["GET"])
 def server_properties(server_id):
     server = Server.query.filter_by(id=server_id).first()
     response = make_response(server.properties.generate_file())
@@ -463,7 +458,7 @@ def server_properties(server_id):
     response.content_type = "text/plain"
     return response
 
-@app.route("/server/<server_id>", methods=["GET","POST"])
+@application.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
             
     topped_up_message = None
@@ -475,7 +470,7 @@ def server(server_id):
         if server_id == 'new':
 
             # if beta need promo code
-            if app.config['BETA']:
+            if application.config['BETA']:
                 if not request.form['promo-code']:
                         return Response('Need promo code', 401)
 
@@ -550,12 +545,12 @@ def server(server_id):
             status=server.status,
             new_server=True,
             topped_up_message=topped_up_message,
-            beta=app.config['BETA'],
+            beta=application.config['BETA'],
             invalid_promo_code=invalid_promo_code,
             )
 
 # Create admin
-admin = admin.Admin(app, name='Example: SQLAlchemy', template_mode='bootstrap3')
+admin = admin.Admin(application, name='Example: SQLAlchemy', template_mode='bootstrap3')
 admin.add_view(ServerAdmin(Server,db.session))
 admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
