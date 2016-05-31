@@ -356,6 +356,7 @@ curl https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instan
 bash bootstrap_instance.sh \
 && echo "/bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local \
 && echo "exit 0" >> /etc/rc.local \
+grep 'some_user python /mount/share/script.py' /etc/crontab || echo '*/1 *  *  *  * some_user python /mount/share/script.py' >> /etc/crontab
 && echo "0 */1 * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
 reboot
         """
