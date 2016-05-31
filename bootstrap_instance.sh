@@ -21,6 +21,7 @@ pip install awscli
 # pull zip of code from s3
 apt-get -y install unzip
 cd /tmp
+rm -Rf /tmp/mineserve-master
 curl -L https://github.com/sandeel/mineserve/archive/master.zip  -o /tmp/master.zip
 unzip master.zip
 
