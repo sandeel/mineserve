@@ -51,6 +51,7 @@ echo Instance ID is $INSTANCE_ID
 read SERVER_ID <<< $(curl -s http://52.30.111.108:5000/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
 echo Server ID is $SERVER_ID
 
+cd $HOME
 curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/${SERVER_ID}/properties -o server.properties
 cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
 
