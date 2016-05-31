@@ -41,7 +41,7 @@ cp -n /tmp/mineserve-master/resources/pocketmine.yml /home/ubuntu/pocketmine.yml
 #get server properties
 read INSTANCE_ID <<< $(curl 'http://169.254.169.254/latest/meta-data/instance-id')
 echo Instance ID is $INSTANCE_ID
-read SERVER_ID <<< $(curl -s 'http://52.30.111.108:5000/server_data?instance_id=$INSTANCE_ID' | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
+read SERVER_ID <<< $(curl -s http://52.30.111.108:5000/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
 echo Server ID is $SERVER_ID
 
 curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/$SERVER_ID/properties -o server.properties
@@ -55,7 +55,7 @@ docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/p
 
 # install mcrcon
 cd $HOME
-rm -r mcrcon
+rm -rf mcrcon
 git retry -v clone https://github.com/Tiiffi/mcrcon.git
 cd mcrcon
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
