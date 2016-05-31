@@ -56,7 +56,9 @@ curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/${SERV
 cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
 
 #op the user
-echo """+self.op+""" > /home/ubuntu/ops.txt
+read OPS <<< $(curl -s http://52.30.111.108:5000/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["op"]')
+echo Ops are $OPS
+echo $OPS > /home/ubuntu/ops.txt
 
 # start or run container
 docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/plugins:/srv/genisys/plugins -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/genisys.yml:/srv/genisys/genisys.yml -v /home/ubuntu/pocketmine.yml:/srv/genisys/pocketmine.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
