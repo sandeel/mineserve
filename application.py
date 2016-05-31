@@ -119,6 +119,29 @@ def security_context_processor():
         h=admin_helpers,
     )
 
+association_table = db.Table('association', db.Model.metadata,
+    db.Column('left_id', db.String, db.ForeignKey('server.id')),
+    db.Column('right_id', db.Integer, db.ForeignKey('plugin.id'))
+)
+
+class Plugin(db.Model):
+    __tablename__ = 'plugin'
+    id = db.Column(db.Integer, primary_key=True)
+    file_name = db.Column(db.String)
+    nice_name = db.Column(db.String)
+    download_url = db.Column(db.String)
+    server_id = db.Column(db.String, db.ForeignKey('server.id'))
+    servers = db.relationship(
+        "Server",
+        secondary=association_table,
+        back_populates="enabled_plugins")
+    
+    def __init__(self, file_name="", nice_name="Plugin", download_url=""):
+        self.file_name = file_name
+        self.download_url = download_url
+        self.nice_name = nice_name
+
+
 class PromoCode(db.Model):
     code = db.Column(db.String, primary_key=True)
     activated = db.Column(db.Boolean)
@@ -257,6 +280,9 @@ class Server(db.Model):
     server_type = db.Column(db.String)
     size = db.Column(db.String)
     properties = db.relationship("Properties", backref="server", uselist=False)
+    enabled_plugins = db.relationship("Plugin",
+                    secondary=association_table,
+                    back_populates="servers")
 
     def __init__(self, progenitor_email, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='micro'):
         self.id = str(uuid.uuid4())
@@ -325,59 +351,6 @@ class Server(db.Model):
     def start_instance(self):
 
         userdata = """#!/bin/bash
-
-HOME=/home/ubuntu
-
-# install docker
-cd $HOME
-curl -sSL https://get.docker.com/ | sh
-
-# install git
-apt-get install -y git
-
-# pip
-apt-get -y install python-pip
-pip install awscli
-
-# clone repo
-HTTPS_REPO_URL=https://git-codecommit.us-east-1.amazonaws.com/v1/repos/mineserve
-git clone https://chromium.googlesource.com/chromium/tools/depot_tools
-export PATH=`pwd`/depot_tools:"$PATH"
-rm -Rf mineserve
-git-retry -v clone https://github.com/sandeel/mineserve.git
-
-docker stop atlas
-
-# get phar
-curl https://gitlab.com/itxtech/genisys/builds/1461919/artifacts/file/Genisys_1.1dev-93aea9c.phar -o genisys.phar
-
-#get server properties
-INSTANCE_ID=curl http://169.254.169.254/latest/meta-data/instance-id
-SERVER_ID="""+self.id+"""
-
-curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/$SERVER_ID/properties -o server.properties
-cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
-
-#op the user
-echo """+self.op+""" > /home/ubuntu/ops.txt
-
-# start or run container
-docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/mineserve/genisys.yml:/srv/genisys/genisys.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
-
-# install mcrcon
-cd $HOME
-rm -r mcrcon
-git retry -v clone https://github.com/Tiiffi/mcrcon.git
-cd mcrcon
-gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
-
-# set up cron to phone home
-pip install requests
-pip install boto3
-echo "0 */1 * * * root python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
-
-echo "Going down for reboot..."
-reboot
         """
 
         # create the instance
@@ -436,6 +409,7 @@ reboot
 # Customized server admin
 class ServerAdmin(ProtectedModelView):
     column_display_pk=True
+    inline_models = [Plugin,]
     
     column_list = (
         'id',
@@ -623,6 +597,7 @@ admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(LogAdmin(LogEntry,db.session))
 admin.add_view(ProtectedModelView(Properties,db.session))
+admin.add_view(ProtectedModelView(Plugin,db.session))
 
 
 if __name__ == '__main__':

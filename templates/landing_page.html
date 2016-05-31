@@ -1,3 +1,6 @@
+{% if not open %}
+Beta closed!
+{% else %}
 {% extends "layout.html" %}
 {% block body %}
   <div class="section no-pad-bot" id="index-banner">
@@ -76,3 +79,4 @@
     </div>
   </div>
 {% endblock %}
+{% endif %}
