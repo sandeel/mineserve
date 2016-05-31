@@ -303,6 +303,12 @@ class Server(db.Model):
         # instantiate default properties
         self.properties = Properties(server_id = self.id)
         self.properties.server_name = server_name
+
+
+        # random seed
+        random.seed(server_name)
+        self.properties.level_seed = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
+
         self.properties.motd = server_name
 
         self.size=size
@@ -519,8 +525,10 @@ def landing_page():
             server_id = new_server.id
 
             # create the user
-            user = User(email=request.form['email'])
-            db.session.add(user)
+            password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
+            encrypted_password = encrypt_password(password)
+            if not user_datastore.get_user(request.form['email']):
+                user_datastore.create_user(email=request.form['email'], password=encrypted_password)
 
             db.session.commit()
             return redirect('/server/'+server_id)
