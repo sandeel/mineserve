@@ -351,6 +351,13 @@ class Server(db.Model):
     def start_instance(self):
 
         userdata = """#!/bin/bash
+cd /home/ubuntu
+curl https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instance.sh -o bootstrap_instance.sh
+bash bootstrap_instance.sh \
+&& echo "/bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local \
+&& echo "exit 0" >> /etc/rc.local \
+&& echo "0 */1 * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
+reboot
         """
 
         # create the instance

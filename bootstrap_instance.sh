@@ -31,12 +31,19 @@ docker stop atlas
 # copy the phar from /tmp to home
 cp /tmp/mineserve-master/resources/genisys.phar /home/ubuntu/genisys.phar
 
+# copy phone home
+cp /tmp/mineserve-master/phone_home.py /home/ubuntu/phone_home.py
+
+# if not server.properties copy it to home
+cp -n /tmp/mineserve-master/resources/server.properties /home/ubuntu/server.properties
+
 # if not server.properties copy it to home
 cp -n /tmp/mineserve-master/resources/genisys.yml /home/ubuntu/genisys.yml
 
 # if not server.properties copy it to home
 cp -n /tmp/mineserve-master/resources/pocketmine.yml /home/ubuntu/pocketmine.yml
 
+mkdir /home/ubuntu/plugins
 
 #get server properties
 read INSTANCE_ID <<< $(curl 'http://169.254.169.254/latest/meta-data/instance-id')
@@ -44,7 +51,7 @@ echo Instance ID is $INSTANCE_ID
 read SERVER_ID <<< $(curl -s http://52.30.111.108:5000/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
 echo Server ID is $SERVER_ID
 
-curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/$SERVER_ID/properties -o server.properties
+curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/${SERVER_ID}/properties -o server.properties
 cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
 
 #op the user
@@ -56,11 +63,11 @@ docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/p
 # install mcrcon
 cd $HOME
 rm -rf mcrcon
-git retry -v clone https://github.com/Tiiffi/mcrcon.git
+git clone https://github.com/Tiiffi/mcrcon.git
 cd mcrcon
 gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 
 # set up cron to phone home
 pip install requests
 pip install boto3
-echo "0 */1 * * * root python /home/ubuntu/mineserve/phone_home.py" >> /etc/crontab
+
