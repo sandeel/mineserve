@@ -214,7 +214,7 @@ class Properties(db.Model):
         # set the default properties
         self.server_name = 'The Server'
         self.motd = 'Adventure Servers Server'
-        self.server_port = '19132'
+        self.server_port = '33775'
         self.memory_limit = ''
         self.gamemode = '0'
         self.max_players = '60'
