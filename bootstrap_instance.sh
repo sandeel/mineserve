@@ -61,7 +61,7 @@ echo Ops are $OPS
 echo $OPS > /home/ubuntu/ops.txt
 
 # start or run container
-docker run -itd --name atlas -p 19132:19132 -p 19132:19132/udp -v /home/ubuntu/plugins:/srv/genisys/plugins -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/pocketmine.yml:/srv/genisys/pocketmine.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
+docker run -itd --name atlas -p 19132:19132 -p 33775:33775/udp -v /home/ubuntu/plugins:/srv/genisys/plugins -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/pocketmine.yml:/srv/genisys/pocketmine.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
 
 # install mcrcon
 cd $HOME
