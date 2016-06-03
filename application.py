@@ -27,7 +27,10 @@ from flask_security.utils import encrypt_password
 from flask_admin import helpers as admin_helpers
 
 application = Flask(__name__)
-application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+application.config['MYSQL_DATABASE_USER'] = os.environ['ADVSRVS_MYSQL_DATABASE_USER']
+application.config['MYSQL_DATABASE_PASSWORD'] = os.environ['ADVSRVS_MYSQL_DATABASE_PASSWORD']
+application.config['MYSQL_DATABASE_DB'] = os.environ['ADVSRVS_MYSQL_DATABASE_DB']
+application.config['MYSQL_DATABASE_HOST'] = os.environ['ADVSRVS_MYSQL_DATABASE_HOST']
 application.config['AWS_REGION'] = os.environ['ADVSRVS_AWS_REGION']
 application.config['BETA'] = (os.environ['ADVSRVS_BETA'] == 'True')
 application.config['SG_ID'] = os.environ['ADVSRVS_SG_ID']
@@ -88,7 +91,7 @@ class ProtectedModelView(sqla.ModelView):
         if not current_user.is_active or not current_user.is_authenticated:
             return False
 
-        if current_user.has_role('superuser'):
+        if current_user.has_role('admin'):
             return True
 
         return False
@@ -108,6 +111,30 @@ class ProtectedModelView(sqla.ModelView):
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(application, user_datastore)
+
+# Executes before the first request is processed.
+@application.before_first_request
+def before_first_request():
+
+    # Create any database tables that don't exist yet.
+    db.create_all()
+
+    # Create the Roles "admin" and "end-user" -- unless they already exist
+    user_datastore.find_or_create_role(name='admin', description='Administrator')
+
+    # Create two Users for testing purposes -- unless they already exists.
+    # In each case, use Flask-Security utility function to encrypt the password.
+    encrypted_password = encrypt_password(os.environ['ADVSRVS_ADMIN_PASSWORD'])
+    if not user_datastore.get_user('adventureservers@kolabnow.com'):
+        user_datastore.create_user(email='adventureservers@kolabnow.com', password=encrypted_password)
+
+    # Commit any database changes; the User and Roles must exist before we can add a Role to the User
+    db.session.commit()
+
+    # Give one User has the "end-user" role, while the other has the "admin" role. (This will have no effect if the
+    # Users already have these Roles.) Again, commit any database changes.
+    user_datastore.add_role_to_user('adventureservers@kolabnow.com', 'admin')
+    db.session.commit()
 
 # define a context processor for merging flask-admin's template context into the
 # flask-security views.
@@ -284,7 +311,7 @@ class Server(db.Model):
                     secondary=association_table,
                     back_populates="servers")
 
-    def __init__(self, progenitor_email, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='micro'):
+    def __init__(self, progenitor_email, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='nano'):
         self.id = str(uuid.uuid4())
 
         db.session.add(LogEntry('Creating server with ID '+self.id+' User\'s email address is '+progenitor_email))
@@ -304,7 +331,6 @@ class Server(db.Model):
         self.properties = Properties(server_id = self.id)
         self.properties.server_name = server_name
 
-
         # random seed
         random.seed(server_name)
         self.properties.level_seed = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
@@ -316,6 +342,9 @@ class Server(db.Model):
         self.game = game
 
         self.instance_id = self.start_instance()
+
+        db.session.add(self)
+        db.session.commit()
 
     def __str__(self):
         return self.id
