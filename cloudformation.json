@@ -76,7 +76,8 @@
             "Properties" : {
                 "VpcId" : { "Ref" : "Vpc" },
                 "CidrBlock" : "10.0.0.0/24",
-                "Tags" : [ { "Key" : "Name", "Value" : "PublicSubnet1" } ]
+                "Tags" : [ { "Key" : "Name", "Value" : "PublicSubnet1" } ],
+                "MapPublicIpOnLaunch": "true"
             }
         },
         "PublicRouteTable": {
@@ -243,7 +244,7 @@
                     {
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "ADVSRVS_CONTAINER_AGENT_INSTANCE_PROFILE",
-                        "Value": { "Ref": "ContainerAgentInstanceProfileRole" }
+                        "Value": { "Ref": "ContainerAgentInstanceProfile" }
                     },
                     {
                         "Namespace": "aws:elasticbeanstalk:application:environment",
@@ -331,26 +332,17 @@
         "ElasticBeanstalkInstanceProfilePolicy" : {
             "Type": "AWS::IAM::Policy",
             "Properties": {
-                "PolicyName" : "ElasticBeanstalkServiceRolePolicy",
+                "PolicyName" : "ElasticBeanstalkInstanceProfilePolicy",
                 "PolicyDocument" : {
                       "Version": "2012-10-17",
                       "Statement": [
                         {
-                          "Sid": "BucketAccess",
-                          "Action": [
-                            "s3:Get*",
-                            "s3:List*",
-                            "s3:PutObject"
-                          ],
-                          "Effect": "Allow",
-                          "Resource": [
-                            "arn:aws:s3:::elasticbeanstalk-*",
-                            "arn:aws:s3:::elasticbeanstalk-*/*"
-                          ]
-                        }
-                      ]
+                          "Effect":"Allow",
+                          "Action":"iam:PassRole",
+                          "Resource": { "Fn::Join": [ "", ["arn:aws:iam::", { "Ref": "AWS::AccountId"}, ":role/*"]] }
+                        }]
                 },
-                "Roles" : [ { "Ref": "ElasticBeanstalkServiceRole"} ]
+                "Roles" : [ { "Ref": "ElasticBeanstalkInstanceProfileRole"} ]
             }
         },
         "ElasticBeanstalkServiceRole": {

@@ -426,6 +426,7 @@ class Server(db.Model):
         return instance_status
 
     def start_instance(self):
+        phone_home_endpoint = "helloworld"
 
         userdata = """#!/bin/bash
 cd /home/ubuntu
@@ -435,6 +436,7 @@ echo "/bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
 echo "exit 0" >> /etc/rc.local
 echo '*/1 *  *  *  * some_user python /mount/share/script.py' >> /etc/crontab
 echo "0 */1 * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
+echo { "phone_home_endpoint": \""""+phone_home_endpoint+"""\" } > /home/ubuntu/config.json
 reboot
         """
 
