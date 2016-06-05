@@ -128,6 +128,7 @@
             "Type" : "AWS::ElasticBeanstalk::Environment",
             "DependsOn": "Website",
             "Properties" : {
+                "CNAMEPrefix": "advsrvs",
                 "ApplicationName" : { "Ref" : "Website" },
                 "SolutionStackName" : "64bit Amazon Linux 2016.03 v2.1.0 running Python 3.4",
                 "OptionSettings": [
@@ -250,6 +251,11 @@
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "ADVSRVS_EC2_KEYPAIR",
                         "Value": { "Ref": "KeyPair" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_PHONE_HOME_ENDPOINT",
+                        "Value": { "Fn::Join": [ "", ["advsrvs.", { "Ref": "AWS::Region"}, ".elasticbeanstalk.com"]] }
                     }
                 ]
             }

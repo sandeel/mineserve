@@ -62,6 +62,8 @@ application.config['SG_ID'] = os.environ['ADVSRVS_SG_ID']
 application.config['CONTAINER_AGENT_SUBNET'] = os.environ['ADVSRVS_CONTAINER_AGENT_SUBNET']
 application.config['CONTAINER_AGENT_INSTANCE_PROFILE'] = os.environ['ADVSRVS_CONTAINER_AGENT_INSTANCE_PROFILE']
 application.config['EC2_KEYPAIR'] = os.environ['ADVSRVS_EC2_KEYPAIR']
+application.config['ADMIN_PASSWORD'] = os.environ['ADVSRVS_ADMIN_PASSWORD']
+application.config['PHONE_HOME_ENDPOINT'] = os.environ['ADVSRVS_PHONE_HOME_ENDPOINT']
 application.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
 application.config['SECURITY_PASSWORD_SALT'] = 'mine'
 application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://'+application.config['MYSQL_DATABASE_USER']+':'+application.config['MYSQL_DATABASE_PASSWORD']+'@'+application.config['MYSQL_DATABASE_HOST']+'/'+application.config['MYSQL_DATABASE_DB']
@@ -161,7 +163,7 @@ def before_first_request():
 
     # Create two Users for testing purposes -- unless they already exists.
     # In each case, use Flask-Security utility function to encrypt the password.
-    encrypted_password = encrypt_password(os.environ['ADVSRVS_ADMIN_PASSWORD'])
+    encrypted_password = encrypt_password(application.config['ADMIN_PASSWORD'])
     if not user_datastore.get_user('adventureservers@kolabnow.com'):
         user_datastore.create_user(email='adventureservers@kolabnow.com', password=encrypted_password)
 
@@ -426,7 +428,7 @@ class Server(db.Model):
         return instance_status
 
     def start_instance(self):
-        phone_home_endpoint = '\\"helloworld\\"'
+        phone_home_endpoint = '\\"'+application.config['PHONE_HOME_ENDPOINT']+'\\"'
 
         userdata = """#!/bin/bash
 cd /home/ubuntu
