@@ -240,6 +240,19 @@
                  }]
            }
         },
+        "DatabaseSG" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Allow MYSQL inbound from the VPC",
+                "VpcId" : {"Ref" : "Vpc"},
+                "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "3306",
+                    "ToPort" : "3306",
+                    "CidrIp" : "10.0.0.0/16"
+                 }]
+           }
+        },
         "ElasticBeanstalkInstanceProfile" : {
             "Type" : "AWS::IAM::InstanceProfile",
             "Properties" : {
@@ -360,7 +373,9 @@
 				"EngineVersion" : "5.7",
 				"MasterUsername" : { "Ref" : "DatabaseUser" },
 				"MasterUserPassword" : { "Ref" : "DatabasePassword" },
-				"DBName": { "Ref": "DatabaseName" }
+				"DBName": { "Ref": "DatabaseName" },
+                "VPCSecurityGroups": [ { "Ref": "DatabaseSG" } ],
+                "DBSubnetGroupName": { "Ref": "DBSubnetGroup" }
    			}
    		}
 	}
