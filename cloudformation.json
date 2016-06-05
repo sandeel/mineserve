@@ -243,7 +243,12 @@
                     {
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "ADVSRVS_CONTAINER_AGENT_INSTANCE_PROFILE",
-                        "Value": { "Ref": "ContainerAgentInstanceProfile" }
+                        "Value": { "Ref": "ContainerAgentInstanceProfileRole" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_EC2_KEYPAIR",
+                        "Value": { "Ref": "KeyPair" }
                     }
                 ]
             }

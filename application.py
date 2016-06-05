@@ -39,6 +39,7 @@ application.config['BETA'] = (os.environ['ADVSRVS_BETA'] == 'True')
 application.config['SG_ID'] = os.environ['ADVSRVS_SG_ID']
 application.config['CONTAINER_AGENT_SUBNET'] = os.environ['ADVSRVS_CONTAINER_AGENT_SUBNET']
 application.config['CONTAINER_AGENT_INSTANCE_PROFILE'] = os.environ['ADVSRVS_CONTAINER_AGENT_INSTANCE_PROFILE']
+application.config['EC2_KEYPAIR'] = os.environ['ADVSRVS_EC2_KEYPAIR']
 application.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
 application.config['SECURITY_PASSWORD_SALT'] = 'mine'
 application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://'+application.config['MYSQL_DATABASE_USER']+':'+application.config['MYSQL_DATABASE_PASSWORD']+'@'+application.config['MYSQL_DATABASE_HOST']+'/'+application.config['MYSQL_DATABASE_DB']
@@ -423,7 +424,7 @@ reboot
                 MinCount = 1,
                 MaxCount = 1,
                 UserData = userdata,
-                KeyName = 'id_rsa',
+                KeyName = application.config['EC2_KEYPAIR'],
                 IamInstanceProfile={
                     'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
                     },
