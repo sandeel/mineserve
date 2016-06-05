@@ -356,6 +356,10 @@ class Server(db.Model):
                 'nano': 500
                 }
 
+    max_players = {
+                    'nano': 10
+                    }
+
     def __init__(self, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='nano'):
         self.id = str(uuid.uuid4())
 
@@ -621,8 +625,10 @@ def landing_page():
                 server_id = new_server.id
 
                 user.servers.append(new_server)
-                db.session.add(new_server)
 
+                server.properties.max_players = Server.max_players[server.size]
+
+                db.session.add(new_server)
 
                 db.session.commit()
 
