@@ -27,6 +27,27 @@ from flask_security.utils import encrypt_password
 from flask_admin import helpers as admin_helpers
 import config
 from flask_mail import Mail
+import logging
+import logging.handlers
+
+# Create logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Handler 
+LOG_FILE = '/var/log/flask.log'
+handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1048576, backupCount=5)
+handler.setLevel(logging.DEBUG)
+
+# Formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Add Formatter to Handler
+handler.setFormatter(formatter)
+
+# add Handler to Logger
+logger.addHandler(handler)
+
 
 application = Flask(__name__)
 mail = Mail(application)
