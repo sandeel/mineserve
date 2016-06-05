@@ -432,13 +432,13 @@ class Server(db.Model):
 
         userdata = """#!/bin/bash
 cd /home/ubuntu
+echo { \\"phone_home_endpoint\\": """+phone_home_endpoint+""" } > /home/ubuntu/config.json
 curl https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instance.sh -o bootstrap_instance.sh
 bash bootstrap_instance.sh
 echo "/bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
 echo "exit 0" >> /etc/rc.local
 echo '*/1 *  *  *  * some_user python /mount/share/script.py' >> /etc/crontab
 echo "0 */1 * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
-echo { \\"phone_home_endpoint\\": """+phone_home_endpoint+""" } > /home/ubuntu/config.json
 reboot
         """
 

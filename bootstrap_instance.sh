@@ -48,15 +48,17 @@ mkdir /home/ubuntu/plugins
 #get server properties
 read INSTANCE_ID <<< $(curl 'http://169.254.169.254/latest/meta-data/instance-id')
 echo Instance ID is $INSTANCE_ID
-read SERVER_ID <<< $(curl -s http://52.30.111.108:5000/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
+read PHONE_HOME_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["phone_home_endpoint"]')
+echo Phone home endpoint is $PHONE_HOME_ENDPOINT
+read SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
 echo Server ID is $SERVER_ID
 
 cd $HOME
-curl http://ec2-52-30-111-108.eu-west-1.compute.amazonaws.com:5000/server/${SERVER_ID}/properties -o server.properties
+curl http://${PHONE_HOME_ENDPOINT}/server/${SERVER_ID}/properties -o server.properties
 cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
 
 #op the user
-read OPS <<< $(curl -s http://52.30.111.108:5000/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["op"]')
+read OPS <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["op"]')
 echo Ops are $OPS
 echo $OPS > /home/ubuntu/ops.txt
 
