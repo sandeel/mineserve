@@ -49,6 +49,7 @@ application.config['SECURITY_RESET_PASSWORD_TEMPLATE'] = 'reset.html'
 application.config['SECURITY_FORGOT_PASSWORD_TEMPLATE'] = 'reset.html'
 application.config['SECURITY_CHANGE_PASSWORD_TEMPLATE'] = 'change_password.html'
 application.config['SECURITY_CHANGEABLE'] = True
+application.debug = (os.environ['FLASK_DEBUG'] == 'True')
 
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)

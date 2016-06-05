@@ -45,6 +45,10 @@
             "Type" : "String",
             "Description" : "MySQL password",
             "NoEcho" : "true"
+        },
+        "FlaskDebug" : {
+            "Type" : "String",
+            "Description" : "Enable Flask debug mode"
         }
     },
     "Resources" : {
@@ -222,6 +226,11 @@
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "ADVSRVS_ADMIN_PASSWORD",
                         "Value": { "Ref": "AdminPassword" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "FLASK_DEBUG",
+                        "Value": { "Ref": "FlaskDebug" }
                     }
                 ]
             }
