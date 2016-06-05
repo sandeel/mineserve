@@ -217,6 +217,11 @@
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "ADVSRVS_CONTAINER_AGENT_SUBNET",
                         "Value": { "Ref": "PublicSubnet1" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_ADMIN_PASSWORD",
+                        "Value": { "Ref": "AdminPassword" }
                     }
                 ]
             }
