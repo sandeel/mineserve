@@ -3,23 +3,25 @@
 <head>
   <!-- Compiled and minified CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/css/materialize.min.css">
-  <!-- Compiled and minified JavaScript -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/js/materialize.min.js"></script>
   <!--Import Google Icon Font-->
   <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <title>Adventure Servers - Premium Minecraft Pocket Servers</title>
 </head>
 <body>
-  <nav class="light-blue lighten-1" role="navigation">
-      <div class="nav-wrapper container"><a id="logo-container" href="/" class="brand-logo center"><img src="/static/Adventure-Servers.png" style="display: block; margin-left: auto; margin-right: auto;" alt="Adventure Servers"></a>
-          <!-- 
-      <ul class="right hide-on-med-and-down">
-        <li><a href="#">Navbar Link</a></li>
-      </ul>
-          -->
+    <!--Import jQuery before materialize.js-->
+      <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/js/materialize.min.js"></script>
 
-      <ul id="nav-mobile" class="side-nav">
-        <li><a href="#">Navbar Link</a></li>
+          <a id="logo-container" href="/" class="brand-logo center"><img src="/static/Adventure-Servers.png" style="display: block; margin-left: auto; margin-right: auto; width: 65%" alt="Adventure Servers"></a>
+  <nav class="light-blue lighten-1" role="navigation">
+      <div class="nav-wrapper container">
+
+      <ul class="right hide-on-med-and-down">
+        {% if not current_user.is_authenticated %}
+        <li><a href="/login">Log In</a></li>
+        {% else %}
+        <li><a href="/servers">{{ current_user.email }}</a></li>
+        {% endif %}
       </ul>
       <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
     </div>

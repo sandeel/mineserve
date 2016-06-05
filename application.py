@@ -25,8 +25,11 @@ from flask_security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user
 from flask_security.utils import encrypt_password
 from flask_admin import helpers as admin_helpers
+import config
+from flask_mail import Mail
 
 application = Flask(__name__)
+mail = Mail(application)
 application.config['MYSQL_DATABASE_USER'] = os.environ['ADVSRVS_MYSQL_DATABASE_USER']
 application.config['MYSQL_DATABASE_PASSWORD'] = os.environ['ADVSRVS_MYSQL_DATABASE_PASSWORD']
 application.config['MYSQL_DATABASE_DB'] = os.environ['ADVSRVS_MYSQL_DATABASE_DB']
@@ -37,6 +40,15 @@ application.config['SG_ID'] = os.environ['ADVSRVS_SG_ID']
 application.config['CONTAINER_AGENT_SUBNET'] = os.environ['ADVSRVS_CONTAINER_AGENT_SUBNET']
 application.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
 application.config['SECURITY_PASSWORD_SALT'] = 'mine'
+application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://'+application.config['MYSQL_DATABASE_USER']+':'+application.config['MYSQL_DATABASE_PASSWORD']+'@'+application.config['MYSQL_DATABASE_HOST']+'/'+application.config['MYSQL_DATABASE_DB']
+application.config['SECURITY_RECOVERABLE'] = True
+application.config['SECURITY_CONFIRMABLE'] = False
+application.config['SECURITY_REGISTERABLE'] = True
+application.config['SECURITY_LOGIN_USER_TEMPLATE'] = 'login.html'
+application.config['SECURITY_RESET_PASSWORD_TEMPLATE'] = 'reset.html'
+application.config['SECURITY_FORGOT_PASSWORD_TEMPLATE'] = 'reset.html'
+application.config['SECURITY_CHANGE_PASSWORD_TEMPLATE'] = 'change_password.html'
+application.config['SECURITY_CHANGEABLE'] = True
 
 db = SQLAlchemy(application)
 migrate = Migrate(application, db)
@@ -44,8 +56,6 @@ manager = Manager(application)
 manager.add_command('db', MigrateCommand)
 login_manager = flask_login.LoginManager()
 login_manager.init_app(application)
-
-db.create_all()
 
 # stripe setup
 stripe_keys = {
@@ -80,6 +90,7 @@ class User(db.Model, UserMixin):
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
+    servers = db.relationship('Server', backref=db.backref('user'))
 
     def __str__(self):
         return self.email
@@ -147,17 +158,17 @@ def security_context_processor():
     )
 
 association_table = db.Table('association', db.Model.metadata,
-    db.Column('left_id', db.String, db.ForeignKey('server.id')),
+    db.Column('left_id', db.String(255), db.ForeignKey('server.id')),
     db.Column('right_id', db.Integer, db.ForeignKey('plugin.id'))
 )
 
 class Plugin(db.Model):
     __tablename__ = 'plugin'
     id = db.Column(db.Integer, primary_key=True)
-    file_name = db.Column(db.String)
-    nice_name = db.Column(db.String)
-    download_url = db.Column(db.String)
-    server_id = db.Column(db.String, db.ForeignKey('server.id'))
+    file_name = db.Column(db.String(255))
+    nice_name = db.Column(db.String(255))
+    download_url = db.Column(db.String(255))
+    server_id = db.Column(db.String(255), db.ForeignKey('server.id'))
     servers = db.relationship(
         "Server",
         secondary=association_table,
@@ -170,9 +181,9 @@ class Plugin(db.Model):
 
 
 class PromoCode(db.Model):
-    code = db.Column(db.String, primary_key=True)
+    code = db.Column(db.String(255), primary_key=True)
     activated = db.Column(db.Boolean)
-    reward_code = db.Column(db.String)
+    reward_code = db.Column(db.String(255))
     
     def __init__(self, reward_code='BetaTest'):
         self.code = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
@@ -193,7 +204,7 @@ class LogEntry(db.Model):
     __tablename__ = 'logentry'
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime)
-    message = db.Column(db.String)
+    message = db.Column(db.String(1024))
 
     def __init__(self, message):
         self.date = datetime.datetime.now()
@@ -206,33 +217,33 @@ class UserAdmin(ProtectedModelView):
 class Properties(db.Model):
     __tablename__ = 'properties'
     id = db.Column(db.Integer, primary_key=True)
-    server_id = db.Column(db.String, db.ForeignKey('server.id'))
+    server_id = db.Column(db.String(255), db.ForeignKey('server.id'))
 
     #properties
-    server_name = db.Column(db.String)
-    motd = db.Column(db.String)
-    server_port = db.Column(db.String)
-    memory_limit= db.Column(db.String)
-    gamemode = db.Column(db.String)
-    max_players = db.Column(db.String)
-    spawn_protection = db.Column(db.String)
-    level_name = db.Column(db.String)
-    level_type = db.Column(db.String)
-    announce_player_achievements = db.Column(db.String)
-    white_list = db.Column(db.String)
-    enable_query = db.Column(db.String)
-    enable_rcon = db.Column(db.String)
-    allow_flight = db.Column(db.String)
-    spawn_animals = db.Column(db.String)
-    spawn_mobs = db.Column(db.String)
-    force_gamemode = db.Column(db.String)
-    hardcore = db.Column(db.String)
-    pvp = db.Column(db.String)
-    difficulty = db.Column(db.String)
-    generator_settings = db.Column(db.String)
-    level_seed = db.Column(db.String)
-    rcon_password = db.Column(db.String)
-    auto_save = db.Column(db.String)
+    server_name = db.Column(db.String(255))
+    motd = db.Column(db.String(255))
+    server_port = db.Column(db.String(255))
+    memory_limit= db.Column(db.String(255))
+    gamemode = db.Column(db.String(255))
+    max_players = db.Column(db.String(255))
+    spawn_protection = db.Column(db.String(255))
+    level_name = db.Column(db.String(255))
+    level_type = db.Column(db.String(255))
+    announce_player_achievements = db.Column(db.String(255))
+    white_list = db.Column(db.String(255))
+    enable_query = db.Column(db.String(255))
+    enable_rcon = db.Column(db.String(255))
+    allow_flight = db.Column(db.String(255))
+    spawn_animals = db.Column(db.String(255))
+    spawn_mobs = db.Column(db.String(255))
+    force_gamemode = db.Column(db.String(255))
+    hardcore = db.Column(db.String(255))
+    pvp = db.Column(db.String(255))
+    difficulty = db.Column(db.String(255))
+    generator_settings = db.Column(db.String(255))
+    level_seed = db.Column(db.String(255))
+    rcon_password = db.Column(db.String(255))
+    auto_save = db.Column(db.String(255))
 
     def __init__(self, server_id):
 
@@ -297,27 +308,32 @@ class Properties(db.Model):
 class Server(db.Model):
 
     __tablename__ = 'server'
-    id = db.Column(db.String, primary_key=True)
-    instance_id = db.Column(db.String)
-    op = db.Column(db.String)
+    id = db.Column(db.String(255), primary_key=True)
+    instance_id = db.Column(db.String(255))
+    op = db.Column(db.String(255))
     expiry_date = db.Column(db.DateTime)
     creation_date = db.Column(db.DateTime)
-    progenitor_email = db.Column(db.String)
-    game = db.Column(db.String)
-    server_type = db.Column(db.String)
-    size = db.Column(db.String)
+    owner = db.Column(db.String(255))
+    game = db.Column(db.String(255))
+    server_type = db.Column(db.String(255))
+    size = db.Column(db.String(255))
     properties = db.relationship("Properties", backref="server", uselist=False)
     enabled_plugins = db.relationship("Plugin",
                     secondary=association_table,
                     back_populates="servers")
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    owner = db.relationship("User", back_populates="servers")
 
-    def __init__(self, progenitor_email, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='nano'):
+    prices = {
+                'nano': 500
+                }
+
+    def __init__(self, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='nano'):
         self.id = str(uuid.uuid4())
 
-        db.session.add(LogEntry('Creating server with ID '+self.id+' User\'s email address is '+progenitor_email))
+        db.session.add(LogEntry('Creating server with ID '+self.id))
         db.session.commit()
 
-        self.progenitor_email = progenitor_email
         self.op = op
 
         self.creation_date=datetime.datetime.now()
@@ -533,34 +549,54 @@ def landing_page():
                 return render_template('landing_page.html', form_error="Please enter a name for your server.", beta_test=application.config['BETA'])
             if not request.form['minecraft_name']:
                 return render_template('landing_page.html', form_error="Please enter your Minecraft name.", beta_test=application.config['BETA'])
+            if not request.form['password']:
+                return render_template('landing_page.html', form_error="Please enter a password.", beta_test=application.config['BETA'])
 
             # if beta need promo code
             if application.config['BETA']:
                 if not request.form['promo-code']:
                         return render_template('landing_page.html', form_error="Promo code required.", beta_test=application.config['BETA'])
+                else:
+                    if not new_server.apply_promo_code(request.form['promo-code']):
+                        return render_template('landing_page.html', form_error="Invalid Promo Code.", beta_test=application.config['BETA'])
 
                 if User.query.filter_by(email=request.form['email']).first():
                     return render_template('landing_page.html', form_error="That user already has a beta server.", beta_test=application.config['BETA'])
 
+
             db.session.add(LogEntry('Customer has requested a new server'))
 
-            # if server doesn't exist create it
-            new_server = Server(progenitor_email=request.form['email'],
-                                op=request.form['minecraft_name'],
-                                server_name=request.form['server_name'])
-            new_server.apply_promo_code(request.form['promo-code'])
-            new_server.op=request.form['minecraft_name']
-            db.session.add(new_server)
-            server_id = new_server.id
+            if user_datastore.get_user(request.form['email']):
+                return render_template('landing_page.html', form_error="That email address has already been taken.")
+            else:
+                # create the user
+                # password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
+                encrypted_password = encrypt_password(request.form['password'])
 
-            # create the user
-            password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
-            encrypted_password = encrypt_password(password)
-            if not user_datastore.get_user(request.form['email']):
                 user_datastore.create_user(email=request.form['email'], password=encrypted_password)
 
-            db.session.commit()
-            return redirect('/server/'+server_id)
+                db.session.commit()
+
+                user = user_datastore.get_user(request.form['email'])
+                flask_login.login_user(user)
+
+                # send reset password
+                #`send_reset_password_instructions(user)
+
+                # if server doesn't exist create it
+                new_server = Server(op=request.form['minecraft_name'],
+                                    server_name=request.form['server_name'])
+
+                new_server.op=request.form['minecraft_name']
+                server_id = new_server.id
+
+                user.servers.append(new_server)
+                db.session.add(new_server)
+
+
+                db.session.commit()
+
+                return redirect('/server/'+server_id)
     else:
         return render_template('landing_page.html', beta_test=application.config['BETA'])
 
@@ -572,12 +608,29 @@ def server_properties(server_id):
     response.content_type = "text/plain"
     return response
 
+@application.route("/servers", methods=["GET"])
+@login_required
+def servers():
+    return render_template('servers.html', servers = current_user.servers)
+
+@application.route("/server/<server_id>/admin", methods=["GET","POST"])
+@login_required
+def server_admin(server_id):
+    server = Server.query.filter_by(id=server_id).first()
+    if (server.owner != current_user):
+        return abort(402)
+    else:
+        return render_template('server_admin.html',
+                               server_name = server.properties.server_name,
+                               )
+
 @application.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
             
     topped_up_message = None
     promo_code_applied=False
     invalid_promo_code=False
+    error_message=None
 
     if request.method == 'POST':
 
@@ -585,7 +638,7 @@ def server(server_id):
 
             server = Server.query.filter_by(id=server_id).first()
 
-            amount = 4000
+            amount = Server.prices[server.size]
 
             customer = stripe.Customer.create(
                 card=request.form['stripeToken'],
@@ -600,11 +653,17 @@ def server(server_id):
                 metadata={"server_id": server.id}
             )
 
-            server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
-            db.session.add(server)
-            db.session.commit()
+            if charge['status'] == "succeeded":
 
-            topped_up_message = "Topped up by 30 days."
+                server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
+                
+                db.session.add(LogEntry('Server '+server.id+' topped up by 30 days'))
+                db.session.commit()
+
+                topped_up_message = "Topped up by 30 days."
+
+            else:
+                error_message = "Payment failed"
 
         elif request.form['promo-code']:
             server = Server.query.filter_by(id=server_id).first()
@@ -633,6 +692,8 @@ def server(server_id):
             topped_up_message=topped_up_message,
             beta=application.config['BETA'],
             invalid_promo_code=invalid_promo_code,
+            size=server.size,
+            error_message=error_message,
             )
 
 # Create admin

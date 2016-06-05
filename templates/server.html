@@ -7,9 +7,7 @@
       <div class="col s12">
         <div class="card-panel">
 		<span class="black-text">
-            Your new server is spinning up and will be ready in a few minutes!<br>
-            Please keep note of the server ID so you can find this page again.<br>
-            While waiting, why not check out the getting started guide?<br>
+            Your new server is spinning up and will be ready in a few minutes! Refresh this page to check!<br>
         </span>
         </div>
       </div>
@@ -45,6 +43,7 @@
           <li class="collection-item dismissable"><div><strong>Status:</strong> {{ status }}<span class="secondary-content"><i class="material-icons">send</i></span></div></li>
           <li class="collection-item dismissable"><div><strong>IP address:</strong> {{ ip }}<span class="secondary-content"><i class="material-icons">language</i></span></div></li>
           <li class="collection-item dismissable"><div><strong>Port:</strong> 33775<span class="secondary-content"><i class="material-icons">input</i></span></div></li>
+          <li class="collection-item dismissable"><div><strong>Size:</strong> {{size}}<span class="secondary-content"><i class="material-icons">insert_chart</i></span></div></li>
           <li class="collection-item dismissable"><div><strong>Time remaining:</strong> {{ time_remaining }}<span class="secondary-content"><i class="material-icons">av_timer</i></span></div></li>
       </ul>
 
@@ -65,6 +64,11 @@
           </div>
         </div>
     {% endif %}
+    {% if error_message %}
+      <div class="row center">
+        <div class="card-panel col s12 red darken-1">{{ error_message }}</div>
+      </div>
+        {% endif %}
 
           <table>
             <thead>

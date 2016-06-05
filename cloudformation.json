@@ -27,6 +27,24 @@
         "StripePublishableKey" : {
             "Type" : "String",
             "Description" : "Stripe publishable key"
+        },
+        "AdminPassword" : {
+            "Type" : "String",
+            "Description" : "Admin password for the website",
+            "NoEcho" : "true"
+        },
+        "DatabaseName" : {
+            "Type" : "String",
+            "Description" : "Name of the MySQL database"
+        },
+        "DatabaseUser" : {
+            "Type" : "String",
+            "Description" : "MySQL username"
+        },
+        "DatabasePassword" : {
+            "Type" : "String",
+            "Description" : "MySQL password",
+            "NoEcho" : "true"
         }
     },
     "Resources" : {
@@ -169,6 +187,36 @@
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "STRIPE_PUBLISHABLE_KEY",
                         "Value": { "Ref": "StripePublishableKey" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_MYSQL_DATABASE_DB",
+                        "Value": { "Ref": "DatabaseName" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_MYSQL_DATABASE_USER",
+                        "Value": { "Ref": "DatabaseUser" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_MYSQL_DATABASE_HOST",
+                        "Value": { "Fn::GetAtt": [ "DB", "Endpoint.Address" ] }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_MYSQL_DATABASE_PASSWORD",
+                        "Value": { "Ref": "DatabasePassword" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_SG_ID",
+                        "Value": { "Ref": "ContainerAgentSG" }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_CONTAINER_AGENT_SUBNET",
+                        "Value": { "Ref": "PublicSubnet1" }
                     }
                 ]
             }
@@ -182,12 +230,12 @@
                     "IpProtocol" : "tcp",
                     "FromPort" : "19132",
                     "ToPort" : "19132",
-                    "CidrIp" : "0.0.0.0/0"
+                    "CidrIp" : "10.0.0.0/16"
                  },
                  {
                     "IpProtocol" : "udp",
-                    "FromPort" : "19132",
-                    "ToPort" : "19132",
+                    "FromPort" : "33775",
+                    "ToPort" : "33775",
                     "CidrIp" : "0.0.0.0/0"
                  }]
            }
@@ -303,16 +351,16 @@
                 "SubnetIds" : [ { "Ref": "PrivateSubnet1" }, { "Ref": "PrivateSubnet2" } ]
            }
         },
-        "MyDB" : {
+        "DB" : {
    			"Type" : "AWS::RDS::DBInstance",
    			"Properties" : {
 				"AllocatedStorage" : "10",
 				"DBInstanceClass" : "db.t2.micro",
 				"Engine" : "MySQL",
 				"EngineVersion" : "5.7",
-				"MasterUsername" : { "Ref" : "DBUser" },
-				"MasterUserPassword" : { "Ref" : "DBPassword" },
-				"DBName": "advsrvs"
+				"MasterUsername" : { "Ref" : "DatabaseUser" },
+				"MasterUserPassword" : { "Ref" : "DatabasePassword" },
+				"DBName": { "Ref": "DatabaseName" }
    			}
    		}
 	}
