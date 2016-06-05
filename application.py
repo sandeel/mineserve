@@ -47,6 +47,7 @@ handler.setFormatter(formatter)
 
 # add Handler to Logger
 logger.addHandler(handler)
+logger.addHandler(logging.StreamHandler())
 
 
 application = Flask(__name__)
