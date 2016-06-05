@@ -239,6 +239,11 @@
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "ADVSRVS_CONTAINER_AGENT_AMI",
                         "Value": { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "ubuntu"]}
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_CONTAINER_AGENT_INSTANCE_PROFILE",
+                        "Value": { "Ref": "ContainerAgentInstanceProfile" }
                     }
                 ]
             }
@@ -279,7 +284,14 @@
             "Type" : "AWS::IAM::InstanceProfile",
             "Properties" : {
                 "Path" : "/",
-                "Roles" : ["MyExistingRole"]
+                "Roles" : [ { "Ref": "ElasticBeanstalkInstanceProfileRole" } ]
+            }
+        },
+        "ContainerAgentInstanceProfile" : {
+            "Type" : "AWS::IAM::InstanceProfile",
+            "Properties" : {
+                "Path" : "/",
+                "Roles" : [ { "Ref": "ContainerAgentInstanceProfileRole" } ]
             }
         },
         "ElasticBeanstalkServiceRolePolicy" : {
@@ -352,6 +364,21 @@
             }
         },
         "ElasticBeanstalkInstanceProfileRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version" : "2012-10-17",
+                    "Statement": [ {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [ "ec2.amazonaws.com" ]
+                        },
+                        "Action": [ "sts:AssumeRole" ]
+                    } ]
+                }
+            }
+        },
+        "ContainerAgentInstanceProfileRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
                 "AssumeRolePolicyDocument": {

@@ -38,6 +38,7 @@ application.config['AWS_REGION'] = os.environ['ADVSRVS_AWS_REGION']
 application.config['BETA'] = (os.environ['ADVSRVS_BETA'] == 'True')
 application.config['SG_ID'] = os.environ['ADVSRVS_SG_ID']
 application.config['CONTAINER_AGENT_SUBNET'] = os.environ['ADVSRVS_CONTAINER_AGENT_SUBNET']
+application.config['CONTAINER_AGENT_INSTANCE_PROFILE'] = os.environ['ADVSRVS_CONTAINER_AGENT_INSTANCE_PROFILE']
 application.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
 application.config['SECURITY_PASSWORD_SALT'] = 'mine'
 application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://'+application.config['MYSQL_DATABASE_USER']+':'+application.config['MYSQL_DATABASE_PASSWORD']+'@'+application.config['MYSQL_DATABASE_HOST']+'/'+application.config['MYSQL_DATABASE_DB']
@@ -417,14 +418,14 @@ reboot
         # create the instance
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         response = client.run_instances(
-                ImageId='ami-9abea4fb',
+                ImageId=application.config['CONTAINER_AGENT_AMI'],
                 InstanceType='t2.'+self.size,
                 MinCount = 1,
                 MaxCount = 1,
                 UserData = userdata,
                 KeyName = 'id_rsa',
                 IamInstanceProfile={
-                    'Name': 'mineserve-agent'
+                    'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
                     },
                 SecurityGroupIds=[application.config['SG_ID']],
                 DisableApiTermination=True,
