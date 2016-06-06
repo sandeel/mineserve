@@ -471,6 +471,7 @@ reboot
         instance_id = response['Instances'][0]['InstanceId']
 
         # tag the instance
+        '''
         response = client.create_tags(
             Resources=[
                 instance_id,
@@ -482,6 +483,7 @@ reboot
                 },
             ]
         )
+        '''
 
         return instance_id
 
