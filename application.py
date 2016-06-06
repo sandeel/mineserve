@@ -29,6 +29,7 @@ import config
 from flask_mail import Mail
 import logging
 import logging.handlers
+import time
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -469,6 +470,8 @@ reboot
                 SubnetId=application.config['CONTAINER_AGENT_SUBNET']
         )
         instance_id = response['Instances'][0]['InstanceId']
+
+        time.sleep(2)
 
         # tag the instance
         '''
