@@ -628,7 +628,7 @@ def landing_page():
 
                 user.servers.append(new_server)
 
-                server.properties.max_players = Server.max_players[server.size]
+                new_server.properties.max_players = Server.max_players[new_server.size]
 
                 db.session.add(new_server)
 
