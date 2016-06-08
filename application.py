@@ -399,14 +399,6 @@ class Server(db.Model):
         return self.id
 
     @property
-    def ip_address(self):
-        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
-        return client.describe_instances(
-            InstanceIds=[
-                self.instance_id
-            ])['Reservations'][0]['Instances'][0]['PublicIpAddress']
-
-    @property
     def status(self):
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         try:
@@ -471,10 +463,9 @@ reboot
         )
         instance_id = response['Instances'][0]['InstanceId']
 
-        time.sleep(2)
+        time.sleep(1)
 
         # tag the instance
-        '''
         response = client.create_tags(
             Resources=[
                 instance_id,
@@ -486,7 +477,6 @@ reboot
                 },
             ]
         )
-        '''
 
         return instance_id
 
@@ -557,14 +547,16 @@ def phone_home():
         server_message ="WARNING. 5 hours credit remaining on this server."
 
     if server_message:
-        db.session.add(LogEntry('Server message \"'+server_message+'\" returned to server '+server.id))
+        Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.ip, '-P', '19132', '-p', 'password', 'say '+server_message])
+        db.session.add(LogEntry('Server message \"'+server_message+'\" sent to server '+server.id))
+
     else:
-        db.session.add(LogEntry('No server message returned for server '+server.id))
+        db.session.add(LogEntry('No server message sent for server '+server.id))
 
     db.session.commit()
 
     return jsonify({
-            "server_message": server_message
+            "status": "ok"
             })
 
 @application.route("/server_data", methods=["GET"])
@@ -726,7 +718,7 @@ def server(server_id):
     return render_template('server.html',
             time_remaining=str(days)+' days, '+str(hours)+' hours, '+str(minutes)+' minutes',
             id=server.id,
-            ip=server.ip_address,
+            ip=server.ip,
             key=stripe_keys['publishable_key'],
             status=server.status,
             new_server=True,

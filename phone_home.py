@@ -17,21 +17,16 @@ print("Getting region...")
 region = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document').json()['region']
 print("Region is "+region)
 
-seconds = randint(0,3300)
+seconds = randint(0,60)
 print("Waiting "+str(seconds)+" seconds before phoning home...")
 time.sleep(seconds)
 
 print("Phoning home...")
-server_message = requests.get(phone_home_endpoint+'/api/v0.1/phone_home?instance_id='+instance_id).json()['server_message']
-
 server_id = requests.get(phone_home_endpoint+'/server_data?instance_id='+instance_id).json()['id']
+status = requests.get(phone_home_endpoint+'/api/v0.1/phone_home?instance_id='+instance_id).json()['status']
+print("Phone home and received status "+status)
 
-server_message = requests.get(phone_home_endpoint+'/api/v0.1/phone_home?instance_id='+instance_id).json()['server_message']
-
-if server_message:
-    print('Sending server message: '+server_message)
-
-Popen(['/home/ubuntu/mcrcon/mcrcon', '-H', 'localhost', '-P', '19132', '-p', 'password', 'say '+server_message])
+'''
 
 # check if properties have changed
 subprocess.call(['curl', phone_home_endpoint+'/server/'+server_id+'/properties', '-o', '/home/ubuntu/server.properties'])
@@ -53,3 +48,4 @@ for i,lines2 in enumerate(properties1):
     else:
         print("line "+  str(i) +" matches")
 
+'''
