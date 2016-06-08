@@ -50,7 +50,9 @@ read INSTANCE_ID <<< $(curl 'http://169.254.169.254/latest/meta-data/instance-id
 echo Instance ID is $INSTANCE_ID
 read PHONE_HOME_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["phone_home_endpoint"]')
 echo Phone home endpoint is $PHONE_HOME_ENDPOINT
-read SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
+cead SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
+
+
 echo Server ID is $SERVER_ID
 
 cd $HOME
@@ -64,13 +66,6 @@ echo $OPS > /home/ubuntu/ops.txt
 
 # start or run container
 docker run -itd --name atlas -p 19132:19132 -p 33775:33775/udp -v /home/ubuntu/plugins:/srv/genisys/plugins -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/pocketmine.yml:/srv/genisys/pocketmine.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas
-
-# install mcrcon
-cd $HOME
-rm -rf mcrcon
-git clone https://github.com/Tiiffi/mcrcon.git
-cd mcrcon
-gcc -std=gnu11 -pedantic -Wall -Wextra -O2 -s -o mcrcon mcrcon.c
 
 # set up cron to phone home
 pip install requests
