@@ -8,7 +8,7 @@ from random import randint
 import subprocess
 import json
 
-phone_home_endpoint = str(open('/home/ubuntu/config.json').read()['phone_home_endpoint'])
+phone_home_endpoint = str(json.loads(open('/home/ubuntu/config.json').read())['phone_home_endpoint'])
 
 print("Getting instance id...")
 instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
