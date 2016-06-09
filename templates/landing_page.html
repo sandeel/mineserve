@@ -4,66 +4,35 @@ Beta closed!
 {% extends "layout.html" %}
 {% block body %}
   <div class="section no-pad-bot" id="index-banner">
-      <br><br>
+    <br><br>
     <div class="container">
       <div class="row center">
-          <!-- <img src="/static/Adventure-Servers.png" alt="Adventure Servers"> -->
-	      <h5 class="header col s12 light"><strong>Premium<strong> Minecraft Pocket Server hosting</h5>
+	     <h5 class="header col s12 light"><strong>Premium<strong> Minecraft Pocket Server hosting</h5>
       </div>
-      <div class="card panel"
-        <br>
-        <br>
-      <div class="row center">
-          {% if not beta_test %}
-	      <h6 class="header col s12 light">Get started with five hours free.</h6>
-          {% else %}
-	      <h6 class="header col s12 light">Enter promo code for closed beta test!</h6>
-          {% endif %}
-      </div>
-
-
-        {% if form_error %}
-      <div class="row center">
-        <div class="card-panel col s12 red darken-1">{{ form_error }}</div>
-      </div>
-        {% endif %}
-      <form action="" method="post" class="col s12">
-	    <div class="row center">
-        {% if beta_test %}
-        <div class="input-field col s6 offset-s3"><input placeholder="Promo Code" id="promo-code" name="promo-code" type="text" class="validate" required></div>
-        {% endif %}
-	    <div class="input-field col s6 offset-s3"><input placeholder="Minecraft Name" id="minecraft_name" name="minecraft_name" type="text" class="validate" required></div>
-	    <div class="input-field col s6 offset-s3"><input placeholder="Server Name" id="server_name" name="server_name" type="text" class="validate" required></div>
-        <div class="input-field col s6 offset-s3"><input placeholder="Your email" id="email" name="email" type="email" class="validate" required></div>
-        <div class="input-field col s6 offset-s3"><input placeholder="Choose a password" id="password" name="password" type="password" class="validate" required></div>
-      </div>
-        <div class="row center"><input type="submit" id="download-button" class="btn-large waves-effect waves-light orange" value="Launch Now"</input></div>
-        </form> 
-        <br>
-      </div>
-
 
       <!--   Icon Section   -->
       <div class="row">
         <div class="col s12 m4">
           <div class="icon-block">
-            <h2 class="center light-blue-text"><i class="large material-icons">flash_on</i></h2>
+            <h2 class="center light-blue-text"><i class="medium material-icons">flash_on</i></h2>
             <h5 class="center">Lightning fast. Lag-free.</h5>
 
-            <p class="light">These are premium quality server. 8GB RAM. Multiple cores. Plenty of power for even 200 players.</p>
+            <p class="light">Premium quality, dedicated servers with plenty of RAM.</p>
+            <p class="light">Server sofware powered by <a href="https://github.com/iTXTech/Genisys">Genisys</a></p>
           </div>
         </div>
 
         <div class="col s12 m4">
           <div class="icon-block">
-            <h2 class="center"><i class="large material-icons">settings</i></h2>
+            <h2 class="center"><i class="medium material-icons">settings</i></h2>
             <h5 class="center">Pay-as-you-Go model.</h5>
 
-            <p class="light">Keep it simple, stupid. First 24 hours are free. Top up the account thereafter to add more days.</p>
+            <p class="light">Keep it simple, stupid. First hour is free, then top up the server to add more days.</p>
           </div>
         </div>
-        <div class="col s12 m4"> <div class="icon-block">
-            <h2 class="center green-text"><i class="large material-icons">group</i></h2>
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center green-text"><i class="medium material-icons">group</i></h2>
             <h5 class="center">Awesome support.</h5>
 
             <p class="light">High-quality support via dedicated IRC channel, Twitter and email.</p>
@@ -72,12 +41,61 @@ Beta closed!
 
       </div>
 
+      <div class="card panel" style="padding:3%">
+        <br>
+        <br>
+        <div class="row center">
+          {% if not beta_test %}
+	      <h6 class="header col s12 light">Get started with five hours free.</h6>
+          {% else %}
+	      <h6 class="header col s12 light">Enter promo code for closed beta test!</h6>
+          {% endif %}
+        </div>
+
+
+        {% if form_error %}
+        <div class="row center">
+          <div class="card-panel col s12 red darken-1">{{ form_error }}</div>
+        </div>
+        {% endif %}
+
+
+        <form action="" method="post" class="col s12">
+	      <div class="row center">
+
+            {% if beta_test %}
+            <div class="input-field col s6 offset-s3"><input placeholder="Promo Code" id="promo-code" name="promo-code" type="text" class="validate" required></div>
+            {% endif %}
+
+            <div class="input-field col s5 offset-s0">
+              <p><input name="server_size" value="nano" type="radio" id="nano" disabled="disabled" /><label for="nano"><strong>Nano.</strong> Up to 10 players. 512 MB RAM.</label></p>
+              <p><input name="server_size" value="micro" type="radio" id="micro" checked /><label for="micro"><strong>Micro.</strong> Up to 20 players. 1 GB RAM.</label></p>
+              <p><input name="server_size" value="small" type="radio" id="small" disabled="disabled" /><label for="small"><strong>Small.</strong> Up to 40 players. 2 GB RAM.</label></p>
+              <p><input name="server_size" value="medium" type="radio" id="medium" disabled="disabled" /><label for="medium"><strong>Medium.</strong> Up to 80 players. 4 GB RAM.</label></p>
+              <p><input name="server_size" value="large" type="radio" id="large" disabled="disabled" /><label for="large"><strong>Large.</strong> Up to 200 players. 8 GB RAM.</label></p>
+            </div>
+
+            <div class="input-field col s7">
+              <div class="input-field"><input placeholder="Minecraft Name" id="minecraft_name" name="minecraft_name" type="text" class="validate" required></div>
+              <div class="input-field"><input placeholder="Server Name" id="server_name" name="server_name" type="text" class="validate" required></div>
+              <div class="input-field"><input placeholder="Your email" id="email" name="email" type="email" class="validate" required></div>
+              <div class="input-field"><input placeholder="Choose a password" id="password" name="password" type="password" class="validate" required></div>
+            </div>
+
+          </div>
+
+        <div class="row center"><input type="submit" id="download-button" class="btn-large waves-effect waves-light orange" value="Launch Now"</input></div>
+
+        </form> 
+
+        <br>
+      </div>
+
+
+
     </div>
     <br><br>
 
-    <div class="section">
-
-    </div>
   </div>
 {% endblock %}
 {% endif %}

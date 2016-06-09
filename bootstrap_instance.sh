@@ -50,7 +50,7 @@ read INSTANCE_ID <<< $(curl 'http://169.254.169.254/latest/meta-data/instance-id
 echo Instance ID is $INSTANCE_ID
 read PHONE_HOME_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["phone_home_endpoint"]')
 echo Phone home endpoint is $PHONE_HOME_ENDPOINT
-cead SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
+read SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
 
 
 echo Server ID is $SERVER_ID

@@ -353,15 +353,17 @@ class Server(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     owner = db.relationship("User", back_populates="servers")
 
+    sizes = ['micro']
+
     prices = {
-                'nano': 500
+                'micro': 1000
                 }
 
     max_players = {
-                    'nano': 10
+                    'micro': 20
                     }
 
-    def __init__(self, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='nano'):
+    def __init__(self, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='micro'):
         self.id = str(uuid.uuid4())
 
         db.session.add(LogEntry('Creating server with ID '+self.id))
@@ -371,10 +373,10 @@ class Server(db.Model):
 
         self.creation_date=datetime.datetime.now()
 
-        # give 5 hours and 5 minutes free
+        # give 1 hour and 5 minutes free
         now = datetime.datetime.now()
-        now_plus_5_hours = now + datetime.timedelta(minutes=305)
-        self.expiry_date = now_plus_5_hours
+        now_plus_1_hours = now + datetime.timedelta(minutes=65)
+        self.expiry_date = now_plus_1_hours
 
         # instantiate default properties
         self.properties = Properties(server_id = self.id)
@@ -615,8 +617,11 @@ def landing_page():
                 #`send_reset_password_instructions(user)
 
                 # if server doesn't exist create it
+                #size = request.form['size']
+                size = 'micro'
                 new_server = Server(op=request.form['minecraft_name'],
-                                    server_name=request.form['server_name'])
+                                    server_name=request.form['server_name'],
+                                    size = size)
 
                 new_server.op=request.form['minecraft_name']
                 server_id = new_server.id
