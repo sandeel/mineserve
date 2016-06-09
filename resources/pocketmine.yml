@@ -36,7 +36,7 @@ memory:
 
  #Main thread hard memory limit in megabytes. Set to 0 to disable
  #This will stop the server when the limit is surpassed
- main-hard-limit: 0
+ main-hard-limit: 1024
 
  #Period in ticks to check memory (default 1 second)
  check-rate: 20
@@ -76,11 +76,11 @@ memory:
 network:
  #Threshold for batching packets, in bytes. Only these packets will be compressed
  #Set to 0 to compress everything, -1 to disable.
- batch-threshold: 8
+ batch-threshold: 256
  #Compression level used when sending batched packets. Higher = Uses More CPU, Less = More Bandwidth Usage
- compression-level: 9
+ compression-level: 2
  #Use AsyncTasks for compression. Adds half/one tick delay, less CPU load on main thread
- async-compression: false
+ async-compression: true
  #Experimental, only for Windows. Tries to use UPnP to automatically port forward
  upnp-forwarding: false
 
