@@ -441,6 +441,7 @@ echo "/bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
 echo "exit 0" >> /etc/rc.local
 echo '*/1 *  *  *  * some_user python /mount/share/script.py' >> /etc/crontab
 echo "0 */1 * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
+echo "post-up /sbin/ifconfig eth0 mtu 1454" >> /etc/network/interfaces.d/eth0.cfg
 reboot
         """
 
