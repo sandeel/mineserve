@@ -411,6 +411,9 @@ class Server(db.Model):
         except:
             instance_status = 'Unknown'
 
+        if instance_status == 'ok' and ((datetime.datetime.now() - server.creation_date).seconds < 300):
+            instance_status = 'Preparing Genisys'
+
         return instance_status
 
     @property
@@ -731,6 +734,7 @@ def server(server_id):
             beta=application.config['BETA'],
             invalid_promo_code=invalid_promo_code,
             size=server.size,
+            price=Server.prices[server.size]/100,
             error_message=error_message,
             )
 

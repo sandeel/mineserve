@@ -56,7 +56,7 @@ read SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${IN
 echo Server ID is $SERVER_ID
 
 cd $HOME
-curl http://${PHONE_HOME_ENDPOINT}/server/${SERVER_ID}/properties -o server.properties
+curl ${PHONE_HOME_ENDPOINT}/server/${SERVER_ID}/properties -o server.properties
 cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
 
 #op the user
