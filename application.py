@@ -440,8 +440,7 @@ curl https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instan
 bash bootstrap_instance.sh
 echo "/bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
 echo "exit 0" >> /etc/rc.local
-echo '*/1 *  *  *  * some_user python /mount/share/script.py' >> /etc/crontab
-echo "0 */1 * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
+echo "*/30 * * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
 echo "post-up /sbin/ifconfig eth0 mtu 1454" >> /etc/network/interfaces.d/eth0.cfg
 reboot
         """
@@ -553,8 +552,7 @@ def phone_home():
         server_message ="WARNING. 5 hours credit remaining on this server."
 
     if server_message:
-        Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.ip, '-P', '33775', '-p', 'password', 'say '+server_message])
-        db.session.add(LogEntry('Server message \"'+server_message+'\" sent to server '+server.id))
+        rcon(server, 'say '+server_message)
 
     else:
         db.session.add(LogEntry('No server message sent for server '+server.id))
@@ -739,6 +737,10 @@ def server(server_id):
             error_message=error_message,
             )
 
+def rcon(server, command):
+    Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.ip, '-P', '33775', '-p', 'password', command])
+    db.session.add(LogEntry('Server message \"'+command+'\" sent to server '+server.id))
+
 @application.route("/admin/messenger", methods=["GET","POST"])
 @roles_accepted('admin')
 def messenger():
@@ -748,8 +750,7 @@ def messenger():
         if request.form['message'] and request.form['server_id']:
             server = Server.query.filter_by(id=request.form['server_id']).first()
             message = request.form['message']
-            Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.ip, '-P', '33775', '-p', 'password', 'say '+message])
-            db.session.add(LogEntry('Server message \"'+message+'\" sent to server '+server.id))
+            rcon(server, "say "+message)
             return render_template('messenger.html')
 
 # Create admin

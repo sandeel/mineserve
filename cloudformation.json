@@ -289,8 +289,8 @@
                 "VpcId" : {"Ref" : "Vpc"},
                 "SecurityGroupIngress" : [{
                     "IpProtocol" : "tcp",
-                    "FromPort" : "19132",
-                    "ToPort" : "19132",
+                    "FromPort" : "33775",
+                    "ToPort" : "33775",
                     "CidrIp" : "10.0.0.0/16"
                  },
                  {
