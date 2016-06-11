@@ -1,6 +1,5 @@
 import requests
 import datetime
-from subprocess import Popen
 import boto3
 import filecmp
 import time

@@ -22,7 +22,7 @@ import flask.ext.login as flask_login
 from flask import Response
 from flask import make_response
 from flask_security import Security, SQLAlchemyUserDatastore, \
-    UserMixin, RoleMixin, login_required, current_user
+    UserMixin, RoleMixin, login_required, current_user, roles_accepted
 from flask_security.utils import encrypt_password
 from flask_admin import helpers as admin_helpers
 import config
@@ -30,6 +30,7 @@ from flask_mail import Mail
 import logging
 import logging.handlers
 import time
+from subprocess import Popen
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -458,7 +459,6 @@ reboot
                     'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
                     },
                 SecurityGroupIds=[application.config['SG_ID']],
-                DisableApiTermination=True,
                 BlockDeviceMappings=[{
                         'DeviceName': '/dev/sda1',
                         'Ebs': {
@@ -553,7 +553,7 @@ def phone_home():
         server_message ="WARNING. 5 hours credit remaining on this server."
 
     if server_message:
-        Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.ip, '-P', '19132', '-p', 'password', 'say '+server_message])
+        Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.ip, '-P', '33775', '-p', 'password', 'say '+server_message])
         db.session.add(LogEntry('Server message \"'+server_message+'\" sent to server '+server.id))
 
     else:
@@ -738,6 +738,19 @@ def server(server_id):
             price=Server.prices[server.size]/100,
             error_message=error_message,
             )
+
+@application.route("/admin/messenger", methods=["GET","POST"])
+@roles_accepted('admin')
+def messenger():
+    if request.method == "GET":
+        return render_template('messenger.html')
+    elif request.method == "POST":
+        if request.form['message'] and request.form['server_id']:
+            server = Server.query.filter_by(id=request.form['server_id']).first()
+            message = request.form['message']
+            Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.ip, '-P', '33775', '-p', 'password', 'say '+message])
+            db.session.add(LogEntry('Server message \"'+message+'\" sent to server '+server.id))
+            return render_template('messenger.html')
 
 # Create admin
 admin = admin.Admin(application, name='MineServe Admin', template_mode='bootstrap3')
