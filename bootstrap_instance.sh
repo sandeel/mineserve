@@ -38,12 +38,7 @@ cp /tmp/mineserve-master/phone_home.py /home/ubuntu/phone_home.py
 cp -n /tmp/mineserve-master/resources/server.properties /home/ubuntu/server.properties
 
 # if not server.properties copy it to home
-cp -n /tmp/mineserve-master/resources/genisys.yml /home/ubuntu/genisys.yml
-
-# if not server.properties copy it to home
 cp -n /tmp/mineserve-master/resources/pocketmine.yml /home/ubuntu/pocketmine.yml
-
-mkdir /home/ubuntu/plugins
 
 #get server properties
 read INSTANCE_ID <<< $(curl 'http://169.254.169.254/latest/meta-data/instance-id')

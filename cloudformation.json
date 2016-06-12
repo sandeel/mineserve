@@ -75,7 +75,9 @@
         "Vpc" : {
             "Type" : "AWS::EC2::VPC",
             "Properties" : {
-                "CidrBlock" : "10.0.0.0/16"
+                "CidrBlock" : "10.0.0.0/16",
+                "EnableDnsHostnames": "true",
+                "EnableDnsSupport": "true"
             }
         },
         "InternetGateway" : {
@@ -158,11 +160,6 @@
                         "Namespace": "aws:autoscaling:launchconfiguration",
                         "OptionName": "InstanceType",
                         "Value":"t2.micro"
-                    },
-                    {
-                        "Namespace": "aws:ec2:vpc",
-                        "OptionName": "VPCId",
-                        "Value": { "Ref": "Vpc" }
                     },
                     {
                         "Namespace": "aws:ec2:vpc",
@@ -278,6 +275,11 @@
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "ADVSRVS_PHONE_HOME_ENDPOINT",
                         "Value": { "Fn::Join": [ "", ["advsrvs.", { "Ref": "AWS::Region"}, ".elasticbeanstalk.com"]] }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:application:environment",
+                        "OptionName": "ADVSRVS_RESOURCES_ENDPOINT",
+                        "Value": { "Fn::GetAtt": [ "ResourcesBucket", "DomainName" ] }
                     }
                 ]
             }
@@ -636,6 +638,12 @@
                 "Location": { "Ref" : "CodePipelineS3Bucket" }
               }
             }
-          }
+          },
+        "ResourcesBucket" : {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "AccessControl": "PublicRead"
+            }
+        }
 	}
 }   
