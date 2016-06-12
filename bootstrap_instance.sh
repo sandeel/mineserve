@@ -11,8 +11,6 @@ apt-get -y install python-pip
 pip install awscli
 
 
-
-
 # from home run or start docker
 
 # pull zip of code from s3
@@ -47,6 +45,8 @@ read INSTANCE_ID <<< $(curl 'http://169.254.169.254/latest/meta-data/instance-id
 echo Instance ID is $INSTANCE_ID
 read PHONE_HOME_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["phone_home_endpoint"]')
 echo Phone home endpoint is $PHONE_HOME_ENDPOINT
+read RESOURCES_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["resources_endpoint"]')
+echo Resources endpoint is $RESOURCES_ENDPOINT
 read SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
 read PLUGINS <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["enabled_plugins"]')
 
@@ -69,7 +69,7 @@ chmod 777 -R /home/ubuntu/plugins
 cd /home/ubuntu/plugins
 for i in ${PLUGINS//,/ }
 do
-    wget --no-check-certificate --no-proxy https://s3-us-west-2.amazonaws.com/advsrvs-resources/$i
+    wget --no-check-certificate --no-proxy $RESOURCES_ENDPOINT/plugins/$i
 done
 
 # start or run container

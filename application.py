@@ -66,6 +66,7 @@ application.config['CONTAINER_AGENT_INSTANCE_PROFILE'] = os.environ['ADVSRVS_CON
 application.config['EC2_KEYPAIR'] = os.environ['ADVSRVS_EC2_KEYPAIR']
 application.config['ADMIN_PASSWORD'] = os.environ['ADVSRVS_ADMIN_PASSWORD']
 application.config['PHONE_HOME_ENDPOINT'] = ('http://'+os.environ['ADVSRVS_PHONE_HOME_ENDPOINT'])
+application.config['RESOURCES_ENDPOINT'] = ('https://'+os.environ['ADVSRVS_RESOURCES_ENDPOINT'])
 application.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
 application.config['SECURITY_PASSWORD_SALT'] = 'mine'
 application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://'+application.config['MYSQL_DATABASE_USER']+':'+application.config['MYSQL_DATABASE_PASSWORD']+'@'+application.config['MYSQL_DATABASE_HOST']+'/'+application.config['MYSQL_DATABASE_DB']
@@ -432,10 +433,11 @@ class Server(db.Model):
 
     def start_instance(self):
         phone_home_endpoint = '\\"'+application.config['PHONE_HOME_ENDPOINT']+'\\"'
+        resources_endpoint = '\\"'+application.config['RESOURCES_ENDPOINT']+'\\"'
 
         userdata = """#!/bin/bash
 cd /home/ubuntu
-echo { \\"phone_home_endpoint\\": """+phone_home_endpoint+""" } > /home/ubuntu/config.json
+echo { \\"phone_home_endpoint\\": """+phone_home_endpoint+""", { \\"resources_endpoint\\": """+resources_endpoint+""" } > /home/ubuntu/config.json
 curl -sSL https://get.docker.com/ | sh
 echo "cd /home/ubuntu && rm -rf bootstrap_instance.sh && wget --no-check-certificate https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instance.sh && /bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
 echo "exit 0" >> /etc/rc.local
