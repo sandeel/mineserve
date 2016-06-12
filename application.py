@@ -435,6 +435,16 @@ class Server(db.Model):
         phone_home_endpoint = '\\"'+application.config['PHONE_HOME_ENDPOINT']+'\\"'
         resources_endpoint = '\\"'+application.config['RESOURCES_ENDPOINT']+'\\"'
 
+        userdata = """#!/bin/bash
+cd /home/ubuntu
+{{ id } \\"phone_home_endpoint\\": """+phone_home_endpoint+""", \\"resources_endpoint\\": """+resources_endpoint+""" } > /home/ubuntu/config.json
+curl -sSL https://get.docker.com/ | sh
+echo "cd /home/ubuntu && rm -rf bootstrap_instance.sh && wget --no-check-certificate https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instance.sh && /bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
+echo "exit 0" >> /etc/rc.local
+echo "*/30 * * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
+echo "post-up /sbin/ifconfig eth0 mtu 1454" >> /etc/network/interfaces.d/eth0.cfg
+reboot
+        """
 
         # create the instance
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
@@ -684,6 +694,7 @@ def dashboard(server_id):
         server.reboot_instance()
 
         return redirect("/server/"+server_id)
+
 
     else:
         plugins = {}
