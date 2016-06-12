@@ -644,6 +644,24 @@
             "Properties": {
                 "AccessControl": "PublicRead"
             }
+        },
+        "PublicRead" : {
+          "Type" : "AWS::S3::BucketPolicy",
+          "Properties" : {
+            "Bucket" : {"Ref" : "ResourcesBucket"},
+            "PolicyDocument": {
+              "Version":"2012-10-17",
+              "Statement":[
+                {
+                  "Sid":"AddPerm",
+                  "Effect":"Allow",
+                  "Principal": "*",
+                  "Action":["s3:GetObject"],
+                  "Resource": { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ResourcesBucket" } , "/*" ]]}
+                }
+              ]
+            }
+          }
         }
 	}
 }   
