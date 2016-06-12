@@ -431,6 +431,19 @@ class Server(db.Model):
 
         return instance_status
 
+    @property
+    def private_ip(self):
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+        try:
+            private_ip =  client.describe_instances(
+                InstanceIds=[
+                    self.instance_id
+                ])['Reservations'][0]['Instances'][0]['PrivateIpAddress']
+        except:
+            private_ip = 'Unknown'
+
+        return unknown
+
     def start_instance(self):
         phone_home_endpoint = '\\"'+application.config['PHONE_HOME_ENDPOINT']+'\\"'
         resources_endpoint = '\\"'+application.config['RESOURCES_ENDPOINT']+'\\"'
@@ -789,7 +802,7 @@ def server(server_id):
             )
 
 def rcon(server, command):
-    Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.ip, '-P', '33775', '-p', 'password', command])
+    Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.private_ip, '-P', '33775', '-p', 'password', command])
     db.session.add(LogEntry('Server message \"'+command+'\" sent to server '+server.id))
 
 @application.route("/admin/messenger", methods=["GET","POST"])
