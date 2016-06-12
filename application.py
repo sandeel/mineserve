@@ -437,7 +437,7 @@ class Server(db.Model):
 
         userdata = """#!/bin/bash
 cd /home/ubuntu
-{{ id } \\"phone_home_endpoint\\": """+phone_home_endpoint+""", \\"resources_endpoint\\": """+resources_endpoint+""" } > /home/ubuntu/config.json
+echo { \\"phone_home_endpoint\\": """+phone_home_endpoint+""", \\"resources_endpoint\\": """+resources_endpoint+""" } > /home/ubuntu/config.json
 curl -sSL https://get.docker.com/ | sh
 echo "cd /home/ubuntu && rm -rf bootstrap_instance.sh && wget --no-check-certificate https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instance.sh && /bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
 echo "exit 0" >> /etc/rc.local
