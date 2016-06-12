@@ -80,3 +80,6 @@ rm -rf mcrcon && git clone https://github.com/Tiiffi/mcrcon.git && cd mcrcon && 
 #reload plugins
 cd /home/ubuntu
 /home/ubuntu/mcrcon/mcrcon -H localhost -P 33775 -p password reload
+
+pip install requests
+pip install boto3

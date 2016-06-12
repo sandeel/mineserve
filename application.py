@@ -413,7 +413,7 @@ class Server(db.Model):
         except:
             instance_status = 'Unknown'
 
-        if instance_status == 'ok' and ((datetime.datetime.now() - self.creation_date).seconds < 300):
+        if instance_status == 'ok' and ((datetime.datetime.now() - self.creation_date).seconds < 120):
             instance_status = 'Preparing Genisys'
 
         return instance_status
