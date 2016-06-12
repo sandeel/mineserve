@@ -437,9 +437,7 @@ class Server(db.Model):
 cd /home/ubuntu
 echo { \\"phone_home_endpoint\\": """+phone_home_endpoint+""" } > /home/ubuntu/config.json
 curl -sSL https://get.docker.com/ | sh
-curl https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instance.sh -o bootstrap_instance.sh
-bash bootstrap_instance.sh
-echo "/bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
+echo "cd /home/ubuntu && rm bootstrap_instance.sh && curl https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instance.sh && /bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
 echo "exit 0" >> /etc/rc.local
 echo "*/30 * * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
 echo "post-up /sbin/ifconfig eth0 mtu 1454" >> /etc/network/interfaces.d/eth0.cfg
