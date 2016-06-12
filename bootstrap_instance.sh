@@ -51,6 +51,7 @@ echo Instance ID is $INSTANCE_ID
 read PHONE_HOME_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["phone_home_endpoint"]')
 echo Phone home endpoint is $PHONE_HOME_ENDPOINT
 read SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
+read PLUGINS <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["enabled_plugins"]')
 
 
 echo Server ID is $SERVER_ID
@@ -63,6 +64,13 @@ cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
 read OPS <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["op"]')
 echo Ops are $OPS
 echo $OPS > /home/ubuntu/ops.txt
+
+#copy the plugins
+cd /home/ubuntu/plugins
+for i in ${PLUGINS//,/ }
+do
+    wget --no-check-certificate --no-proxy https://s3-us-west-2.amazonaws.com/advsrvs-resources/$i
+done
 
 # start or run container
 docker run -itd --name atlas -p 33775:33775 -p 33775:33775/udp -v /home/ubuntu/genisys.yml:/srv/genisys/genisys.yml -v /home/ubuntu/plugins:/srv/genisys/plugins -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/pocketmine.yml:/srv/genisys/pocketmine.yml --restart=unless-stopped itxtech/docker-env-genisys || docker start atlas

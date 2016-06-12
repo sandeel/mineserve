@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="container">
+  <div class="row">
+    <div class="col s12">
+
+    <h4>Settings</h4>
+
+        <form action="" method="post" class="col s12">
+	      <div class="row center">
+
+            <div class="input-field col s7">
+                <div class="input-field"><input value="{{ name }}" id="name" name="name" type="text" class="validate" required></div>
+            </div>
+
+            <div class="input-field col s7">
+                <div class="input-field"><input value="{{ motd }}" id="motd" name="motd" type="text" class="validate" required></div>
+            </div>
+
+          </div>
+
+          {% for plugin_file_name,plugin_nice_name in plugins.items() %}
+           <div class="switch">
+                 {{ plugin_file_name }}
+             <label>
+                 <input type="checkbox" name="plugins" value="{{ plugin_file_name }}" {% if plugin_file_name in enabled_plugins %}checked{% endif %}>
+                 <span class="lever"></span>
+             </label>
+           </div>
+          {% endfor %}
+
+        <div class="row center"><input type="submit" id="download-button" class="btn-small waves-effect waves-light orange" value="Send Now"</input></div>
+
+        </form> 
+    </div>
+  </div>
+</div>
+{% endblock %}

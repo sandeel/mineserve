@@ -499,6 +499,16 @@ reboot
 
             db.session.commit()
 
+    def reboot_instance(self):
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+        response = client.reboot_instances(
+            InstanceIds=[
+                self.instance_id,
+            ]
+        )
+        return response
+
+
 # Customized server admin
 class ServerAdmin(ProtectedModelView):
     column_display_pk=True
@@ -567,10 +577,16 @@ def phone_home():
 def server_data():
     instance_id = request.args['instance_id']
     server = Server.query.filter_by(instance_id=instance_id).first()
+
+    plugins_list = ""
+    for plugin in server.enabled_plugins:
+        plugins_list += plugin.file_name + ','
+
     return jsonify({
             "id": server.id,
             "expiry_date": str(server.expiry_date),
             "op": server.op,
+            "enabled_plugins": plugins_list
             })
 
 @application.route("/", methods=["GET", "POST"])
@@ -653,15 +669,48 @@ def server_properties(server_id):
 def servers():
     return render_template('servers.html', servers = current_user.servers)
 
-@application.route("/server/<server_id>/admin", methods=["GET","POST"])
+@application.route("/server/<server_id>/dashboard", methods=["GET","POST"])
 @login_required
-def server_admin(server_id):
+def dashboard(server_id):
     server = Server.query.filter_by(id=server_id).first()
     if (server.owner != current_user):
-        return abort(402)
+        return abort(403)
+
+    if request.method == "POST":
+        server.properties.server_name = request.form['name']
+        server.properties.motd = request.form['motd']
+
+        enabled_plugins = request.form.getlist("plugins")
+
+        print(enabled_plugins)
+
+        server.enabled_plugins = []
+        for enabled_plugin in enabled_plugins:
+            server.enabled_plugins.append(Plugin.query.filter_by(file_name=enabled_plugin).first())
+
+        db.session.commit()
+
+        server.reboot_instance()
+
+        return redirect("/server/"+server_id+"/dashboard")
+
+
     else:
-        return render_template('server_admin.html',
-                               server_name = server.properties.server_name,
+        plugins = {}
+        for plugin in Plugin.query.all():
+            plugins[plugin.file_name] = plugin.nice_name
+
+        enabled_plugins = []
+        for plugin in server.enabled_plugins:
+            enabled_plugins.append(plugin.file_name)
+
+        print(enabled_plugins)
+
+        return render_template('dashboard.html',
+                               name = server.properties.server_name,
+                               motd = server.properties.motd,
+                               plugins = plugins,
+                               enabled_plugins = enabled_plugins
                                )
 
 @application.route("/server/<server_id>", methods=["GET","POST"])
