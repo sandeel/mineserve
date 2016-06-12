@@ -23,8 +23,13 @@ unzip master.zip
 
 docker stop atlas
 
+cd /home/ubuntu
+
+read RESOURCES_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["resources_endpoint"]')
+echo Resources endpoint is $RESOURCES_ENDPOINT
+
 # copy the phar from /tmp to home
-cp /tmp/mineserve-master/resources/genisys.phar /home/ubuntu/genisys.phar
+wget $RESOURCES_ENDPOINT/genisys.phar
 
 # copy phone home
 cp /tmp/mineserve-master/phone_home.py /home/ubuntu/phone_home.py
@@ -45,8 +50,6 @@ read INSTANCE_ID <<< $(curl 'http://169.254.169.254/latest/meta-data/instance-id
 echo Instance ID is $INSTANCE_ID
 read PHONE_HOME_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["phone_home_endpoint"]')
 echo Phone home endpoint is $PHONE_HOME_ENDPOINT
-read RESOURCES_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["resources_endpoint"]')
-echo Resources endpoint is $RESOURCES_ENDPOINT
 read SERVER_ID <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["id"]')
 read PLUGINS <<< $(curl -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${INSTANCE_ID} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["enabled_plugins"]')
 
