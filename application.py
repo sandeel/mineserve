@@ -442,7 +442,7 @@ class Server(db.Model):
         except:
             private_ip = 'Unknown'
 
-        return unknown
+        return private_ip
 
     def start_instance(self):
         phone_home_endpoint = '\\"'+application.config['PHONE_HOME_ENDPOINT']+'\\"'
