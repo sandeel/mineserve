@@ -61,8 +61,8 @@ echo Ops are $OPS
 echo $OPS > /home/ubuntu/ops.txt
 
 #copy the plugins
-rm -rf /home/ubuntu/plugins
 mkdir /home/ubuntu/plugins
+rm -rf /home/ubuntu/plugins/*.phar
 chmod 777 -R /home/ubuntu/plugins
 cd /home/ubuntu/plugins
 for i in ${PLUGINS//,/ }
