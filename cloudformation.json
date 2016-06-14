@@ -469,6 +469,18 @@
                 "Type" : "A"
               }
         },
+        "RecordSet": {
+            "Type" : "AWS::Route53::RecordSet",
+            "Properties" : {
+                "AliasTarget" : {
+                  "DNSName" : { "Fn::GetAtt" : ["ProdEnvironment", "EndpointURL"] },
+                  "HostedZoneId" : { "Fn::FindInMap" : [ "Beanstalk2Route53HostedZoneId", {"Ref" : "AWS::Region"}, "HostedZoneId" ]}
+                },
+                "HostedZoneId" : { "Ref": "HostedZone" },
+                "Name" : "www.adventureservers.com",
+                "Type" : "A"
+              }
+        },
         "DBSubnetGroup": {
             "Type" : "AWS::RDS::DBSubnetGroup",
             "Properties" : {
