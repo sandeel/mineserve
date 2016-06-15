@@ -198,17 +198,17 @@ class Plugin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     file_name = db.Column(db.String(255))
     nice_name = db.Column(db.String(255))
-    download_url = db.Column(db.String(255))
+    description = db.Column(db.String(1024))
     server_id = db.Column(db.String(255), db.ForeignKey('server.id'))
     servers = db.relationship(
         "Server",
         secondary=association_table,
         back_populates="enabled_plugins")
     
-    def __init__(self, file_name="", nice_name="Plugin", download_url=""):
+    def __init__(self, file_name="", nice_name="Plugin", description=""):
         self.file_name = file_name
-        self.download_url = download_url
         self.nice_name = nice_name
+        self.description = description
 
 
 class PromoCode(db.Model):
