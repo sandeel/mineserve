@@ -13,7 +13,7 @@
   <div class="row">
     <div class="col s12">
 
-    <h4>Settings</h4>
+      <h4>Settings</h4>
 
         <form action="" method="post" class="col s12">
 	      <div class="row center">
@@ -28,14 +28,23 @@
 
           </div>
 
-          {% for plugin_file_name,plugin_nice_name in plugins.items() %}
-           <div class="switch">
-                 {{ plugin_file_name }}
-             <label>
-                 <input type="checkbox" name="plugins" value="{{ plugin_file_name }}" {% if plugin_file_name in enabled_plugins %}checked{% endif %}>
-                 <span class="lever"></span>
-             </label>
-           </div>
+      <h4>Plugins</h4>
+
+          {% for plugin_nice_name,plugin_description in zip(plugins.items(), plugin_descriptions.items()) %}
+          <div class="row">
+            <div class="col s12">
+              <div class="card-panel white">
+                <div class="switch">
+                    <h5>{{ plugin_nice_name[1] }}</h5>
+                    <p>{{ plugin_description[1] }}</p>
+                  <label>
+                      <input type="checkbox" name="plugins" value="{{ plugin_file_name }}" {% if plugin_file_name in enabled_plugins %}checked{% endif %}>
+                      <span class="lever"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
           {% endfor %}
 
         <div class="row center"><input type="submit" id="download-button" class="btn-small waves-effect waves-light orange" value="Save and Reboot"</input></div>

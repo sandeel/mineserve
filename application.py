@@ -714,6 +714,10 @@ def dashboard(server_id):
         for plugin in Plugin.query.all():
             plugins[plugin.file_name] = plugin.nice_name
 
+        plugin_descriptions = {}
+        for plugin in Plugin.query.all():
+            plugin_descriptions[plugin.file_name] = plugin.description
+
         enabled_plugins = []
         for plugin in server.enabled_plugins:
             enabled_plugins.append(plugin.file_name)
@@ -725,7 +729,8 @@ def dashboard(server_id):
                                name = server.properties.server_name,
                                motd = server.properties.motd,
                                plugins = plugins,
-                               enabled_plugins = enabled_plugins
+                               enabled_plugins = enabled_plugins,
+                               plugin_descriptions = plugin_descriptions
                                )
 
 @application.route("/server/<server_id>", methods=["GET","POST"])
@@ -826,6 +831,9 @@ admin.add_view(LogAdmin(LogEntry,db.session))
 admin.add_view(ProtectedModelView(Properties,db.session))
 admin.add_view(ProtectedModelView(Plugin,db.session))
 
+@application.template_global(name='zip')
+def _zip(*args, **kwargs): #to not overwrite builtin zip in globals
+    return __builtins__.zip(*args, **kwargs)
 
 if __name__ == '__main__':
     manager.run()
