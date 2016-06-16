@@ -497,6 +497,10 @@ reboot
             ],
             Tags=[
                 {
+                    'Key': 'name',
+                    'Value': self.id
+                },
+                {
                     'Key': 'mineserv_role',
                     'Value': 'container_agent'
                 },
