@@ -574,6 +574,8 @@ def phone_home():
         server_message ="WARNING. 4 hours credit remaining on this server."
     elif hours_left < 5:
         server_message ="WARNING. 5 hours credit remaining on this server."
+    elif hours_left < 24:
+        server_message ="WARNING. 24 hours credit remaining on this server."
 
     if server_message:
         rcon(server, 'say '+server_message)
