@@ -818,6 +818,11 @@ def rcon(server, command):
     Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.private_ip, '-P', '33775', '-p', 'password', command])
     db.session.add(LogEntry('Server message \"'+command+'\" sent to server '+server.id))
 
+@application.route("/admin", methods=["GET","POST"])
+@roles_accepted('admin')
+def admin():
+    pass
+
 @application.route("/admin/messenger", methods=["GET","POST"])
 @roles_accepted('admin')
 def messenger():
