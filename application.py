@@ -245,6 +245,11 @@ class LogEntry(db.Model):
 class UserAdmin(ProtectedModelView):
     column_display_pk=True
 
+    column_list = (
+        'email',
+        'active',
+    )
+
 class Properties(db.Model):
     __tablename__ = 'properties'
     id = db.Column(db.Integer, primary_key=True)
@@ -536,7 +541,6 @@ class ServerAdmin(ProtectedModelView):
         'creation_date',
         'expiry_date',
         'size',
-        'progenitor_email',
     )
 
 
