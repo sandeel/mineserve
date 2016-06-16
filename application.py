@@ -31,6 +31,7 @@ import logging
 import logging.handlers
 import time
 from subprocess import Popen
+from flaskext.mail import Message
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -634,6 +635,10 @@ def landing_page():
 
 
             db.session.add(LogEntry('Customer has requested a new server'))
+            msg = Message("Customer has requested a new server",
+                  sender="adventureservers@kolabnow.com",
+                  recipients=["adventureservers@kolabnow.com"])
+            mail.send(msg)
 
             if user_datastore.get_user(request.form['email']):
                 return render_template('landing_page.html', form_error="That email address has already been taken.")
