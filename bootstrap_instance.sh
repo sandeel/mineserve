@@ -28,8 +28,10 @@ cd /home/ubuntu
 read RESOURCES_ENDPOINT <<< $(cat /home/ubuntu/config.json | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["resources_endpoint"]')
 echo Resources endpoint is $RESOURCES_ENDPOINT
 
-# copy the phar from /tmp to home
-wget $RESOURCES_ENDPOINT/genisys.phar
+# get genisys
+cd $HOME
+rm -rf genisys.phar
+wget --no-check-certificate --no-proxy $RESOURCES_ENDPOINT/genisys.phar
 
 # copy phone home
 cp /tmp/mineserve-master/phone_home.py /home/ubuntu/phone_home.py
