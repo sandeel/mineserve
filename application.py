@@ -31,6 +31,7 @@ import logging
 import logging.handlers
 import time
 from subprocess import Popen
+import builtins
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -835,7 +836,7 @@ admin.add_view(ProtectedModelView(Plugin,db.session))
 
 @application.template_global(name='zip')
 def _zip(*args, **kwargs): #to not overwrite builtin zip in globals
-    return __builtins__.zip(*args, **kwargs)
+    return builtins.zip(*args, **kwargs)
 
 if __name__ == '__main__':
     manager.run()
