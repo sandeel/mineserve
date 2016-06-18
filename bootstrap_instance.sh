@@ -81,6 +81,7 @@ rm -rf mcrcon && git clone https://github.com/Tiiffi/mcrcon.git && cd mcrcon && 
 
 #reload plugins
 cd /home/ubuntu
+sleep 20
 /home/ubuntu/mcrcon/mcrcon -H localhost -P 33775 -p password reload
 
 pip install requests
