@@ -35,9 +35,6 @@ wget $RESOURCES_ENDPOINT/genisys.phar
 cp /tmp/mineserve-master/phone_home.py /home/ubuntu/phone_home.py
 
 # if not server.properties copy it to home
-cp -n /tmp/mineserve-master/resources/server.properties /home/ubuntu/server.properties
-
-# if not server.properties copy it to home
 cp -n /tmp/mineserve-master/resources/pocketmine.yml /home/ubuntu/pocketmine.yml
 
 #get server properties
@@ -52,7 +49,8 @@ read PLUGINS <<< $(curl -k -s ${PHONE_HOME_ENDPOINT}/server_data?instance_id=${I
 echo Server ID is $SERVER_ID
 
 cd $HOME
-curl -k ${PHONE_HOME_ENDPOINT}/server/${SERVER_ID}/properties -o server.properties
+rm -rf server.properties
+wget --no-check-certificate --no-proxy ${PHONE_HOME_ENDPOINT}/server/${SERVER_ID}/properties -O server.properties
 cp /home/ubuntu/server.properties /home/ubuntu/server.properties.bk
 
 #op the user
@@ -72,6 +70,8 @@ done
 
 # start or run container
 docker run -itd --name atlas -p 33775:33775 -p 33775:33775/udp -v /home/ubuntu/genisys.yml:/srv/genisys/genisys.yml -v /home/ubuntu/plugins:/srv/genisys/plugins -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/pocketmine.yml:/srv/genisys/pocketmine.yml itxtech/docker-env-genisys || docker start atlas
+
+docker restart atlas
 
 #mcrcon
 cd /home/ubuntu
