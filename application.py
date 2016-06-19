@@ -31,7 +31,7 @@ import logging
 import logging.handlers
 import time
 from subprocess import Popen
-from flaskext.mail import Message
+from flask_mail import Message
 import builtins
 
 # Create logger
@@ -830,7 +830,7 @@ def rcon(server, command):
 
 @application.route("/admin", methods=["GET","POST"])
 @roles_accepted('admin')
-def admin():
+def main_admin_page():
     pass
 
 @application.route("/admin/messenger", methods=["GET","POST"])
