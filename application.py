@@ -554,7 +554,7 @@ def phone_home():
     instance_id = request.args['instance_id']
     server = Server.query.filter_by(instance_id=instance_id).first()
 
-    db.session.add(LogEntry('Server '+server.id+' phoned home.'))
+    log_entry = ('Server '+server.id+' phoned home.')
 
     td = server.expiry_date - datetime.datetime.now()
 
@@ -565,7 +565,8 @@ def phone_home():
 
     if server.expiry_date < datetime.datetime.now():
 
-        db.session.add(LogEntry('Server '+server.id+' expired, terminating...'))
+        db.session.add(LogEntry
+        log_entry += ('Server '+server.id+' expired, terminating...'))
 
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         response = client.terminate_instances(
@@ -588,7 +589,9 @@ def phone_home():
         rcon(server, 'say '+server_message)
 
     else:
-        db.session.add(LogEntry('No server message sent for server '+server.id))
+        log_entry += ('No server message sent for server '+server.id)
+
+    db.session.add(LogEntry(log_entry))
 
     db.session.commit()
 
