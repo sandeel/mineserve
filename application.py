@@ -498,7 +498,7 @@ reboot
             ],
             Tags=[
                 {
-                    'Key': 'name',
+                    'Key': 'Name',
                     'Value': self.id
                 },
                 {
