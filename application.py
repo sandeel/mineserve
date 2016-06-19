@@ -31,6 +31,7 @@ import logging
 import logging.handlers
 import time
 from subprocess import Popen
+from flaskext.mail import Message
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -244,6 +245,11 @@ class LogEntry(db.Model):
 # Customized user admin view
 class UserAdmin(ProtectedModelView):
     column_display_pk=True
+
+    column_list = (
+        'email',
+        'active',
+    )
 
 class Properties(db.Model):
     __tablename__ = 'properties'
@@ -491,6 +497,10 @@ reboot
             ],
             Tags=[
                 {
+                    'Key': 'name',
+                    'Value': self.id
+                },
+                {
                     'Key': 'mineserv_role',
                     'Value': 'container_agent'
                 },
@@ -536,7 +546,6 @@ class ServerAdmin(ProtectedModelView):
         'creation_date',
         'expiry_date',
         'size',
-        'progenitor_email',
     )
 
 
@@ -632,6 +641,10 @@ def landing_page():
 
 
             db.session.add(LogEntry('Customer has requested a new server'))
+            msg = Message("Customer has requested a new server",
+                  sender="adventureservers@kolabnow.com",
+                  recipients=["adventureservers@kolabnow.com"])
+            mail.send(msg)
 
             if user_datastore.get_user(request.form['email']):
                 return render_template('landing_page.html', form_error="That email address has already been taken.")
@@ -811,6 +824,11 @@ def server(server_id):
 def rcon(server, command):
     Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.private_ip, '-P', '33775', '-p', 'password', command])
     db.session.add(LogEntry('Server message \"'+command+'\" sent to server '+server.id))
+
+@application.route("/admin", methods=["GET","POST"])
+@roles_accepted('admin')
+def admin():
+    pass
 
 @application.route("/admin/messenger", methods=["GET","POST"])
 @roles_accepted('admin')

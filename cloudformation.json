@@ -280,6 +280,31 @@
                         "Namespace": "aws:elasticbeanstalk:application:environment",
                         "OptionName": "ADVSRVS_RESOURCES_ENDPOINT",
                         "Value": { "Fn::GetAtt": [ "ResourcesBucket", "DomainName" ] }
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:command",
+                        "OptionName": "DeploymentPolicy",
+                        "Value": "Rolling"
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:command",
+                        "OptionName": "BatchSizeType",
+                        "Value": "Fixed"
+                    },
+                    {
+                        "Namespace": "aws:elasticbeanstalk:command",
+                        "OptionName": "BatchSize",
+                        "Value": "1"
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:asg",
+                        "OptionName": "MinSize",
+                        "Value": "2"
+                    },
+                    {
+                        "Namespace": "aws:autoscaling:asg",
+                        "OptionName": "MaxSize",
+                        "Value": "4"
                     }
                 ]
             }
