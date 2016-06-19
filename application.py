@@ -566,7 +566,6 @@ def phone_home():
 
     if server.expiry_date < datetime.datetime.now():
 
-        db.session.add(LogEntry
         log_entry += ('Server '+server.id+' expired, terminating...')
 
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
