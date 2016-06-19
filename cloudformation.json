@@ -312,7 +312,7 @@
         "ContainerAgentSG" : {
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
-                "GroupDescription" : "Allow mcrcon internally and mc from externally",
+                "GroupDescription" : "Allow mcrcon and ssh internally and mc from externally",
                 "VpcId" : {"Ref" : "Vpc"},
                 "SecurityGroupIngress" : [{
                     "IpProtocol" : "tcp",
@@ -325,6 +325,12 @@
                     "FromPort" : "33775",
                     "ToPort" : "33775",
                     "CidrIp" : "0.0.0.0/0"
+                 },
+		 {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "22",
+                    "ToPort" : "22",
+                    "CidrIp" : "10.0.0.0/16"
                  }]
            }
         },

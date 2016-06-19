@@ -10,10 +10,10 @@ import json
 phone_home_endpoint = str(json.loads(open('/home/ubuntu/config.json').read())['phone_home_endpoint'])
 
 print("Getting instance id...")
-instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
+instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id', verify=False).text
 print("Instance id is "+instance_id)
 print("Getting region...")
-region = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document').json()['region']
+region = requests.get('http://169.254.169.254/latest/dynamic/instance-identity/document', verify=False).json()['region']
 print("Region is "+region)
 
 seconds = randint(0,60)
@@ -21,8 +21,8 @@ print("Waiting "+str(seconds)+" seconds before phoning home...")
 time.sleep(seconds)
 
 print("Phoning home...")
-server_id = requests.get(phone_home_endpoint+'/server_data?instance_id='+instance_id).json()['id']
-status = requests.get(phone_home_endpoint+'/api/v0.1/phone_home?instance_id='+instance_id).json()['status']
+server_id = requests.get(phone_home_endpoint+'/server_data?instance_id='+instance_id, verify=False).json()['id']
+status = requests.get(phone_home_endpoint+'/api/v0.1/phone_home?instance_id='+instance_id, verify=False).json()['status']
 print("Phone home and received status "+status)
 
 '''

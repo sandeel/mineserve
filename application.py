@@ -32,6 +32,7 @@ import logging.handlers
 import time
 from subprocess import Popen
 from flaskext.mail import Message
+import builtins
 
 # Create logger
 logger = logging.getLogger(__name__)
@@ -825,7 +826,7 @@ def server(server_id):
             )
 
 def rcon(server, command):
-    Popen(['/home/ec2-user/mcrcon/mcrcon', '-H', server.private_ip, '-P', '33775', '-p', 'password', command])
+    Popen(['/opt/mcrcon/mcrcon/mcrcon', '-H', server.private_ip, '-P', '33775', '-p', 'password', command])
     db.session.add(LogEntry('Server message \"'+command+'\" sent to server '+server.id))
 
 @application.route("/admin", methods=["GET","POST"])
@@ -856,7 +857,7 @@ admin.add_view(ProtectedModelView(Plugin,db.session))
 
 @application.template_global(name='zip')
 def _zip(*args, **kwargs): #to not overwrite builtin zip in globals
-    return __builtins__.zip(*args, **kwargs)
+    return builtins.zip(*args, **kwargs)
 
 if __name__ == '__main__':
     manager.run()
