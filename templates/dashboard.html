@@ -20,18 +20,36 @@
       <h4>Settings</h4>
 
         <form action="" method="post" class="col s12">
-	      <div class="row center">
+	      <div class="row">
 
-            <div class="input-field col s7">
-                <div class="input-field"><input value="{{ name }}" id="name" name="name" type="text" class="validate" required></div>
-            </div>
+              <br>
+            <div class="col s7">
+                <div class="input-field"><input value="{{ name }}" id="name" name="name" type="text" class="validate" required>
+                <label for="name">Server Name</label>
+                </div>
 
-            <div class="input-field col s7">
-                <div class="input-field"><input value="{{ motd }}" id="motd" name="motd" type="text" class="validate" required></div>
+              <br>
+                <div class="input-field"><input value="{{ motd }}" id="motd" name="motd" type="text" class="validate" required>
+                <label for="motd">Message of the Day</label>
+                </div>
+
+                  <!-- Switch
+                  <br>
+                  Whitelist
+                  <div class="switch">
+                    <label>
+                      Off
+                      <input type="checkbox" name="whitelist" value="on">
+                      <span class="lever"></span>
+                      On
+                    </label>
+                  </div>
+                  -->
             </div>
 
           </div>
 
+              <br>
       <h4>Plugins</h4>
 
           {% for plugin_nice_name,plugin_description in zip(plugins.items(), plugin_descriptions.items()) %}
