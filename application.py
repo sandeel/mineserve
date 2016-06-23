@@ -365,7 +365,7 @@ class Server(db.Model):
     sizes = ['micro']
 
     prices = {
-                'micro': 1000
+                'micro': 800
                 }
 
     max_players = {
