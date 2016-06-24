@@ -227,7 +227,8 @@ class PromoCode(db.Model):
 class PromoCodeAdmin(ProtectedModelView):
     column_display_pk=True
 
-    form_choices = { 'reward_code': [ ('BetaTest', 'BetaTest'),],}
+    form_choices = { 'reward_code': [('BetaTest', 'BetaTest'),
+                                     ('5Days', '5Days')],}
 
 # Customized log admin
 class LogAdmin(ProtectedModelView):
@@ -511,10 +512,16 @@ reboot
         return instance_id
 
     def apply_promo_code(self,promo_code):
+
+        promo_code_days = {
+                'BetaTest': 30,
+                '5Days': 5
+                }
+
         promo_code = PromoCode.query.filter_by(code=promo_code).first()
 
         if promo_code and not promo_code.activated:
-            self.expiry_date = self.expiry_date + datetime.timedelta(days=30)
+            self.expiry_date = self.expiry_date + datetime.timedelta(days=promo_code_days[promo_code.reward_code])
             db.session.add(self)
 
             promo_code.activated=True
