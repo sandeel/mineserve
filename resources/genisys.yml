@@ -2,7 +2,7 @@
 
 #Version of this file
 config:
- version: 15
+ version: 16
 
 level:
  #Set if turn on the weather system
@@ -98,9 +98,13 @@ synapse:
  enabled: false
  server-ip: 127.0.0.1
  server-port: 10305
+ #If this client is the lobby or the main server
  is-main-server: true
  server-password: 32bitlongkey
+ #Description of this client is the identifier of this client
  description: "A Synapse client"
+ #Disable RakLib means that players can only join via Synapse
+ disable-rak: false
 
 dserver:
  #The count of all multi-server unified
@@ -130,7 +134,7 @@ dserver:
  
 ai:
  #AI switch
- enable: true
+ enable: false
  #Zombie'AI，0=disabled，1=AI 1.0ver，2=new AI(Faultiness)
  zombie: 1
  #PigZombie's AI
@@ -154,4 +158,4 @@ ai:
  #Destory blocks if creeper exploded
  creeper-explode-destroy-block: false
  #Choose if allow mob auto generate
- mobgenerate: true
+ mobgenerate: false

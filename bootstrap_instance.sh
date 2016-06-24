@@ -33,6 +33,9 @@ cd $HOME
 rm -rf genisys.phar
 wget --no-check-certificate --no-proxy $RESOURCES_ENDPOINT/genisys.phar
 
+# copy genisys
+cp /tmp/mineserve-master/resources/genisys.yml /home/ubuntu/genisys.yml
+
 # copy phone home
 cp /tmp/mineserve-master/phone_home.py /home/ubuntu/phone_home.py
 
