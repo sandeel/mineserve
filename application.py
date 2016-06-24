@@ -827,7 +827,7 @@ def server(server_id):
             beta=application.config['BETA'],
             invalid_promo_code=invalid_promo_code,
             size=server.size,
-            price=Server.prices[server.size]/100,
+            price='{0:.02f}'.format(float(Server.prices[server.size]) / 100.0),
             error_message=error_message,
             )
 
