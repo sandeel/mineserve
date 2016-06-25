@@ -39,8 +39,8 @@ cp /tmp/mineserve-master/resources/genisys.yml /home/ubuntu/genisys.yml
 # copy phone home
 cp /tmp/mineserve-master/phone_home.py /home/ubuntu/phone_home.py
 
-# if not server.properties copy it to home
-cp -n /tmp/mineserve-master/resources/pocketmine.yml /home/ubuntu/pocketmine.yml
+# copy pocketmine.yml
+cp /tmp/mineserve-master/resources/pocketmine.yml /home/ubuntu/pocketmine.yml
 
 #get server properties
 read INSTANCE_ID <<< $(curl -k 'http://169.254.169.254/latest/meta-data/instance-id')
