@@ -136,7 +136,7 @@ ai:
  #AI switch
  enable: true
  #Zombie'AI，0=disabled，1=AI 1.0ver，2=new AI(Faultiness)
- zombie: 2
+ zombie: 1
  #PigZombie's AI
  pigzombie: true
  #the AI of cow and mushroom cow
