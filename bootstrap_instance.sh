@@ -74,7 +74,7 @@ do
 done
 
 # start or run container
-docker run -itd --name atlas -p 33775:33775 -p 33775:33775/udp -v /home/ubuntu/genisys.yml:/srv/genisys/genisys.yml -v /home/ubuntu/plugins:/srv/genisys/plugins -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/pocketmine.yml:/srv/genisys/pocketmine.yml itxtech/docker-env-genisys || docker start atlas
+docker run -itd --name atlas --restart always -p 33775:33775 -p 33775:33775/udp -v /home/ubuntu/genisys.yml:/srv/genisys/genisys.yml -v /home/ubuntu/plugins:/srv/genisys/plugins -v /home/ubuntu/ops.txt:/srv/genisys/ops.txt -v /home/ubuntu/genisys.phar:/srv/genisys/genisys.phar -v /home/ubuntu/server.properties:/srv/genisys/server.properties -v /home/ubuntu/pocketmine.yml:/srv/genisys/pocketmine.yml itxtech/docker-env-genisys || docker restart atlas
 
 #docker restart atlas
 
