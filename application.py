@@ -328,7 +328,7 @@ class Properties(db.Model):
         file += 'level-type='+str(self.level_type)+'\n'
         file += 'announce-player-achievements='+str(self.announce_player_achievements)+'\n'
         file += 'white-list='+str(self.white_list)+'\n'
-        file +=  'enable-query='+str(self.enable_query)+'\n'
+        file += 'enable-query='+str(self.enable_query)+'\n'
         file += 'enable-rcon='+str(self.enable_rcon)+'\n'
         file += 'allow-flight='+str(self.allow_flight)+'\n'
         file += 'spawn-animals='+str( self.spawn_animals)+'\n'
@@ -716,9 +716,22 @@ def dashboard(server_id):
         return abort(403)
 
     if request.method == "POST":
+        # server name
         server.properties.server_name = request.form['name']
+
+
+        # message of the day`
         server.properties.motd = request.form['motd']
 
+
+        # mobs
+        if request.form.get('mobs'):
+            server.properties.spawn_mobs = "on"
+        else:
+            server.properties.spawn_mobs = "off"
+
+
+        # plugins
         enabled_plugins = request.form.getlist("plugins")
 
         print(enabled_plugins)
@@ -726,6 +739,7 @@ def dashboard(server_id):
         server.enabled_plugins = []
         for enabled_plugin in enabled_plugins:
             server.enabled_plugins.append(Plugin.query.filter_by(file_name=enabled_plugin).first())
+
 
         db.session.commit()
 
@@ -753,6 +767,7 @@ def dashboard(server_id):
                                id = server.id,
                                name = server.properties.server_name,
                                motd = server.properties.motd,
+                               mobs = server.properties.spawn_mobs,
                                plugins = plugins,
                                enabled_plugins = enabled_plugins,
                                plugin_descriptions = plugin_descriptions
