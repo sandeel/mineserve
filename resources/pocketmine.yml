@@ -78,7 +78,7 @@ network:
  #Set to 0 to compress everything, -1 to disable.
  batch-threshold: 256
  #Compression level used when sending batched packets. Higher = Uses More CPU, Less = More Bandwidth Usage
- compression-level: 2
+ compression-level: 9
  #Use AsyncTasks for compression. Adds half/one tick delay, less CPU load on main thread
  async-compression: true
  #Experimental, only for Windows. Tries to use UPnP to automatically port forward
@@ -106,9 +106,9 @@ level-settings:
 
 chunk-sending:
  #Amount of chunks sent to players per tick
- per-tick: 4
+ per-tick: 1
  #Amount of chunks sent around each player
- max-chunks: 192
+ max-chunks: 32
  #Amount of chunks that need to be sent before spawning the player
  spawn-threshold: 28
  #Save a serialized copy of the chunk in memory for faster sending
