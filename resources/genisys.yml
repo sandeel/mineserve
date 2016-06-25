@@ -134,9 +134,9 @@ dserver:
  
 ai:
  #AI switch
- enable: false
+ enable: true
  #Zombie'AI，0=disabled，1=AI 1.0ver，2=new AI(Faultiness)
- zombie: 1
+ zombie: 2
  #PigZombie's AI
  pigzombie: true
  #the AI of cow and mushroom cow
@@ -158,4 +158,4 @@ ai:
  #Destory blocks if creeper exploded
  creeper-explode-destroy-block: false
  #Choose if allow mob auto generate
- mobgenerate: false
+ mobgenerate: true
