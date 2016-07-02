@@ -725,10 +725,10 @@ def dashboard(server_id):
 
 
         # mobs
-        if request.form.get('mobs'):
-            server.properties.spawn_mobs = "on"
-        else:
-            server.properties.spawn_mobs = "off"
+        #if request.form.get('mobs'):
+            #server.properties.spawn_mobs = "on"
+        #else:
+            #server.properties.spawn_mobs = "off"
 
 
         # plugins
