@@ -34,26 +34,6 @@ from subprocess import Popen
 from flask_mail import Message
 import builtins
 
-# Create logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-# Handler 
-LOG_FILE = '/opt/python/log/flask.log'
-handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1048576, backupCount=5)
-handler.setLevel(logging.DEBUG)
-
-# Formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# Add Formatter to Handler
-handler.setFormatter(formatter)
-
-# add Handler to Logger
-logger.addHandler(handler)
-logger.addHandler(logging.StreamHandler())
-
-
 application = Flask(__name__)
 mail = Mail(application)
 application.config['MYSQL_DATABASE_USER'] = os.environ['ADVSRVS_MYSQL_DATABASE_USER']
@@ -206,7 +186,7 @@ class Plugin(db.Model):
         "Server",
         secondary=association_table,
         back_populates="enabled_plugins")
-    
+
     def __init__(self, file_name="", nice_name="Plugin", description=""):
         self.file_name = file_name
         self.nice_name = nice_name
@@ -217,7 +197,7 @@ class PromoCode(db.Model):
     code = db.Column(db.String(255), primary_key=True)
     activated = db.Column(db.Boolean)
     reward_code = db.Column(db.String(255))
-    
+
     def __init__(self, reward_code='BetaTest'):
         self.code = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.activated = False
@@ -287,7 +267,7 @@ class Properties(db.Model):
     def __init__(self, server_id):
 
         self.server_id = server_id
-        
+
         # set the default properties
         self.server_name = 'The Server'
         self.motd = 'Adventure Servers Server'
@@ -545,7 +525,7 @@ reboot
 class ServerAdmin(ProtectedModelView):
     column_display_pk=True
     inline_models = [Plugin,]
-    
+
     column_list = (
         'id',
         'instance_id',
@@ -775,7 +755,7 @@ def dashboard(server_id):
 
 @application.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
-            
+
     topped_up_message = None
     promo_code_applied=False
     invalid_promo_code=False
@@ -805,7 +785,7 @@ def server(server_id):
             if charge['status'] == "succeeded":
 
                 server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
-                
+
                 db.session.add(LogEntry('Server '+server.id+' topped up by 30 days'))
                 db.session.commit()
 
