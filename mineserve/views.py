@@ -37,7 +37,8 @@ def landing_page():
 
 
             db.session.add(models.LogEntry('Customer has requested a new server'))
-            msg = Message("Customer has requested a new server",
+            msg = Message(subject="Customer has requested a new server",
+                  body="Email address: "+request.form['email'],
                   sender="adventureservers@kolabnow.com",
                   recipients=["adventureservers@kolabnow.com"])
             mail.send(msg)
