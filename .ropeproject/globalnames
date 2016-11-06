@@ -1,7 +1,5 @@
 €}q(U	mineserve]q(UmanagerqUapplicationqUmailqUlogin_managerqUdbqUstripe_keysqUmigrateq	eU	arkserver]q
 U	ArkServerqaUmineserve.views]q(UserversqU	messengerqUlanding_pageqUserver_dataqU
 phone_homeqUrconqUmain_admin_pageqUserver_propertiesqUserverqU	dashboardqeUmineserve.models]q(U	UserAdminqUroles_usersqURoleqUServerAdminqUPromoCodeAdminqUbefore_first_requestqUUserqULogEntryqUProtectedModelViewq U
-Propertiesq!U	PromoCodeq"UPluginq#UServerq$Uuser_datastoreq%Uassociation_tableq&ULogAdminq'Usecurity_context_processorq(Usecurityq)eUdatabase]q*(Uengineq+Uinit_dbq,Udbq-UBaseq.eUapplication]q/(Userversq0U	UserAdminq1Uroles_usersq2Umanagerq3URoleq4UServerAdminq5Ulanding_pageq6UPluginq7U	PromoCodeq8Urconq9Ubefore_first_requestq:Uapplicationq;U	messengerq<UUserq=ULogEntryq>UProtectedModelViewq?Ulogin_managerq@U
-PropertiesqAUuser_datastoreqBUmain_admin_pageqCUserver_dataqDUdbqEUServerqFU
-phone_homeqGUmailqHUsecurityqIUstripe_keysqJUserver_propertiesqKUassociation_tableqLUserverqMULogAdminqNUPromoCodeAdminqOU	dashboardqPUsecurity_context_processorqQUmigrateqReUmodels]qS(U	PromoCodeqTUroles_usersqUURoleqVUServerAdminqWUPromoCodeAdminqXUUserqYULogEntryqZUProtectedModelViewq[U
-Propertiesq\UPluginq]UServerq^U	UserAdminq_Uassociation_tableq`ULogAdminqaeUuser]u.
+Propertiesq!U	PromoCodeq"UPluginq#UServerq$Uuser_datastoreq%Uassociation_tableq&ULogAdminq'Usecurity_context_processorq(Usecurityq)eUdatabase]q*(Uengineq+Uinit_dbq,Udbq-UBaseq.eUapplication]q/Uapplicationq0aUmodels]q1(U	PromoCodeq2Uroles_usersq3URoleq4UServerAdminq5UPromoCodeAdminq6UUserq7ULogEntryq8UProtectedModelViewq9U
+Propertiesq:UPluginq;UServerq<U	UserAdminq=Uassociation_tableq>ULogAdminq?eUuser]u.

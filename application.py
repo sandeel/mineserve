@@ -1,4 +1,6 @@
-import mineserve
 from mineserve import manager
 
-manager.run()
+application = manager
+
+if __name__ == "__main__":
+    manager.run()
