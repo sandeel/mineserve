@@ -12,6 +12,8 @@ from flask_admin import helpers as admin_helpers
 import boto3
 import time
 from flask import Flask, redirect
+from sqlalchemy import event
+from threading import Thread
 
 association_table = db.Table('association', db.Model.metadata,
     db.Column('left_id', db.String(255), db.ForeignKey('server.id')),
@@ -283,7 +285,7 @@ class Server(db.Model):
         self.server_type = server_type
         self.game = game
 
-        self.instance_id = self.start_instance()
+        self.instance_id = self.create_cluster()
 
         db.session.add(self)
         db.session.commit()
@@ -333,19 +335,18 @@ class Server(db.Model):
 
         return private_ip
 
-    def start_instance(self):
-        phone_home_endpoint = '\\"'+application.config['PHONE_HOME_ENDPOINT']+'\\"'
+    def create_cluster(self):
         resources_endpoint = '\\"'+application.config['RESOURCES_ENDPOINT']+'\\"'
 
+        # create the ECS cluster
+        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        response = client.create_cluster(
+            clusterName=self.id
+        )
+
         userdata = """#!/bin/bash
-cd /home/ubuntu
-echo { \\"phone_home_endpoint\\": """+phone_home_endpoint+""", \\"resources_endpoint\\": """+resources_endpoint+""" } > /home/ubuntu/config.json
-curl -sSL https://get.docker.com/ | sh
-echo "cd /home/ubuntu && rm -rf bootstrap_instance.sh && wget --no-check-certificate https://raw.githubusercontent.com/sandeel/mineserve/master/bootstrap_instance.sh && /bin/bash /home/ubuntu/bootstrap_instance.sh" > /etc/rc.local
-echo "exit 0" >> /etc/rc.local
-echo "*/30 * * * * root python /home/ubuntu/phone_home.py" >> /etc/crontab
-echo "post-up /sbin/ifconfig eth0 mtu 1454" >> /etc/network/interfaces.d/eth0.cfg
-reboot
+
+echo ECS_CLUSTER="""+self.id+""" >> /etc/ecs/ecs.config
         """
 
         # create the instance
@@ -360,13 +361,7 @@ reboot
                 IamInstanceProfile={
                     'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
                     },
-                SecurityGroupIds=[application.config['SG_ID']],
-                BlockDeviceMappings=[{
-                        'DeviceName': '/dev/sda1',
-                        'Ebs': {
-                            'VolumeSize': 28,
-                            }
-                        }],
+                #SecurityGroupIds=[application.config['SG_ID']],
                 SubnetId=application.config['CONTAINER_AGENT_SUBNET']
         )
         instance_id = response['Instances'][0]['InstanceId']
@@ -420,6 +415,26 @@ reboot
             ]
         )
         return response
+
+
+@event.listens_for(Server, 'before_delete')
+def receive_before_delete(mapper, connection, target):
+    # kill the instance
+    client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+    client.terminate_instances(
+            InstanceIds=[
+                        target.instance_id
+                    ]
+    )
+
+    # wait for instance to start shutting down
+    time.sleep(5)
+
+    # kill the cluster
+    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+    client.delete_cluster(
+            cluster=target.id
+    )
 
 
 class LogEntry(db.Model):

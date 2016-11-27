@@ -1,0 +1,120 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters: 
+  KeyName: 
+    Description: Amazon EC2 Key Pair
+    Type: "AWS::EC2::KeyPair::KeyName"
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: Vpc
+      CidrBlock: 10.0.0.0/24
+      Tags:
+        - Key: Name
+          Value: PublicSubnet
+      MapPublicIpOnLaunch: 'true'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: Vpc
+      InternetGatewayId:
+        Ref: InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: Vpc
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+
+  mySubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet
+      RouteTableId:
+        Ref: PublicRouteTable
+
+  taskdefinition: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      ContainerDefinitions: 
+      - 
+        Name: "pmmp"
+        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/pmmp:latest"
+        PortMappings:
+          - 
+            ContainerPort: 19132
+            HostPort: 19132
+            Protocol: tcp
+          -
+            ContainerPort: 19132
+            HostPort: 19132
+            Protocol: udp
+        Essential: "true"
+        Memory: 4096
+
+  sshSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH
+      VpcId:
+        Ref: Vpc
+
+  sshSGInboundRuleSSH:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - sshSG
+        - GroupId
+
+  GitRepo:
+    Type: "AWS::CodeCommit::Repository"
+    Properties: 
+      RepositoryDescription: "msv"
+      RepositoryName: "msv"
+
+Mappings: 
+  RegionMap: 
+    us-east-1: 
+      AMI: "ami-6411e20d"
+    us-west-1: 
+      AMI: "ami-9398d3e0"
+    eu-west-1: 
+      amazon: "ami-9398d3e0"
+      ubuntu: "ami-0d77397e"
+      ecsoptimized: "ami-a1491ad2"
+    ap-southeast-1: 
+      AMI: "ami-66f28c34"
+    ap-northeast-1: 
+      AMI: "ami-9c03a89d"
