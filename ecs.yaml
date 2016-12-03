@@ -63,6 +63,19 @@ Resources:
   taskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
+      Volumes: 
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/users.conf"
+        Name: "sftpconfig"
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/server.properties"
+        Name: "server-properties"
+      - 
+        Host: 
+          SourcePath: "/plugins"
+        Name: "plugins"
       ContainerDefinitions: 
       - 
         Name: "pmmp"
@@ -76,8 +89,36 @@ Resources:
             ContainerPort: 19132
             HostPort: 19132
             Protocol: udp
+          - 
+            ContainerPort: 9090
+            HostPort: 9090
+            Protocol: tcp
         Essential: "true"
-        Memory: 4096
+        Memory: 6144
+        MountPoints: 
+        - 
+          SourceVolume: "plugins"
+          ContainerPath: "/pocketmine/plugins"
+        - 
+          SourceVolume: "server-properties"
+          ContainerPath: "/pocketmine/server.properties"
+      - 
+        Name: "ftp"
+        Image: "atmoz/sftp"
+        PortMappings:
+          - 
+            ContainerPort: 22
+            HostPort: 2222
+            Protocol: tcp
+        Essential: "true"
+        Memory: 512
+        MountPoints: 
+        - 
+          SourceVolume: "sftpconfig"
+          ContainerPath: "/etc/sftp-users.conf"
+        - 
+          SourceVolume: "plugins"
+          ContainerPath: "/home/foo/plugins"
 
   sshSG:
     Type: AWS::EC2::SecurityGroup
@@ -98,11 +139,81 @@ Resources:
         - sshSG
         - GroupId
 
+  ContainerAgentSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: For container agents
+      VpcId:
+        Ref: Vpc
+
+  ContainerAgentInboundRulePmmpTcp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '19132'
+      ToPort: '19132'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ContainerAgentSG
+        - GroupId
+
+  ContainerAgentInboundRulePmmpUdp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: udp
+      FromPort: '19132'
+      ToPort: '19132'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ContainerAgentSG
+        - GroupId
+
+  ContainerAgentInboundRuleDestionationUnreachable:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: 'icmp'
+      FromPort: '3'
+      ToPort: '3'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ContainerAgentSG
+        - GroupId
+
+  ContainerAgentInboundRulePocketDockConsole:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '9090'
+      ToPort: '9090'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ContainerAgentSG
+        - GroupId
+
+  ContainerAgentInboundRuleSftp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '2222'
+      ToPort: '2222'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ContainerAgentSG
+        - GroupId
+
   GitRepo:
     Type: "AWS::CodeCommit::Repository"
     Properties: 
       RepositoryDescription: "msv"
       RepositoryName: "msv"
+
+  ResourcesBucket:
+    Type: AWS::S3::Bucket
 
 Mappings: 
   RegionMap: 

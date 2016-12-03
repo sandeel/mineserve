@@ -41,6 +41,7 @@ application.config['SECURITY_CHANGE_PASSWORD_TEMPLATE'] = 'change_password.html'
 application.config['SECURITY_CHANGEABLE'] = True
 application.config['CONTAINER_AGENT_AMI'] = os.environ['ADVSRVS_CONTAINER_AGENT_AMI']
 application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+application.config['TASK_DEFINITION'] = os.environ['TASK_DEFINITION']
 application.debug = (os.environ['FLASK_DEBUG'] == 'True')
 
 db = SQLAlchemy(application)

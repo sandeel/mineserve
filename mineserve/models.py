@@ -246,14 +246,16 @@ class Server(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     owner = db.relationship("User", back_populates="servers")
 
-    sizes = ['micro']
+    sizes = ['micro', 'large']
 
     prices = {
-                'micro': 800
+                'micro': 800,
+                'large': 1600
                 }
 
     max_players = {
-                    'micro': 20
+                    'micro': 20,
+                    'large': 80
                     }
 
     def __init__(self, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='micro'):
@@ -347,6 +349,16 @@ class Server(db.Model):
         userdata = """#!/bin/bash
 
 echo ECS_CLUSTER="""+self.id+""" >> /etc/ecs/ecs.config
+ip link set dev eth0 mtu 1460
+echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
+mkdir /plugins
+curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+sudo yum -y install unzip
+unzip awscli-bundle.zip
+./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+rm awscli-bundle.zip
+/usr/local/bin/aws s3 cp s3://msv-resourcesbucket-1cy9th89fajoy/plugins/pdc.phar /plugins/
+/usr/local/bin/aws s3 cp s3://msv-resourcesbucket-1cy9th89fajoy/server.properties /home/ec2-user/
         """
 
         # create the instance
@@ -385,6 +397,19 @@ echo ECS_CLUSTER="""+self.id+""" >> /etc/ecs/ecs.config
             ]
         )
 
+        # create the service
+        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        client.create_service(
+            cluster=self.id,
+            serviceName='pmmp',
+            taskDefinition=application.config['TASK_DEFINITION'],
+            desiredCount=1,
+            deploymentConfiguration={
+                        'maximumPercent': 100,
+                        'minimumHealthyPercent': 0
+                    }
+        )
+
         return instance_id
 
     def apply_promo_code(self,promo_code):
@@ -419,19 +444,32 @@ echo ECS_CLUSTER="""+self.id+""" >> /etc/ecs/ecs.config
 
 @event.listens_for(Server, 'before_delete')
 def receive_before_delete(mapper, connection, target):
-    # kill the instance
+    # terminate the instance if it exists
     client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
-    client.terminate_instances(
-            InstanceIds=[
-                        target.instance_id
-                    ]
-    )
+    if len(client.describe_instances(InstanceIds=[target.instance_id,])['Reservations']) > 0:
+        client.terminate_instances(
+                InstanceIds=[
+                            target.instance_id
+                        ]
+        )
 
-    # wait for instance to start shutting down
-    time.sleep(5)
+    # delete the service if it exists
+    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+    if client.describe_services( cluster=target.id, services=[ 'pmmp', ] )['services'][0]['status'] == 'ACTIVE':
+        client.update_service(
+                cluster=target.id,
+                service='pmmp',
+                desiredCount=0
+        )
+        client.delete_service(
+                cluster=target.id,
+                service='pmmp'
+        )
+
+    # wait to ensure instance shutting down
+    time.sleep(10)
 
     # kill the cluster
-    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
     client.delete_cluster(
             cluster=target.id
     )
