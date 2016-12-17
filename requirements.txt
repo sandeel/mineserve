@@ -10,7 +10,7 @@ docopt
 docutils
 Flask
 Flask-Admin
-Flask-Login
+Flask-Login>=0.3.0,<0.4
 Flask-Mail
 Flask-Migrate
 Flask-Principal

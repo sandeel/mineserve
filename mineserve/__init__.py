@@ -1,5 +1,5 @@
 from flask import Flask
-import flask.ext.login as flask_login
+import flask_login
 from flask_sqlalchemy import SQLAlchemy
 import stripe
 import os
