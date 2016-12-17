@@ -50,24 +50,6 @@
           </div>
 
               <br>
-      <h4>Plugins</h4>
-
-          {% for plugin_nice_name,plugin_description in zip(plugins.items(), plugin_descriptions.items()) %}
-          <div class="row">
-            <div class="col s12">
-              <div class="card-panel white">
-                <div class="switch">
-                    <h5>{{ plugin_nice_name[1] }}</h5>
-                    <p>{{ plugin_description[1] }}</p>
-                  <label>
-                      <input type="checkbox" name="plugins" value="{{ plugin_nice_name[0] }}" {% if plugin_nice_name[0] in enabled_plugins %}checked{% endif %}>
-                      <span class="lever"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
 
         <div class="row center"><input type="submit" id="download-button" class="btn-small waves-effect waves-light orange" value="Save and Reboot"</input></div>
 

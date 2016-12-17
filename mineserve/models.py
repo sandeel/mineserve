@@ -10,7 +10,7 @@ import random
 from flask_admin import helpers as admin_helpers
 import boto3
 import time
-from flask import Flask, redirect
+from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 from threading import Thread
 
@@ -325,7 +325,9 @@ class Server(db.Model):
         return private_ip
 
     def create_cluster(self):
-        resources_endpoint = '\\"'+application.config['RESOURCES_ENDPOINT']+'\\"'
+
+        if application.debug:
+            return 'fake-instance-id'
 
         # create the ECS cluster
         client = boto3.client('ecs', region_name=application.config['AWS_REGION'])

@@ -2,12 +2,12 @@ from mineserve import application, db, mail, stripe_keys
 from flask import request, render_template
 from flask_security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user, roles_accepted
-from mineserve import models
+from mineserve.models import User
 from mcpe.mcpeserver import MCPEServer
 from flask_mail import Message
 from flask.ext.security.utils import encrypt_password
-import flask.ext.login as flask_login
-from mineserve.models import Server
+import flask_login
+from mineserve.models import Server, user_datastore
 from flask import Flask, redirect
 import datetime
 
@@ -29,33 +29,29 @@ def landing_page():
             if application.config['BETA']:
                 if not request.form['promo-code']:
                         return render_template('landing_page.html', form_error="Promo code required.", beta_test=application.config['BETA'])
-                else:
-                    if not new_server.apply_promo_code(request.form['promo-code']):
-                        return render_template('landing_page.html', form_error="Invalid Promo Code.", beta_test=application.config['BETA'])
 
                 if User.query.filter_by(email=request.form['email']).first():
                     return render_template('landing_page.html', form_error="That user already has a beta server.", beta_test=application.config['BETA'])
 
 
-            db.session.add(models.LogEntry('Customer has requested a new server'))
             msg = Message(subject="Customer has requested a new server",
                   body="Email address: "+request.form['email'],
                   sender="adventureservers@kolabnow.com",
                   recipients=["adventureservers@kolabnow.com"])
-            mail.send(msg)
+            # mail.send(msg)
 
-            if models.user_datastore.get_user(request.form['email']):
+            if user_datastore.get_user(request.form['email']):
                 return render_template('landing_page.html', form_error="That email address has already been taken.")
             else:
                 # create the user
                 # password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
                 encrypted_password = encrypt_password(request.form['password'])
 
-                models.user_datastore.create_user(email=request.form['email'], password=encrypted_password)
+                user_datastore.create_user(email=request.form['email'], password=encrypted_password)
 
                 db.session.commit()
 
-                user = models.user_datastore.get_user(request.form['email'])
+                user = user_datastore.get_user(request.form['email'])
                 flask_login.login_user(user)
 
                 # send reset password
@@ -64,7 +60,7 @@ def landing_page():
                 # if server doesn't exist create it
                 #size = request.form['size']
                 size = 'micro'
-                new_server = Server(op=request.form['minecraft_name'],
+                new_server = MCPEServer(op=request.form['minecraft_name'],
                                     server_name=request.form['server_name'],
                                     size = size)
 
@@ -89,15 +85,10 @@ def server_data():
     instance_id = request.args['instance_id']
     server = Server.query.filter_by(instance_id=instance_id).first()
 
-    plugins_list = ""
-    for plugin in server.enabled_plugins:
-        plugins_list += plugin.file_name + ','
-
     return jsonify({
             "id": server.id,
             "expiry_date": str(server.expiry_date),
             "op": server.op,
-            "enabled_plugins": plugins_list
             })
 
 @application.route("/server/<server_id>/properties", methods=["GET"])
@@ -135,17 +126,6 @@ def dashboard(server_id):
         #else:
             #server.properties.spawn_mobs = "off"
 
-
-        # plugins
-        enabled_plugins = request.form.getlist("plugins")
-
-        print(enabled_plugins)
-
-        server.enabled_plugins = []
-        for enabled_plugin in enabled_plugins:
-            server.enabled_plugins.append(Plugin.query.filter_by(file_name=enabled_plugin).first())
-
-
         db.session.commit()
 
         server.reboot_instance()
@@ -154,28 +134,12 @@ def dashboard(server_id):
 
 
     else:
-        plugins = {}
-        for plugin in Plugin.query.all():
-            plugins[plugin.file_name] = plugin.nice_name
-
-        plugin_descriptions = {}
-        for plugin in Plugin.query.all():
-            plugin_descriptions[plugin.file_name] = plugin.description
-
-        enabled_plugins = []
-        for plugin in server.enabled_plugins:
-            enabled_plugins.append(plugin.file_name)
-
-        print(enabled_plugins)
 
         return render_template('dashboard.html',
                                id = server.id,
                                name = server.properties.server_name,
                                motd = server.properties.motd,
                                mobs = server.properties.spawn_mobs,
-                               plugins = plugins,
-                               enabled_plugins = enabled_plugins,
-                               plugin_descriptions = plugin_descriptions
                                )
 
 @application.route("/server/<server_id>", methods=["GET","POST"])
@@ -211,7 +175,6 @@ def server(server_id):
 
                 server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
 
-                db.session.add(models.LogEntry('Server '+server.id+' topped up by 30 days'))
                 db.session.commit()
 
                 topped_up_message = "Topped up by 30 days."
@@ -253,7 +216,6 @@ def server(server_id):
 
 def rcon(server, command):
     Popen(['/opt/mcrcon/mcrcon/mcrcon', '-H', server.private_ip, '-P', '33775', '-p', 'password', command])
-    db.session.add(models.LogEntry('Server message \"'+command+'\" sent to server '+server.id))
 
 @application.route("/admin", methods=["GET","POST"])
 @roles_accepted('admin')
