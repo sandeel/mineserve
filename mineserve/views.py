@@ -3,6 +3,7 @@ from flask import request, render_template
 from flask_security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user, roles_accepted
 from mineserve import models
+from mcpe.mcpeserver import MCPEServer
 from flask_mail import Message
 from flask.ext.security.utils import encrypt_password
 import flask.ext.login as flask_login

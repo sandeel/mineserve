@@ -12,6 +12,10 @@ from subprocess import Popen
 import builtins
 from flask_security import SQLAlchemyUserDatastore
 import datetime
+import yaml
+
+with open('config.yaml', 'r') as f:
+        config = yaml.load(f)
 
 application = Flask(__name__)
 mail = Mail(application)
@@ -21,7 +25,7 @@ application.config['MYSQL_DATABASE_DB'] = os.environ['ADVSRVS_MYSQL_DATABASE_DB'
 application.config['MYSQL_DATABASE_HOST'] = os.environ['ADVSRVS_MYSQL_DATABASE_HOST']
 application.config['AWS_REGION'] = os.environ['ADVSRVS_AWS_REGION']
 application.config['BETA'] = (os.environ['ADVSRVS_BETA'] == 'True')
-application.config['SG_ID'] = os.environ['ADVSRVS_SG_ID']
+application.config['SG_ID'] = config['aws']['security_group_id']
 application.config['CONTAINER_AGENT_SUBNET'] = os.environ['ADVSRVS_CONTAINER_AGENT_SUBNET']
 application.config['CONTAINER_AGENT_INSTANCE_PROFILE'] = os.environ['ADVSRVS_CONTAINER_AGENT_INSTANCE_PROFILE']
 application.config['EC2_KEYPAIR'] = os.environ['ADVSRVS_EC2_KEYPAIR']

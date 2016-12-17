@@ -1,5 +1,6 @@
 from mineserve import manager
 import mineserve
+import mcpe
 
 application = mineserve.application
 

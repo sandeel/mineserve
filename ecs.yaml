@@ -63,6 +63,7 @@ Resources:
   taskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
+      Family: "msv"
       Volumes: 
       - 
         Host: 
@@ -118,7 +119,7 @@ Resources:
           ContainerPath: "/etc/sftp-users.conf"
         - 
           SourceVolume: "plugins"
-          ContainerPath: "/home/foo/plugins"
+          ContainerPath: "/home/user/plugins"
 
   sshSG:
     Type: AWS::EC2::SecurityGroup

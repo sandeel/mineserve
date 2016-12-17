@@ -7,7 +7,6 @@ import flask_admin as admin
 import datetime
 import uuid
 import random
-import string
 from flask_admin import helpers as admin_helpers
 import boto3
 import time
@@ -123,10 +122,6 @@ class PromoCodeAdmin(ProtectedModelView):
     form_choices = { 'reward_code': [('BetaTest', 'BetaTest'),
                                      ('5Days', '5Days')],}
 
-# Customized log admin
-class LogAdmin(ProtectedModelView):
-    column_default_sort = ('date', True)
-
 # Customized user admin view
 class UserAdmin(ProtectedModelView):
     column_display_pk=True
@@ -232,7 +227,6 @@ class Server(db.Model):
     __tablename__ = 'server'
     id = db.Column(db.String(255), primary_key=True)
     instance_id = db.Column(db.String(255))
-    op = db.Column(db.String(255))
     expiry_date = db.Column(db.DateTime)
     creation_date = db.Column(db.DateTime)
     owner = db.Column(db.String(255))
@@ -245,6 +239,7 @@ class Server(db.Model):
                     back_populates="servers")
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     owner = db.relationship("User", back_populates="servers")
+    type = db.Column(db.String(50))
 
     sizes = ['micro', 'large']
 
@@ -258,13 +253,15 @@ class Server(db.Model):
                     'large': 80
                     }
 
-    def __init__(self, op, server_name='Adventure Servers', game='mcpe', server_type='genisys', size='micro'):
+    __mapper_args__ = {
+                'polymorphic_identity':'server',
+                'polymorphic_on':type
+            }
+
+    def __init__(self, size='micro'):
         self.id = str(uuid.uuid4())
 
-        db.session.add(LogEntry('Creating server with ID '+self.id))
-        db.session.commit()
-
-        self.op = op
+        self.size = size
 
         self.creation_date=datetime.datetime.now()
 
@@ -275,22 +272,12 @@ class Server(db.Model):
 
         # instantiate default properties
         self.properties = Properties(server_id = self.id)
-        self.properties.server_name = server_name
-
-        # random seed
-        random.seed(server_name)
-        self.properties.level_seed = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
-
-        self.properties.motd = server_name
-
-        self.size=size
-        self.server_type = server_type
-        self.game = game
 
         self.instance_id = self.create_cluster()
 
         db.session.add(self)
         db.session.commit()
+
 
     def __str__(self):
         return self.id
@@ -359,13 +346,14 @@ unzip awscli-bundle.zip
 rm awscli-bundle.zip
 /usr/local/bin/aws s3 cp s3://msv-resourcesbucket-1cy9th89fajoy/plugins/pdc.phar /plugins/
 /usr/local/bin/aws s3 cp s3://msv-resourcesbucket-1cy9th89fajoy/server.properties /home/ec2-user/
+echo "user:password:::upload" > /home/ec2-user/users.conf
         """
 
         # create the instance
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         response = client.run_instances(
                 ImageId=application.config['CONTAINER_AGENT_AMI'],
-                InstanceType='t2.'+self.size,
+                InstanceType='t2.'+str(self.size),
                 MinCount = 1,
                 MaxCount = 1,
                 UserData = userdata,
@@ -428,8 +416,6 @@ rm awscli-bundle.zip
             promo_code.activated=True
             db.session.add(promo_code)
 
-            db.session.add(LogEntry('Promo Code '+promo_code.code+' applied to server '+self.id))
-
             db.session.commit()
 
     def reboot_instance(self):
@@ -441,6 +427,14 @@ rm awscli-bundle.zip
         )
         return response
 
+def check_if_task_definition_exists(name):
+    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+    response = client.list_task_definitions(
+            familyPrefix=name,
+    )
+    if response['taskDefinitionArns']:
+        return True
+    return False
 
 @event.listens_for(Server, 'before_delete')
 def receive_before_delete(mapper, connection, target):
@@ -475,22 +469,11 @@ def receive_before_delete(mapper, connection, target):
     )
 
 
-class LogEntry(db.Model):
-    __tablename__ = 'logentry'
-    id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime)
-    message = db.Column(db.String(1024))
-
-    def __init__(self, message):
-        self.date = datetime.datetime.now()
-        self.message = message
-
 # Create admin
 admin = admin.Admin(application, name='MineServe Admin', template_mode='bootstrap3')
 admin.add_view(ServerAdmin(Server,db.session))
 admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
-admin.add_view(LogAdmin(LogEntry,db.session))
 admin.add_view(ProtectedModelView(Properties,db.session))
 admin.add_view(ProtectedModelView(Plugin,db.session))
 
