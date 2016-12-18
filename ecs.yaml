@@ -215,8 +215,15 @@ Resources:
       Integration: 
         Type: "HTTP"
         Uri:
-          !Join ['', ['https://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
+          !Join ['', ['http://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
         IntegrationHttpMethod: "GET"
+        IntegrationResponses:
+          -
+            StatusCode: 200
+      MethodResponses:
+        -
+          StatusCode: 200
+
 
   Vpc:
     Type: AWS::EC2::VPC
