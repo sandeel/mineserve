@@ -13,8 +13,8 @@ class MCPEServer(Server):
                 'polymorphic_identity':'mcpe_server',
             }
 
-    def __init__(self, op, name='Adventure Servers', size='micro'):
-        super().__init__(size)
+    def __init__(self, user, op, name='Adventure Servers', size='micro'):
+        super().__init__(user, size)
 
         self.op = op
 

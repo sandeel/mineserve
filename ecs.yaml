@@ -201,16 +201,46 @@ Resources:
     Properties:
       Name: "MsvApi"
 
-  MockMethod: 
+  Servers: 
+    Type: "AWS::ApiGateway::Resource"
+    Properties: 
+      RestApiId: 
+        Ref: "MsvApi"
+      ParentId: 
+        Fn::GetAtt: 
+          - "MsvApi"
+          - "RootResourceId"
+      PathPart: "servers"
+
+  ServersGET: 
     Type: "AWS::ApiGateway::Method"
     Properties: 
       RestApiId: 
         Ref: "MsvApi"
       ResourceId: 
-        Fn::GetAtt: 
-          - "MsvApi"
-          - "RootResourceId"
+        !Ref Servers
       HttpMethod: "GET"
+      AuthorizationType: "NONE"
+      Integration: 
+        Type: "HTTP"
+        Uri:
+          !Join ['', ['http://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
+        IntegrationHttpMethod: "GET"
+        IntegrationResponses:
+          -
+            StatusCode: 200
+      MethodResponses:
+        -
+          StatusCode: 200
+
+  ServersPOST: 
+    Type: "AWS::ApiGateway::Method"
+    Properties: 
+      RestApiId: 
+        Ref: "MsvApi"
+      ResourceId: 
+        !Ref Servers
+      HttpMethod: "POST"
       AuthorizationType: "NONE"
       Integration: 
         Type: "HTTP"

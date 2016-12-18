@@ -1,5 +1,5 @@
 from mineserve import application, db, mail, stripe_keys
-from flask import request, render_template, jsonify
+from flask import request, render_template, jsonify, abort
 from flask_security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user, roles_accepted
 from mineserve.models import User
@@ -199,18 +199,19 @@ def servers():
 
         data = request.get_json(force=True)
 
+        user = User.query.filter_by(id=data['user_id']).first()
+
+        if not user:
+            return abort(400)
+
         #size = data['size']
         size = 'micro'
         new_server =  globals()[data['type']](
                             name=data['server_name'],
-                            size = size)
+                            size = size,
+                            user=user)
 
         new_server.op=data['minecraft_name']
-        server_id = new_server.id
-
-        user = User.query.filter_by(id=data['user_id']).first()
-
-        user.servers.append(new_server)
 
         new_server.properties.max_players = Server.max_players[new_server.size]
 

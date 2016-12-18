@@ -10,8 +10,8 @@ class ArkServer(Server):
                 'polymorphic_identity':'ark_server',
             }
 
-    def __init__(self, size='micro', name='Ark Server'):
-        super().__init__(size=size, name=name)
+    def __init__(self, user, size='micro', name='Ark Server'):
+        super().__init__(user, size=size, name=name)
 
     def serialize(self):
         data = super().serialize()

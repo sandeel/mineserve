@@ -37,7 +37,7 @@ class User(db.Model, UserMixin):
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
-    servers = db.relationship('Server', backref=db.backref('user'))
+    servers = db.relationship('Server', back_populates='user')
 
     def serialize(self):
         return {
@@ -214,11 +214,11 @@ class Server(db.Model):
     name = db.Column(db.String(255))
     expiry_date = db.Column(db.DateTime)
     creation_date = db.Column(db.DateTime)
-    owner = db.Column(db.String(255))
+    user = db.Column(db.String(255))
     size = db.Column(db.String(255))
     properties = db.relationship("Properties", backref="server", uselist=False)
-    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    owner = db.relationship("User", back_populates="servers")
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship("User", back_populates="servers")
     type = db.Column(db.String(50))
 
     sizes = ['micro', 'large']
@@ -244,11 +244,11 @@ class Server(db.Model):
             "type": str(self.type),
             "expiry_date" : str(self.expiry_date),
             "creation_date" : str(self.creation_date),
-            "owner": str(self.owner.id),
+            "user": str(self.user.id),
             "name": str(self.name)
         }
 
-    def __init__(self, size='micro', name="New Server"):
+    def __init__(self, user, size='micro', name="New Server"):
         self.id = str(uuid.uuid4())
 
         self.name = name
@@ -266,6 +266,8 @@ class Server(db.Model):
         self.properties = Properties(server_id = self.id)
 
         self.instance_id = self.create_cluster()
+
+        self.user = user
 
         db.session.add(self)
         db.session.commit()
