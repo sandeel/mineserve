@@ -245,7 +245,10 @@ class Server(db.Model):
             "expiry_date" : str(self.expiry_date),
             "creation_date" : str(self.creation_date),
             "user": str(self.user.id),
-            "name": str(self.name)
+            "name": str(self.name),
+            "aws_resources": {
+                "instance_id": str(self.instance_id)
+            }
         }
 
     def __init__(self, user, size='micro', name="New Server"):
@@ -321,7 +324,7 @@ class Server(db.Model):
 
     def create_cluster(self):
 
-        if application.config.STUB_AWS_RESOURCES:
+        if application.config['STUB_AWS_RESOURCES']:
             return 'fake-instance-id'
 
         # create the ECS cluster
@@ -346,8 +349,15 @@ rm awscli-bundle.zip
 echo "user:password:::upload" > /home/ec2-user/users.conf
         """
 
-        # create the instance
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+
+        # get the security group
+        security_group_id = client.describe_security_groups(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':[self.type+'_sg']}])['SecurityGroups'][0]['GroupId']
+
+        # get the subnet
+        subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['PublicSubnet1']}])['Subnets'][0]['SubnetId']
+
+        # create the instance
         response = client.run_instances(
                 ImageId=application.config['CONTAINER_AGENT_AMI'],
                 InstanceType='t2.'+str(self.size),
@@ -358,8 +368,8 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
                 IamInstanceProfile={
                     'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
                     },
-                #SecurityGroupIds=[application.config['SG_ID']],
-                SubnetId=application.config['CONTAINER_AGENT_SUBNET']
+                SecurityGroupIds=[security_group_id],
+                SubnetId=subnet_id
         )
         instance_id = response['Instances'][0]['InstanceId']
 
@@ -436,7 +446,7 @@ def check_if_task_definition_exists(name):
 @event.listens_for(Server, 'before_delete')
 def receive_before_delete(mapper, connection, target):
     # if we are in debug don't do anything
-    if application.config.STUB_AWS_RESOURCES:
+    if application.config['STUB_AWS_RESOURCES']:
         return
 
     # terminate the instance if it exists

@@ -181,6 +181,66 @@ Resources:
         - ContainerAgentSG
         - GroupId
 
+  ArkSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: For container agents
+      VpcId:
+        Ref: Vpc
+      Tags:
+        -
+          Key: Name
+          Value: ark_server_sg
+
+  ArkInboundRule27015tcp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '27015'
+      ToPort: '27015'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule27015udp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: udp
+      FromPort: '27015'
+      ToPort: '27015'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule7777tcp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '7777'
+      ToPort: '7777'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule7777udp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: udp
+      FromPort: '7777'
+      ToPort: '7777'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+
   GitRepo:
     Type: "AWS::CodeCommit::Repository"
     Properties: 
