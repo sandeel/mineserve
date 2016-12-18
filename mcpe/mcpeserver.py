@@ -9,7 +9,11 @@ class MCPEServer(Server):
     id = db.Column(db.String(255), db.ForeignKey('server.id'), primary_key=True)
     op = db.Column(db.String(255))
 
-    def __init__(self, op, server_name='Adventure Servers', game='mcpe', size='micro'):
+    __mapper_args__ = {
+                'polymorphic_identity':'mcpe_server',
+            }
+
+    def __init__(self, op, name='Adventure Servers', size='micro'):
         super().__init__(size)
 
         self.op = op
@@ -24,5 +28,7 @@ class MCPEServer(Server):
 
         self.size=size
 
-        self.game = game
-
+    def serialize(self):
+        data = super().serialize()
+        data['type'] = str(self.type)
+        return data

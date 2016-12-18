@@ -14,29 +14,6 @@ from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 from threading import Thread
 
-association_table = db.Table('association', db.Model.metadata,
-    db.Column('left_id', db.String(255), db.ForeignKey('server.id')),
-    db.Column('right_id', db.Integer, db.ForeignKey('plugin.id'))
-)
-
-class Plugin(db.Model):
-    __tablename__ = 'plugin'
-    id = db.Column(db.Integer, primary_key=True)
-    file_name = db.Column(db.String(255))
-    nice_name = db.Column(db.String(255))
-    description = db.Column(db.String(1024))
-    server_id = db.Column(db.String(255), db.ForeignKey('server.id'))
-    servers = db.relationship(
-        "Server",
-        secondary=association_table,
-        back_populates="enabled_plugins")
-
-    def __init__(self, file_name="", nice_name="Plugin", description=""):
-        self.file_name = file_name
-        self.nice_name = nice_name
-        self.description = description
-
-
 roles_users = db.Table(
     'roles_users',
     db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -61,6 +38,14 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
     servers = db.relationship('Server', backref=db.backref('user'))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "servers": [s.id for s in self.servers]
+        }
+
 
     def __str__(self):
         return self.email
@@ -93,7 +78,6 @@ class ProtectedModelView(sqla.ModelView):
 # Customized server admin
 class ServerAdmin(ProtectedModelView):
     column_display_pk=True
-    inline_models = [Plugin,]
 
     column_list = (
         'id',
@@ -227,16 +211,12 @@ class Server(db.Model):
     __tablename__ = 'server'
     id = db.Column(db.String(255), primary_key=True)
     instance_id = db.Column(db.String(255))
+    name = db.Column(db.String(255))
     expiry_date = db.Column(db.DateTime)
     creation_date = db.Column(db.DateTime)
     owner = db.Column(db.String(255))
-    game = db.Column(db.String(255))
-    server_type = db.Column(db.String(255))
     size = db.Column(db.String(255))
     properties = db.relationship("Properties", backref="server", uselist=False)
-    enabled_plugins = db.relationship("Plugin",
-                    secondary=association_table,
-                    back_populates="servers")
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     owner = db.relationship("User", back_populates="servers")
     type = db.Column(db.String(50))
@@ -258,8 +238,20 @@ class Server(db.Model):
                 'polymorphic_on':type
             }
 
-    def __init__(self, size='micro'):
+    def serialize(self):
+        return {
+            "id": str(self.id),
+            "type": str(self.type),
+            "expiry_date" : str(self.expiry_date),
+            "creation_date" : str(self.creation_date),
+            "owner": str(self.owner.id),
+            "name": str(self.name)
+        }
+
+    def __init__(self, size='micro', name="New Server"):
         self.id = str(uuid.uuid4())
+
+        self.name = name
 
         self.size = size
 
@@ -281,6 +273,7 @@ class Server(db.Model):
 
     def __str__(self):
         return self.id
+
 
     @property
     def status(self):
@@ -440,6 +433,10 @@ def check_if_task_definition_exists(name):
 
 @event.listens_for(Server, 'before_delete')
 def receive_before_delete(mapper, connection, target):
+    # if we are in debug don't do anything
+    if application.debug:
+        return
+
     # terminate the instance if it exists
     client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
     if len(client.describe_instances(InstanceIds=[target.instance_id,])['Reservations']) > 0:
@@ -477,7 +474,6 @@ admin.add_view(ServerAdmin(Server,db.session))
 admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(ProtectedModelView(Properties,db.session))
-admin.add_view(ProtectedModelView(Plugin,db.session))
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -516,5 +512,6 @@ def before_first_request():
     # Users already have these Roles.) Again, commit any database changes.
     user_datastore.add_role_to_user('adventureservers@kolabnow.com', 'admin')
     db.session.commit()
+
 
 

@@ -1,9 +1,8 @@
 from mineserve import application, db, mail, stripe_keys
-from flask import request, render_template
+from flask import request, render_template, jsonify
 from flask_security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user, roles_accepted
 from mineserve.models import User
-from mcpe.mcpeserver import MCPEServer
 from flask_mail import Message
 from flask.ext.security.utils import encrypt_password
 import flask_login
@@ -11,85 +10,11 @@ from mineserve.models import Server, user_datastore
 from flask import Flask, redirect
 import datetime
 
-@application.route("/", methods=["GET", "POST"])
-def landing_page():
-    if request.method == "POST":
+#mcpe
+from mcpe.mcpeserver import MCPEServer
 
-            # validate entered data
-            if not request.form['email']:
-                return render_template('landing_page.html', form_error="Please enter your email address.", beta_test=application.config['BETA'])
-            if not request.form['server_name']:
-                return render_template('landing_page.html', form_error="Please enter a name for your server.", beta_test=application.config['BETA'])
-            if not request.form['minecraft_name']:
-                return render_template('landing_page.html', form_error="Please enter your Minecraft name.", beta_test=application.config['BETA'])
-            if not request.form['password']:
-                return render_template('landing_page.html', form_error="Please enter a password.", beta_test=application.config['BETA'])
-
-            # if beta need promo code
-            if application.config['BETA']:
-                if not request.form['promo-code']:
-                        return render_template('landing_page.html', form_error="Promo code required.", beta_test=application.config['BETA'])
-
-                if User.query.filter_by(email=request.form['email']).first():
-                    return render_template('landing_page.html', form_error="That user already has a beta server.", beta_test=application.config['BETA'])
-
-
-            msg = Message(subject="Customer has requested a new server",
-                  body="Email address: "+request.form['email'],
-                  sender="adventureservers@kolabnow.com",
-                  recipients=["adventureservers@kolabnow.com"])
-            # mail.send(msg)
-
-            if user_datastore.get_user(request.form['email']):
-                return render_template('landing_page.html', form_error="That email address has already been taken.")
-            else:
-                # create the user
-                # password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
-                encrypted_password = encrypt_password(request.form['password'])
-
-                user_datastore.create_user(email=request.form['email'], password=encrypted_password)
-
-                db.session.commit()
-
-                user = user_datastore.get_user(request.form['email'])
-                flask_login.login_user(user)
-
-                # send reset password
-                #`send_reset_password_instructions(user)
-
-                # if server doesn't exist create it
-                #size = request.form['size']
-                size = 'micro'
-                new_server = MCPEServer(op=request.form['minecraft_name'],
-                                    server_name=request.form['server_name'],
-                                    size = size)
-
-                new_server.op=request.form['minecraft_name']
-                server_id = new_server.id
-
-                user.servers.append(new_server)
-
-                new_server.properties.max_players = Server.max_players[new_server.size]
-
-                db.session.add(new_server)
-
-                db.session.commit()
-
-                return redirect('/server/'+server_id)
-    else:
-        return render_template('landing_page.html', beta_test=application.config['BETA'])
-
-
-@application.route("/server_data", methods=["GET"])
-def server_data():
-    instance_id = request.args['instance_id']
-    server = Server.query.filter_by(instance_id=instance_id).first()
-
-    return jsonify({
-            "id": server.id,
-            "expiry_date": str(server.expiry_date),
-            "op": server.op,
-            })
+#ark
+from ark.arkserver import ArkServer
 
 @application.route("/server/<server_id>/properties", methods=["GET"])
 def server_properties(server_id):
@@ -98,11 +23,6 @@ def server_properties(server_id):
     response.headers["content-type"] = "text/plain"
     response.content_type = "text/plain"
     return response
-
-@application.route("/servers", methods=["GET"])
-@login_required
-def servers():
-    return render_template('servers.html', servers = current_user.servers)
 
 @application.route("/server/<server_id>/dashboard", methods=["GET","POST"])
 @login_required
@@ -234,3 +154,74 @@ def messenger():
             rcon(server, "say "+message)
             return render_template('messenger.html')
 
+
+@application.route("/api/0.1/users", methods=["GET","POST"])
+def users():
+
+    if request.method == "POST":
+
+        data = request.get_json(force=True)
+
+        if user_datastore.get_user(data['email']):
+            return render_template('landing_page.html', form_error="That email address has already been taken.")
+        else:
+            # create the user
+            # password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
+            encrypted_password = encrypt_password(data['password'])
+
+            user_datastore.create_user(email=data['email'], password=encrypted_password)
+
+            db.session.commit()
+
+            user = user_datastore.get_user(data['email'])
+
+            return jsonify(user.serialize())
+
+    if request.args.get('id'):
+        user = User.query.filter_by(id=request.args.get('id')).first()
+        return jsonify(users = user.serialize())
+    return jsonify(users=[u.serialize() for u in User.query.all()])
+
+
+@application.route("/api/0.1/servers", methods=["GET","POST","DELETE"])
+def servers():
+
+    if request.method == "DELETE":
+
+        data = request.get_json(force=True)
+
+        server_to_delete = Server.query.filter_by(id=data['id']).first()
+
+        db.session.delete(server_to_delete)
+        db.session.commit()
+
+    if request.method == "POST":
+
+        data = request.get_json(force=True)
+
+        #size = data['size']
+        size = 'micro'
+        new_server =  globals()[data['type']](
+                            name=data['server_name'],
+                            size = size)
+
+        new_server.op=data['minecraft_name']
+        server_id = new_server.id
+
+        user = User.query.filter_by(id=data['user_id']).first()
+
+        user.servers.append(new_server)
+
+        new_server.properties.max_players = Server.max_players[new_server.size]
+
+        db.session.add(new_server)
+
+        db.session.commit()
+
+        return jsonify(new_server.serialize())
+
+    if request.args.get('user'):
+        user = User.query.filter_by(id=request.args.get('user')).first()
+        return jsonify(servers=[s.serialize() for s in user.servers])
+
+    return jsonify(servers=[s.serialize() for s in Server.query.all()])
