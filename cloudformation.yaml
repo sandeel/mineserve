@@ -34,7 +34,7 @@ Parameters:
 
 Resources:
 
-  taskdefinition: 
+  mcpeservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
       Family: "msv"
@@ -94,6 +94,34 @@ Resources:
         - 
           SourceVolume: "plugins"
           ContainerPath: "/home/user/plugins"
+
+  arkservertaskdefinition: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: "ark_server"
+      ContainerDefinitions: 
+      - 
+        Name: "steam"
+        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/pmmp:latest"
+        PortMappings:
+          - 
+            ContainerPort: 27015
+            HostPort: 27015
+            Protocol: tcp
+          -
+            ContainerPort: 27015
+            HostPort: 27015
+            Protocol: udp
+          - 
+            ContainerPort: 7777
+            HostPort: 7777
+            Protocol: tcp
+          - 
+            ContainerPort: 7777
+            HostPort: 7777
+            Protocol: udp
+        Essential: "true"
+        Memory: 6144
 
   sshSG:
     Type: AWS::EC2::SecurityGroup

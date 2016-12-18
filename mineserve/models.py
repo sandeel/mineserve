@@ -396,8 +396,8 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
         client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
         client.create_service(
             cluster=self.id,
-            serviceName='pmmp',
-            taskDefinition=application.config['TASK_DEFINITION'],
+            serviceName=str(self.type),
+            taskDefinition=str(self.type),
             desiredCount=1,
             deploymentConfiguration={
                         'maximumPercent': 100,
@@ -443,10 +443,11 @@ def check_if_task_definition_exists(name):
         return True
     return False
 
-@event.listens_for(Server, 'before_delete')
+@event.listens_for(Server, 'before_delete', propagate=True)
 def receive_before_delete(mapper, connection, target):
     # if we are in debug don't do anything
     if application.config['STUB_AWS_RESOURCES']:
+        print('In stub mode, nothing to do')
         return
 
     # terminate the instance if it exists
@@ -460,15 +461,15 @@ def receive_before_delete(mapper, connection, target):
 
     # delete the service if it exists
     client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
-    if client.describe_services( cluster=target.id, services=[ 'pmmp', ] )['services'][0]['status'] == 'ACTIVE':
+    if client.describe_services( cluster=target.id, services=[ target.type ] )['services'][0]['status'] == 'ACTIVE':
         client.update_service(
                 cluster=target.id,
-                service='pmmp',
+                service=str(target.type),
                 desiredCount=0
         )
         client.delete_service(
                 cluster=target.id,
-                service='pmmp'
+                service=str(target.type)
         )
 
     # wait to ensure instance shutting down

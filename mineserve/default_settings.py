@@ -5,7 +5,6 @@ AWS_REGION = "eu-west-1"
 EC2_KEYPAIR = "id_rsa"
 CONTAINER_AGENT_INSTANCE_PROFILE = "mineserve-agent"
 CONTAINER_AGENT_AMI = "ami-a1491ad2"
-TASK_DEFINITION = "msv"
 STUB_AWS_RESOURCES = (os.getenv('STUB_AWS_RESOURCES', 'True') == 'True')
 
 # database settings
