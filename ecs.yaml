@@ -215,7 +215,7 @@ Resources:
       Integration: 
         Type: "HTTP"
         Uri:
-          !Join ['', ['http://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
+          !Join ['', ['https://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
         IntegrationHttpMethod: "GET"
 
   Vpc:
@@ -326,16 +326,16 @@ Resources:
         OptionName: STRIPE_PUBLISHABLE_KEY
         Value: !Ref 'StripePublishableKey'
       - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: ADVSRVS_MYSQL_DATABASE_DB
+        OptionName: DB_NAME
         Value: !Ref 'DatabaseName'
       - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: ADVSRVS_MYSQL_DATABASE_USER
+        OptionName: DB_USER
         Value: !Ref 'DatabaseUser'
       - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: ADVSRVS_MYSQL_DATABASE_HOST
+        OptionName: DB_HOST
         Value: !GetAtt [DB, Endpoint.Address]
       - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: ADVSRVS_MYSQL_DATABASE_PASSWORD
+        OptionName: DB_PASS
         Value: !Ref 'DatabasePassword'
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: ADVSRVS_SG_ID
@@ -375,7 +375,7 @@ Resources:
         Value: '1'
       - Namespace: aws:autoscaling:asg
         OptionName: MinSize
-        Value: '2'
+        Value: '1'
       - Namespace: aws:autoscaling:asg
         OptionName: MaxSize
         Value: '4'

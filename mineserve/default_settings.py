@@ -1,3 +1,5 @@
+import os
+
 # aws settings
 AWS_REGION = "eu-west-1"
 EC2_KEYPAIR = "id_rsa"
@@ -8,10 +10,10 @@ CONTAINER_AGENT_AMI = "ami-a1491ad2"
 TASK_DEFINITION = "msv"
 
 # database settings
-MYSQL_DATABASE_USER = "root"
-MYSQL_DATABASE_PASSWORD = "password"
-MYSQL_DATABASE_DB = "mineserve"
-MYSQL_DATABASE_HOST = "localhost"
+MYSQL_DATABASE_USER = os.getenv('DB_USER', 'root')
+MYSQL_DATABASE_PASSWORD = os.getenv('DB_PASS','password')
+MYSQL_DATABASE_DB = os.getenv('DB_NAME', 'mineserve')
+MYSQL_DATABASE_HOST = os.getenv('DB_HOST','localhost')
 
 # app settings
 BETA = True
