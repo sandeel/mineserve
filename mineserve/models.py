@@ -321,7 +321,7 @@ class Server(db.Model):
 
     def create_cluster(self):
 
-        if application.debug:
+        if application.config.STUB_AWS_RESOURCES:
             return 'fake-instance-id'
 
         # create the ECS cluster
@@ -436,7 +436,7 @@ def check_if_task_definition_exists(name):
 @event.listens_for(Server, 'before_delete')
 def receive_before_delete(mapper, connection, target):
     # if we are in debug don't do anything
-    if application.debug:
+    if application.config.STUB_AWS_RESOURCES:
         return
 
     # terminate the instance if it exists

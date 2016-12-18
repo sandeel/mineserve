@@ -24,12 +24,6 @@ Parameters:
     Type: String
     Description: Admin password for the website
     NoEcho: 'true'
-  DatabaseName:
-    Type: String
-    Description: Name of the MySQL database
-  DatabaseUser:
-    Type: String
-    Description: MySQL username
   DatabasePassword:
     Type: String
     Description: MySQL password
@@ -363,12 +357,6 @@ Resources:
         OptionName: STRIPE_PUBLISHABLE_KEY
         Value: !Ref 'StripePublishableKey'
       - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: DB_NAME
-        Value: !Ref 'DatabaseName'
-      - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: DB_USER
-        Value: !Ref 'DatabaseUser'
-      - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: DB_HOST
         Value: !GetAtt [DB, Endpoint.Address]
       - Namespace: aws:elasticbeanstalk:application:environment
@@ -548,9 +536,9 @@ Resources:
       DBInstanceClass: db.t2.micro
       Engine: MySQL
       EngineVersion: '5.7'
-      MasterUsername: !Ref 'DatabaseUser'
+      MasterUsername: 'mineserve'
       MasterUserPassword: !Ref 'DatabasePassword'
-      DBName: !Ref 'DatabaseName'
+      DBName: 'mineserve'
       VPCSecurityGroups: [!Ref 'DatabaseSG']
       DBSubnetGroupName: !Ref 'DBSubnetGroup'
   CodePipelineS3Bucket:
