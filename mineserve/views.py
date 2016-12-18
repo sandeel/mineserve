@@ -4,7 +4,7 @@ from flask_security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, login_required, current_user, roles_accepted
 from mineserve.models import User
 from flask_mail import Message
-from flask.ext.security.utils import encrypt_password
+from flask_security.utils import encrypt_password
 import flask_login
 from mineserve.models import Server, user_datastore
 from flask import Flask, redirect
