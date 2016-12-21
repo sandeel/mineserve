@@ -9,7 +9,7 @@ STUB_AWS_RESOURCES = (os.getenv('STUB_AWS_RESOURCES', 'True') == 'True')
 
 # database settings
 MYSQL_DATABASE_USER = os.getenv('DB_USER', 'root')
-MYSQL_DATABASE_PASSWORD = os.getenv('DB_PASS','password')
+MYSQL_DATABASE_PASSWORD = os.getenv('DB_PASS','')
 MYSQL_DATABASE_DB = os.getenv('DB_NAME', 'mineserve')
 MYSQL_DATABASE_HOST = os.getenv('DB_HOST','localhost')
 
