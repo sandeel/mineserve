@@ -46,3 +46,4 @@ websocket-client
 Werkzeug
 WTForms
 pyyaml
+Flask-JWT

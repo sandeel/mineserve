@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 # aws settings
 AWS_REGION = "eu-west-1"
@@ -35,3 +36,5 @@ SECURITY_CHANGEABLE = True
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 ADMIN_PASSWORD = "password"
 
+#jwt
+JWT_EXPIRATION_DELTA = timedelta(seconds=600)

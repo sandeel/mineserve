@@ -2,12 +2,10 @@ from flask import Flask
 import flask_login
 from flask_sqlalchemy import SQLAlchemy
 import stripe
-import os
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 from flask_mail import Mail
 import builtins
-import yaml
 
 application = Flask(__name__)
 mail = Mail(application)

@@ -9,6 +9,7 @@ import flask_login
 from mineserve.models import Server, user_datastore
 from flask import Flask, redirect
 import datetime
+from flask_jwt import jwt_required, current_identity
 
 #mcpe
 from mcpe.mcpeserver import MCPEServer
@@ -156,6 +157,7 @@ def messenger():
 
 
 @application.route("/api/0.1/users", methods=["GET","POST"])
+@jwt_required()
 def users():
 
     if request.method == "POST":
@@ -166,7 +168,6 @@ def users():
             return render_template('landing_page.html', form_error="That email address has already been taken.")
         else:
             # create the user
-            # password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
             encrypted_password = encrypt_password(data['password'])
 
             user_datastore.create_user(email=data['email'], password=encrypted_password)
@@ -184,6 +185,7 @@ def users():
 
 
 @application.route("/api/0.1/servers", methods=["GET","POST","DELETE"])
+@jwt_required()
 def servers():
 
     if request.method == "DELETE":

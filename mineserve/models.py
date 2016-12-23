@@ -1,7 +1,7 @@
 from mineserve import db, application
 from flask_security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, current_user, roles_accepted
-from flask_security.utils import encrypt_password
+from flask_security.utils import encrypt_password, verify_password
 from flask_admin.contrib import sqla
 import flask_admin as admin
 import datetime
@@ -13,6 +13,8 @@ import time
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 from threading import Thread
+from flask_jwt import JWT
+from werkzeug.security import safe_str_cmp
 
 roles_users = db.Table(
     'roles_users',
@@ -49,6 +51,18 @@ class User(db.Model, UserMixin):
 
     def __str__(self):
         return self.email
+
+# set up jwt
+
+def authenticate(username, password):
+    user = User.query.filter_by(email=username).first()
+    if user and verify_password(password, user.password):
+        return user
+
+def identity(payload):
+    return User.query.filter(User.id == payload['identity']).scalar()
+
+jwt = JWT(application, authenticate, identity)
 
 # Create customized model view class
 class ProtectedModelView(sqla.ModelView):
@@ -245,10 +259,7 @@ class Server(db.Model):
             "expiry_date" : str(self.expiry_date),
             "creation_date" : str(self.creation_date),
             "user": str(self.user.id),
-            "name": str(self.name),
-            "aws_resources": {
-                "instance_id": str(self.instance_id)
-            }
+            "name": str(self.name)
         }
 
     def __init__(self, user, size='micro', name="New Server"):
@@ -352,10 +363,18 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
 
         # get the security group
-        security_group_id = client.describe_security_groups(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':[self.type+'_sg']}])['SecurityGroups'][0]['GroupId']
+        try:
+            security_group_id = client.describe_security_groups(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':[self.type+'_sg']}])['SecurityGroups'][0]['GroupId']
+        except IndexError:
+            print("Error getting the security group for "+self.type+". Has it been created?")
+            return 'fake-instance-id'
 
         # get the subnet
-        subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['PublicSubnet1']}])['Subnets'][0]['SubnetId']
+        try:
+            subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['PublicSubnet1']}])['Subnets'][0]['SubnetId']
+        except IndexError:
+            print("Error getting the subnet for server. Has it been created?")
+            return 'fake-instance-id'
 
         # create the instance
         response = client.run_instances(
