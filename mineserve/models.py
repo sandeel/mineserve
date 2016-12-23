@@ -1,7 +1,7 @@
 from mineserve import db, application
 from flask_security import Security, SQLAlchemyUserDatastore, \
     UserMixin, RoleMixin, current_user, roles_accepted
-from flask_security.utils import encrypt_password
+from flask_security.utils import encrypt_password, verify_password
 from flask_admin.contrib import sqla
 import flask_admin as admin
 import datetime
@@ -13,6 +13,8 @@ import time
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 from threading import Thread
+from flask_jwt import JWT
+from werkzeug.security import safe_str_cmp
 
 roles_users = db.Table(
     'roles_users',
@@ -49,6 +51,18 @@ class User(db.Model, UserMixin):
 
     def __str__(self):
         return self.email
+
+# set up jwt
+
+def authenticate(username, password):
+    user = User.query.filter_by(email=username).first()
+    if user and verify_password(password, user.password):
+        return user
+
+def identity(payload):
+    return User.query.filter(User.id == payload['identity']).scalar()
+
+jwt = JWT(application, authenticate, identity)
 
 # Create customized model view class
 class ProtectedModelView(sqla.ModelView):
