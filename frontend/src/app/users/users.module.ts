@@ -18,6 +18,7 @@ import { MessagesModule } from "primeng/primeng";
   declarations: [
     LoginComponent,
     LogoutComponent,
-  ]
+  ],
+  exports: [  ]
 })
 export class UsersModule { }
