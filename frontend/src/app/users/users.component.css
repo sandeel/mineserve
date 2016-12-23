@@ -1,0 +1,68 @@
+a, p { font-size: 13px; }
+
+.modal-dialog {
+  -webkit-transform: translate(-50, -50%);
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 15px 30px;
+  width: 450px;
+  text-align: center;
+  color: #01303F;
+}
+.modal-dialog h3 { color: #01303F; }
+.login_button { height: 100px; position: relative; }
+
+.modal-dialog .dashboard-block {
+  box-shadow: 1px 2px 3px 3px rgba(20,20,20,0.6);
+  overflow: hidden;
+}
+
+.modal-dialog .loginmodal-container {
+  background-color: #fff;
+  padding: 15px 30px;
+}
+
+.modal-dialog button {
+  border-radius: 3px;
+}
+.input-group {
+  margin: 5px 0;
+}
+
+img {
+  height: 60px;
+  margin: auto;
+  display: block;
+}
+.messages { min-height: 70px; margin: 10px 0; position: relative; }
+
+.login-content {
+  background-color: #01303F;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+@media only screen and (max-width : 767px) {
+  .login-content { background: #fff; }
+  .modal-dialog .dashboard-block {
+    box-shadow: none;
+    margin: 15px;
+  }
+  .modal-dialog {
+    width:100%;
+    margin: 0;
+    padding: 0;
+  }
+}
+@media only screen and (min-width: 768px){
+  .modal-dialog{ margin: 0}
+}
+@media only screen and (min-width: 1200px){
+  img { height: 100px; }
+}
