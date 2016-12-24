@@ -175,15 +175,14 @@ export class UserLoginService {
             },
             mfaCallback: function(verificationCode, callback: any){
               cognitoUser.sendMFACode(verificationCode, callback);
+            },
+            newPasswordRequired: function(userAttributes, requiredAttributes) {
+              // User was signed up by an admin and must provide new
+              // password and required attributes, if any, to complete
+              // authentication.
+              // Get these details and call
+              cognitoUser.completeNewPasswordChallenge('Pass123$', null, this)
             }
-			newPasswordRequired: function(userAttributes, requiredAttributes) {
-				// User was signed up by an admin and must provide new 
-				// password and required attributes, if any, to complete 
-				// authentication.
-
-				// Get these details and call 
-				cognitoUser.completeNewPasswordChallenge('Pass123$', null, this)
-			}
         });
     }
 
