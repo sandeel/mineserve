@@ -1,15 +1,21 @@
-from mineserve import application, db, mail, stripe_keys
+from mineserve import application, db, stripe_keys
 from flask import request, render_template, jsonify, abort
-from flask_security import Security, SQLAlchemyUserDatastore, \
-    UserMixin, RoleMixin, login_required, current_user, roles_accepted
+from flask_security import login_required, current_user, roles_accepted
 from mineserve.models import User
-from flask_mail import Message
 from flask_security.utils import encrypt_password
-import flask_login
 from mineserve.models import Server, user_datastore
-from flask import Flask, redirect
+from flask import redirect
 import datetime
-from flask_jwt import jwt_required, current_identity
+import jwt
+from functools import wraps
+import base64
+import six
+import struct
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+import requests
+
 
 #mcpe
 from mcpe.mcpeserver import MCPEServer
@@ -154,6 +160,96 @@ def messenger():
             message = request.form['message']
             rcon(server, "say "+message)
             return render_template('messenger.html')
+
+# set up jwt
+def intarr2long(arr):
+    return int(''.join(["%02x" % byte for byte in arr]), 16)
+
+
+def base64_to_long(data):
+    if isinstance(data, six.text_type):
+        data = data.encode("ascii")
+
+    # urlsafe_b64decode will happily convert b64encoded data
+    _d = base64.urlsafe_b64decode(bytes(data) + b'==')
+    return intarr2long(struct.unpack('%sB' % len(_d), _d))
+
+
+print("Fetching JWKS")
+r = requests.get("https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_HMLKJ8toC/.well-known/jwks.json")
+jwks = r.json()
+
+pems = {}
+
+for jwk in jwks['keys']:
+    exponent = base64_to_long(jwk['e'])
+    modulus = base64_to_long(jwk['n'])
+    numbers = RSAPublicNumbers(exponent, modulus)
+    public_key = numbers.public_key(backend=default_backend())
+    pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    pems[jwk['kid']] = pem
+
+print("JWKs converted to PEMS")
+
+
+def _jwt_required():
+    auth_header = request.headers.get('Authorization', None)
+
+    if not auth_header:
+        return
+
+    allowed_auth_header_prefixes = ['jwt']
+
+    parts = auth_header.split()
+
+    if parts[0].lower() not in allowed_auth_header_prefixes:
+        raise JWTError('Invalid JWT header', 'Unsupported authorization type')
+    elif len(parts) == 1:
+        raise JWTError('Invalid JWT header', 'Token missing')
+    elif len(parts) > 2:
+        raise JWTError('Invalid JWT header', 'Token contains spaces')
+
+    token = parts[1]
+
+    print("JWT token = "+token)
+
+    kid = jwt.get_unverified_header(token)['kid']
+
+    print("Pem for kid is "+str(pems[kid]))
+
+    if jwt.decode(token,pems[kid],algorithms=['RS256']):
+        print("JWT verified")
+    else:
+        raise JWTError('Bad Request', 'Invalid credentials')
+
+class JWTError(Exception):
+    def __init__(self, error, description, status_code=401, headers=None):
+        self.error = error
+        self.description = description
+        self.status_code = status_code
+        self.headers = headers
+
+    def __repr__(self):
+        return 'JWTError: %s' % self.error
+
+    def __str__(self):
+        return '%s. %s' % (self.error, self.description)
+
+
+def jwt_required():
+    """View decorator that requires a valid JWT token to be present in the request
+    """
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            _jwt_required()
+            return fn(*args, **kwargs)
+        return decorator
+    return wrapper
 
 
 @application.route("/api/0.1/users", methods=["GET","POST"])
