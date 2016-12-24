@@ -20,9 +20,9 @@ export interface Callback {
 export class CognitoUtil {
     // Af changed all these
     public static _REGION = "eu-west-1";
-    public static _IDENTITY_POOL_ID = "eu-west-1:31a9eb64-3ca8-45fb-94c4-2ebae00127a3";
-    public static _USER_POOL_ID = "eu-west-1_GOcZp4aQZ";
-    public static _CLIENT_ID = "1ejrb2vikksmu59numdsqemn7r";
+    public static _IDENTITY_POOL_ID = "eu-west-1:73a88a02-e6a6-4a9c-80fa-0f248d04a654";
+    public static _USER_POOL_ID = "eu-west-1_HMLKJ8toC";
+    public static _CLIENT_ID = "7oa9ir0uf69e54krmhkrcno0g6";
 
     public static _POOL_DATA = {
         UserPoolId: CognitoUtil._USER_POOL_ID,
@@ -159,7 +159,7 @@ export class UserLoginService {
               AWS.config.credentials = new AWS.CognitoIdentityCredentials({
                   IdentityPoolId: CognitoUtil._IDENTITY_POOL_ID,
                   Logins: {
-                      'cognito-idp.eu-west-1.amazonaws.com/eu-west-1_GOcZp4aQZ': result.getIdToken().getJwtToken()
+                      'cognito-idp.eu-west-1.amazonaws.com/eu-west-1_HMLKJ8toC': result.getIdToken().getJwtToken()
                   }
               });
 
@@ -176,6 +176,14 @@ export class UserLoginService {
             mfaCallback: function(verificationCode, callback: any){
               cognitoUser.sendMFACode(verificationCode, callback);
             }
+			newPasswordRequired: function(userAttributes, requiredAttributes) {
+				// User was signed up by an admin and must provide new 
+				// password and required attributes, if any, to complete 
+				// authentication.
+
+				// Get these details and call 
+				cognitoUser.completeNewPasswordChallenge('Pass123$', null, this)
+			}
         });
     }
 

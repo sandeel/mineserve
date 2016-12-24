@@ -37,4 +37,6 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 ADMIN_PASSWORD = "password"
 
 #jwt
+SECRET_KEY = 'super-secret'
+JWT_SECRET_KEY = 'super-secret'
 JWT_EXPIRATION_DELTA = timedelta(seconds=600)

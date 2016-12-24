@@ -47,3 +47,4 @@ Werkzeug
 WTForms
 pyyaml
 Flask-JWT
+pyjwt
