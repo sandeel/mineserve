@@ -51,9 +51,10 @@ export class LoginComponent implements CognitoCallback, OnInit, LoggedInCallback
   }
 
   isLoggedIn(message:string, isLoggedIn:boolean) {
-    if (isLoggedIn)
+    if (isLoggedIn){
       console.log("YES");
       this.router.navigate(['/']);
+    }
   }
 
   cognitoCallback(message:string, result:any) {

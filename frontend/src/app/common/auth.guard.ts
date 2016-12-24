@@ -3,6 +3,7 @@ import {Router, CanActivate, CanLoad, CanActivateChild} from '@angular/router';
 import {LoggedInCallback, UserLoginService} from "../service/cognito.service";
 
 
+
 @Injectable()
 export class AuthGuard implements CanActivate, CanActivateChild, CanLoad, LoggedInCallback {
   errorMessage: string;
