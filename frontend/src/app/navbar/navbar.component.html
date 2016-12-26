@@ -22,7 +22,9 @@
         <li *ngIf="loggedIn">
           <a [routerLink]="['/']">{{ username }}</a>
         </li>
-        <li *ngIf="loggedIn"><a href="/servers">My Servers</a></li>
+        <li *ngIf="loggedIn">
+          <a [routerLink]="['/servers']">My Servers</a>
+        </li>
         <li *ngIf="loggedIn">
           <a [routerLink]="['/users', 'logout']">Log Out</a>
         </li>

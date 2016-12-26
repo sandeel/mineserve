@@ -9,19 +9,21 @@ import { UserLoginService, CognitoUtil } from "./service/cognito.service";
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from './app.component';
 import { HomeComponent } from "./home/home.component";
-import { NavbarComponent } from "./navbar/navbar.component";
+import { NavbarModule } from "./navbar/navbar.module";
+import {ServersComponent} from "./servers/servers.component";
 
 @NgModule({
   declarations: [
     AppComponent,
     HomeComponent,
-    NavbarComponent
+    ServersComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
     HttpModule,
-    AppRoutingModule
+    AppRoutingModule,
+    NavbarModule
   ],
   providers: [ AuthGuard, UserLoginService, CognitoUtil ],
   bootstrap: [AppComponent]
