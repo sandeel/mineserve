@@ -280,7 +280,7 @@ def users():
     return jsonify(users=[u.serialize() for u in User.query.all()])
 
 
-@application.route("/api/0.1/servers", methods=["GET","POST","DELETE"])
+@application.route("/api/0.1/servers", methods=["GET", "POST", "DELETE"])
 @jwt_required()
 def servers():
 
