@@ -1,6 +1,6 @@
-import {Component, OnInit, Pipe, PipeTransform} from '@angular/core';
-import {ServersService} from "./servers.service";
-import {Server } from './server';
+import { Component, OnInit } from '@angular/core';
+import { ServersService} from "./servers.service";
+import { Server } from './server';
 
 @Component({
   selector: 'app-servers',
@@ -12,6 +12,8 @@ export class ServersComponent implements OnInit {
 
   constructor(private serversService: ServersService ) { }
   private servers: Server[];
+  selectedServer: Server;
+  displayDialog: boolean;
   errorMessage: string;
 
   ngOnInit() {
@@ -21,7 +23,12 @@ export class ServersComponent implements OnInit {
         error =>  this.errorMessage = <any>error
       );
   }
-  logLog(){
-    console.log(this.servers);
+
+  selectServer(server: Server) {
+    this.selectedServer = server;
+    this.displayDialog = true;
+  }
+  onDialogHide() {
+    this.selectedServer = null;
   }
 }

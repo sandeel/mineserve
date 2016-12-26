@@ -1,17 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './common/auth.guard';
-import {HomeComponent} from "./home/home.component";
-import {ServersComponent} from "./servers/servers.component";
 
 const routes: Routes = [
   {
     path: '',
-    component: HomeComponent
+    loadChildren: 'app/home/home.module#HomeModule'
   },
   {
     path: 'servers',
-    component: ServersComponent
+    loadChildren: 'app/servers/servers.module#ServersModule'
   },
   {
     path: 'users',

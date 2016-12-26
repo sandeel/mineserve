@@ -1,1 +1,13 @@
-/* You can add global styles to this file, and also import other style files */
+.shadow-block, .dashboard-block {
+  margin: 10px 0;
+  padding: 0 15px;
+  box-shadow: 0 1px 3px 1px rgba(0,0,0,0.3);
+  border-radius: 4px;
+  color: #333;
+  position: relative;
+  transition: box-shadow .2s ease;
+  padding-bottom: 20px;
+}
+.dashboard-block:hover {
+  box-shadow: 0 1px 4px 1px rgba(0,0,0,0.4);
+}

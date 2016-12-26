@@ -5,18 +5,14 @@ import { HttpModule, JsonpModule } from '@angular/http';
 
 import { AuthGuard } from './common/auth.guard';
 import { UserLoginService, CognitoUtil } from "./service/cognito.service";
+import { DataListModule, DialogModule } from 'primeng/primeng';
 
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from './app.component';
-import { HomeComponent } from "./home/home.component";
-import { NavbarModule } from "./navbar/navbar.module";
-import {ServersComponent} from "./servers/servers.component";
 
 @NgModule({
   declarations: [
-    AppComponent,
-    HomeComponent,
-    ServersComponent
+    AppComponent
   ],
   imports: [
     BrowserModule,
@@ -24,7 +20,8 @@ import {ServersComponent} from "./servers/servers.component";
     HttpModule,
     JsonpModule,
     AppRoutingModule,
-    NavbarModule
+    DataListModule,
+    DialogModule
   ],
   providers: [ AuthGuard, UserLoginService, CognitoUtil ],
   bootstrap: [AppComponent]
