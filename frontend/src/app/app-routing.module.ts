@@ -9,7 +9,8 @@ const routes: Routes = [
   },
   {
     path: 'servers',
-    loadChildren: 'app/servers/servers.module#ServersModule'
+    loadChildren: 'app/servers/servers.module#ServersModule',
+    canLoad: [ AuthGuard ]
   },
   {
     path: 'users',
