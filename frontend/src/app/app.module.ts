@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
+import { HttpModule, JsonpModule } from '@angular/http';
 
 import { AuthGuard } from './common/auth.guard';
 import { UserLoginService, CognitoUtil } from "./service/cognito.service";
@@ -22,6 +22,7 @@ import {ServersComponent} from "./servers/servers.component";
     BrowserModule,
     FormsModule,
     HttpModule,
+    JsonpModule,
     AppRoutingModule,
     NavbarModule
   ],

@@ -1,1 +1,7 @@
 <app-navbar></app-navbar>
+<div class="page">
+  <div *ngFor="let server of servers">
+    {{server.creation_date}}
+    <button (click)="logLog()">logLog</button>
+  </div>
+</div>
