@@ -322,3 +322,14 @@ def servers():
         return jsonify(servers=[s.serialize() for s in user.servers])
 
     return jsonify(servers=[s.serialize() for s in Server.query.all()])
+
+
+@application.route("/api/0.1/server", methods=["POST"])
+@jwt_required()
+def server():
+    if request.method == "POST":
+        data = request.get_json(force=True)
+        s = Server.query.filter_by(id=data['server_id']).first()
+        if not s:
+            return abort(400)
+        return jsonify(s.serialize())

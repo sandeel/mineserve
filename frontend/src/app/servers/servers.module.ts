@@ -4,6 +4,7 @@ import { ServersComponent } from './servers.component';
 import { NavbarModule } from '../navbar/navbar.module';
 import { DataTableModule } from 'primeng/primeng';
 import {ServersRoutingModule} from "./servers-routing.module";
+import { ServerDetailComponent } from './server-detail/server-detail.component';
 
 @NgModule({
   imports: [
@@ -13,7 +14,8 @@ import {ServersRoutingModule} from "./servers-routing.module";
     ServersRoutingModule
   ],
   declarations: [
-    ServersComponent
+    ServersComponent,
+    ServerDetailComponent
   ]
 })
 export class ServersModule { }

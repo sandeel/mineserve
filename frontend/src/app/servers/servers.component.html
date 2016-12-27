@@ -10,13 +10,19 @@
       You have no servers
     </div>
     <div *ngIf="servers && servers.length > 0">
-      <p-dataTable [value]="servers" [responsive]="true" [stacked]="stacked">
+      <p-dataTable [value]="servers"
+                   [responsive]="true"
+                   [stacked]="stacked"
+                   selectionMode="single"
+                   [(selection)]="selectedCar2"
+                   (onRowSelect)="selectServer($event)"
+      >
         <p-column [styleClass]="'image-col'" field="type">
           <template let-col let-server="rowData" pTemplate="body">
             <img src="assets/image/{{server.type}}.png"/>
           </template>
         </p-column>
-        <p-column field="name" header="Server name" [sortable]="true"></p-column>
+        <p-column field="name" header="Server name" [sortable]="true" (click)="selectServer()"></p-column>
         <p-column field="type" header="Game type" [sortable]="true"></p-column>
         <p-column field="creation_date" header="Creation date" [sortable]="true"></p-column>
         <p-column field="expiry_date" header="Expiry date" [sortable]="true"></p-column>

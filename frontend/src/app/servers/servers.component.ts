@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ServersService} from "./servers.service";
 import { Server } from './server';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-servers',
@@ -11,7 +12,7 @@ import { Server } from './server';
 })
 export class ServersComponent implements OnInit {
 
-  constructor(private serversService: ServersService ) { }
+  constructor( private serversService: ServersService, private router: Router ) { }
   private servers: Server[];
   selectedServer: Server;
   displayDialog: boolean;
@@ -25,11 +26,8 @@ export class ServersComponent implements OnInit {
       );
   }
 
-  selectServer(server: Server) {
-    this.selectedServer = server;
-    this.displayDialog = true;
-  }
-  onDialogHide() {
-    this.selectedServer = null;
+  selectServer(event) {
+    this.selectedServer = event.data;
+    this.router.navigate(['/servers/', this.selectedServer.id]);
   }
 }
