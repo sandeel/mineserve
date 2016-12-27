@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ServersService} from "./servers.service";
 import { Server } from './server';
 
@@ -6,7 +6,8 @@ import { Server } from './server';
   selector: 'app-servers',
   templateUrl: './servers.component.html',
   styleUrls: ['./servers.component.css'],
-  providers: [ ServersService ]
+  providers: [ ServersService ],
+  encapsulation: ViewEncapsulation.None,
 })
 export class ServersComponent implements OnInit {
 
@@ -19,7 +20,7 @@ export class ServersComponent implements OnInit {
   ngOnInit() {
     this.serversService.getServers()
       .subscribe(
-        servers => this.servers = servers,
+        servers => this.servers = servers['servers'],
         error =>  this.errorMessage = <any>error
       );
   }

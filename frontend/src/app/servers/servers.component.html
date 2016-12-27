@@ -10,65 +10,17 @@
       You have no servers
     </div>
     <div *ngIf="servers && servers.length > 0">
-      <p-dataList [value]="servers" [paginator]="true" [rows]="5">
-        <template let-server>
-          <div class="ui-grid ui-grid-responsive ui-fluid" style="font-size:16px;padding:20px;border-bottom:1px solid #D5D5D5;">
-            <div class="ui-grid-row">
-              <div class="ui-grid-col-3" style="text-align:center">
-                <i class="fa fa-search"
-                   (click)="selectServer(server)"
-                   style="cursor:pointer;float:left;margin-top:40px">
-                </i>
-                <img src="assets/image/{{server.type}}.png">
-              </div>
-              <div class="ui-grid-col-9">
-                <div class="ui-grid ui-grid-responsive ui-fluid">
-                  <div class="ui-grid-row">
-                    <div class="ui-grid-col-2">Name: </div>
-                    <div class="ui-grid-col-10">{{server.name}}</div>
-                  </div>
-                  <div class="ui-grid-row">
-                    <div class="ui-grid-col-2">Type </div>
-                    <div class="ui-grid-col-10">{{server.type}}</div>
-                  </div>
-                  <div class="ui-grid-row">
-                    <div class="ui-grid-col-2">Expiry Date: </div>
-                    <div class="ui-grid-col-10">{{server.expiry_date}}</div>
-                  </div>
-                  <div class="ui-grid-row">
-                    <div class="ui-grid-col-2">Creation Date: </div>
-                    <div class="ui-grid-col-10">{{server.creation_date}}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-      </p-dataList>
-      <p-dialog header="Server Details" [(visible)]="displayDialog"
-              showEffect="fade"
-              [modal]="true" width="225"
-              (onAfterHide)="onDialogHide()">
-      <div class="ui-grid ui-grid-responsive ui-fluid" *ngIf="selectedServer"
-           style="font-size:16px;text-align:center;padding:20px">
-        <div class="ui-grid-row">
-          <div class="ui-grid-col-12" style="text-align:center">
-            <img src="assets/image/{{selectedServer.type}}.png"></div>
-        </div>
-        <div class="ui-grid-row">
-          <div class="ui-grid-col-2">Type </div>
-          <div class="ui-grid-col-10">{{selectedServer.type}}</div>
-        </div>
-        <div class="ui-grid-row">
-          <div class="ui-grid-col-2">Expiry Date: </div>
-          <div class="ui-grid-col-10">{{selectedServer.expiry_date}}</div>
-        </div>
-        <div class="ui-grid-row">
-          <div class="ui-grid-col-2">Creation Date: </div>
-          <div class="ui-grid-col-10">{{selectedServer.creation_date}}</div>
-        </div>
-      </div>
-    </p-dialog>
+      <p-dataTable [value]="servers" [responsive]="true" [stacked]="stacked">
+        <p-column [styleClass]="'image-col'" field="type">
+          <template let-col let-server="rowData" pTemplate="body">
+            <img src="assets/image/{{server.type}}.png"/>
+          </template>
+        </p-column>
+        <p-column field="name" header="Server name" [sortable]="true"></p-column>
+        <p-column field="type" header="Game type" [sortable]="true"></p-column>
+        <p-column field="creation_date" header="Creation date" [sortable]="true"></p-column>
+        <p-column field="expiry_date" header="Expiry date" [sortable]="true"></p-column>
+      </p-dataTable>
     </div>
   </div>
 </div>

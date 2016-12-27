@@ -8,14 +8,13 @@ import { Server } from './server';
 @Injectable()
 export class ServersService {
 
-  private url = 'app/servers/servers.json';
+  private url = 'http://192.168.0.108:5000/api/0.1/servers';
   private headers = new Headers();
   private servers: Observable<Server[]>
   constructor(private http: Http) {
   }
   getServers(): Observable<Server[]> {
     let params = new URLSearchParams();
-    // params.set('callback', 'JSONP_CALLBACK');
     return this.http.get(this.url)
       .map(res => res.json());
   }

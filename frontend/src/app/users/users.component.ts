@@ -73,7 +73,6 @@ export class LoginComponent implements CognitoCallback, OnInit, LoggedInCallback
     } else { //success
       localStorage.setItem('currentUser', this.username);
       console.log('accessToken: '+result.accessToken.jwtToken);
-      console.log("getAccessToken", this.userLoginService.cognitoUtil.getAccessToken(new AccessTokenCallback()));
       this.router.navigate(['/']);
     }
   }

@@ -1,1 +1,10 @@
-img { max-width: 120px;}
+img { max-width: 100%;}
+.capitalize {
+  text-transform: capitalize;
+}
+@media screen and (min-width: 560px) {
+  img { display: block; margin:auto;}
+  .image-col {
+    width:10%;
+  }
+}
