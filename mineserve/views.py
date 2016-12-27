@@ -304,7 +304,7 @@ def servers():
 
         #size = data['size']
         size = 'micro'
-        new_server =  globals()[data['type']](
+        new_server = globals()[data['type']](
                             name=data['server_name'],
                             size = size,
                             user=user)
