@@ -326,7 +326,7 @@ def servers():
 
 @application.route("/api/0.1/server-detail", methods=["POST"])
 @jwt_required()
-def server():
+def server_detail():
     if request.method == "POST":
         data = request.get_json(force=True)
         s = Server.query.filter_by(id=data['server_id']).first()
