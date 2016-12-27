@@ -6,9 +6,11 @@ from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 from flask_mail import Mail
 import builtins
+from flask_cors import CORS
 
 application = Flask(__name__)
 mail = Mail(application)
+CORS(application)
 
 application.config.from_object('mineserve.default_settings')
 
