@@ -270,16 +270,14 @@ class Server(db.Model):
         db.session.add(self)
         db.session.commit()
 
-
     def __str__(self):
         return self.id
-
 
     @property
     def status(self):
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         try:
-            instance_status =  client.describe_instance_status(
+            instance_status = client.describe_instance_status(
                 InstanceIds=[
                     self.instance_id
                 ])['InstanceStatuses'][0].get('InstanceStatus').get('Status')
