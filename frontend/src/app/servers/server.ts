@@ -5,6 +5,9 @@ export class Server {
   creation_date: string;
   user: string;
   name: string;
+  ip: string;
+  private_ip: string;
+  status: string;
 
   constructor(id: string, type: string, expiry_date: string, creation_date: string, user: string, name: string){
     this.id = id;

@@ -335,5 +335,5 @@ def server_detail():
         data = s.serialize()
         data['status'] = s.status
         data['ip'] = s.ip
-        data['private-ip'] = s.private_ip
+        data['private_ip'] = s.private_ip
         return jsonify(data)

@@ -11,8 +11,7 @@ import { Server } from "../server";
 })
 export class ServerDetailComponent implements OnInit {
   id: string;
-  server: any;
-  private sub: any;
+  server: Server;
   constructor(private route: ActivatedRoute, private serversService: ServersService) {}
 
   ngOnInit() {
