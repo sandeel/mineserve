@@ -333,7 +333,7 @@ def server_detail():
         if not s:
             return abort(400)
         data = s.serialize()
-        data.update(s.status)
-        data.update(s.ip)
-        data.update(s.private_ip)
+        data['status'] = s.status
+        data['ip'] = s.ip
+        data['private-ip'] = s.private_ip
         return jsonify(data)
