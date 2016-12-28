@@ -12,41 +12,31 @@ import boto3
 import time
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
-roles_users = db.Table(
-    'roles_users',
-    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
-)
 
-class Role(db.Model, RoleMixin):
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(80), unique=True)
-    description = db.Column(db.String(255))
+class User():
 
-    def __str__(self):
-        return self.name
+    def __init__(self, username):
+        client = boto3.client('cognito-idp', region_name=application.config['AWS_REGION'])
 
+        try:
+            response = client.admin_get_user(
+                UserPoolId=application.config['POOL_ID'],
+                Username=username
+            )
+            self.username = response['Username']
 
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(255), unique=True)
-    password = db.Column(db.String(255))
-    active = db.Column(db.Boolean())
-    confirmed_at = db.Column(db.DateTime())
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref=db.backref('users', lazy='dynamic'))
-    servers = db.relationship('Server', back_populates='user')
+        except:
+            raise ValueError("User doesn't exist in cognito")
+
 
     def serialize(self):
         return {
-            "id": self.id,
-            "email": self.email,
-            "servers": [s.id for s in self.servers]
+            "username": self.id
         }
 
 
     def __str__(self):
-        return self.email
+        return self.username
 
 # Create customized model view class
 class ProtectedModelView(sqla.ModelView):
@@ -215,8 +205,6 @@ class Server(db.Model):
     user = db.Column(db.String(255))
     size = db.Column(db.String(255))
     properties = db.relationship("Properties", backref="server", uselist=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship("User", back_populates="servers")
     type = db.Column(db.String(50))
 
     sizes = ['micro', 'large']
@@ -242,8 +230,10 @@ class Server(db.Model):
             "type": str(self.type),
             "expiry_date" : str(self.expiry_date),
             "creation_date" : str(self.creation_date),
-            "user": str(self.user.id),
-            "name": str(self.name)
+            "user": str(self.user),
+            "name": str(self.name),
+            "status": str(self.status),
+            "ip": str(self.ip)
         }
 
     def __init__(self, user, size='micro', name="New Server"):
@@ -485,23 +475,8 @@ def receive_before_delete(mapper, connection, target):
 # Create admin
 admin = admin.Admin(application, name='MineServe Admin', template_mode='bootstrap3')
 admin.add_view(ServerAdmin(Server,db.session))
-admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(ProtectedModelView(Properties,db.session))
-
-# Setup Flask-Security
-user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(application, user_datastore)
-
-# define a context processor for merging flask-admin's template context into the
-# flask-security views.
-@security.context_processor
-def security_context_processor():
-    return dict(
-        admin_base_template=admin.base_template,
-        admin_view=admin.index_view,
-        h=admin_helpers,
-    )
 
 # Executes before the first request is processed.
 @application.before_first_request
@@ -510,21 +485,18 @@ def before_first_request():
     # Create any database tables that don't exist yet.
     db.create_all()
 
-    # Create the Roles "admin" and "end-user" -- unless they already exist
-    user_datastore.find_or_create_role(name='admin', description='Administrator')
-
     # Create two Users for testing purposes -- unless they already exists.
     # In each case, use Flask-Security utility function to encrypt the password.
-    encrypted_password = encrypt_password(application.config['ADMIN_PASSWORD'])
-    if not user_datastore.get_user('adventureservers@kolabnow.com'):
-        user_datastore.create_user(email='adventureservers@kolabnow.com', password=encrypted_password)
+    #encrypted_password = encrypt_password(application.config['ADMIN_PASSWORD'])
+    #if not user_datastore.get_user('adventureservers@kolabnow.com'):
+        #user_datastore.create_user(email='adventureservers@kolabnow.com', password=encrypted_password)
 
     # Commit any database changes; the User and Roles must exist before we can add a Role to the User
-    db.session.commit()
+    #db.session.commit()
 
     # Give one User has the "end-user" role, while the other has the "admin" role. (This will have no effect if the
     # Users already have these Roles.) Again, commit any database changes.
-    user_datastore.add_role_to_user('adventureservers@kolabnow.com', 'admin')
+    #user_datastore.add_role_to_user('adventureservers@kolabnow.com', 'admin')
     db.session.commit()
 
 
