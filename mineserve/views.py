@@ -279,7 +279,7 @@ def servers():
 
         data = request.get_json(force=True)
 
-        user = User.query.filter_by(username=data['username']).first()
+        user = User(data['username'])
 
         if not user:
             return abort(400)
@@ -300,22 +300,7 @@ def servers():
         return jsonify(new_server.serialize())
 
     if request.args.get('user'):
-        user = User.query.filter_by(id=request.args.get('user')).first()
-        return jsonify(servers=[s.serialize() for s in user.servers])
+        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(username=request.args.get('user'))])
 
     return jsonify(servers=[s.serialize() for s in Server.query.all()])
 
-
-@application.route("/api/0.1/server-detail", methods=["POST"])
-@jwt_required()
-def server_detail():
-    if request.method == "POST":
-        data = request.get_json(force=True)
-        s = Server.query.filter_by(id=data['server_id']).first()
-        if not s:
-            return abort(400)
-        data = s.serialize()
-        data['status'] = s.status
-        data['ip'] = s.ip
-        data['private_ip'] = s.private_ip
-        return jsonify(data)

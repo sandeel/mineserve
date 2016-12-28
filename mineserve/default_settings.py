@@ -7,6 +7,7 @@ EC2_KEYPAIR = "id_rsa"
 CONTAINER_AGENT_INSTANCE_PROFILE = "mineserve-agent"
 CONTAINER_AGENT_AMI = "ami-a1491ad2"
 STUB_AWS_RESOURCES = (os.getenv('STUB_AWS_RESOURCES', 'True') == 'True')
+POOL_ID = "eu-west-1_HMLKJ8toC"
 
 # database settings
 MYSQL_DATABASE_USER = os.getenv('DB_USER', 'root')

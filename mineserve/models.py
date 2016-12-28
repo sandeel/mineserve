@@ -13,19 +13,30 @@ import time
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 
-class User(db.Model, UserMixin):
-    username = db.Column(db.String(50), primary_key=True)
-    servers = db.relationship('Server', back_populates='user')
+class User():
+
+    def __init__(self, username):
+        client = boto3.client('cognito-idp', region_name=application.config['AWS_REGION'])
+
+        try:
+            response = client.admin_get_user(
+                UserPoolId=application.config['POOL_ID'],
+                Username=username
+            )
+            self.username = response['Username']
+
+        except:
+            raise ValueError("User doesn't exist in cognito")
+
 
     def serialize(self):
         return {
-            "username": self.id,
-            "servers": [s.id for s in self.servers]
+            "username": self.id
         }
 
 
     def __str__(self):
-        return self.email
+        return self.username
 
 # Create customized model view class
 class ProtectedModelView(sqla.ModelView):
@@ -194,8 +205,6 @@ class Server(db.Model):
     user = db.Column(db.String(255))
     size = db.Column(db.String(255))
     properties = db.relationship("Properties", backref="server", uselist=False)
-    username = db.Column(db.String(50), db.ForeignKey('user.username'))
-    user = db.relationship("User", back_populates="servers")
     type = db.Column(db.String(50))
 
     sizes = ['micro', 'large']
@@ -221,8 +230,10 @@ class Server(db.Model):
             "type": str(self.type),
             "expiry_date" : str(self.expiry_date),
             "creation_date" : str(self.creation_date),
-            "user": str(self.user.username),
-            "name": str(self.name)
+            "user": str(self.user),
+            "name": str(self.name),
+            "status": str(self.status),
+            "ip": str(self.ip)
         }
 
     def __init__(self, user, size='micro', name="New Server"):
@@ -464,7 +475,6 @@ def receive_before_delete(mapper, connection, target):
 # Create admin
 admin = admin.Admin(application, name='MineServe Admin', template_mode='bootstrap3')
 admin.add_view(ServerAdmin(Server,db.session))
-admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(ProtectedModelView(Properties,db.session))
 
