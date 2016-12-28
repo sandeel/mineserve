@@ -1,6 +1,6 @@
 from mineserve import application, db, stripe_keys
 from flask import request, render_template, jsonify, abort
-from flask_security import login_required, current_user, roles_accepted
+from flask_security import login_required, roles_accepted
 from mineserve.models import User
 from flask_security.utils import encrypt_password
 from mineserve.models import Server
@@ -15,7 +15,10 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import requests
+from flask import _request_ctx_stack as stack
+from werkzeug.local import LocalProxy
 
+current_user = LocalProxy(lambda: getattr(stack.top, 'current_user', None))
 
 #mcpe
 from mcpe.mcpeserver import MCPEServer
@@ -30,44 +33,6 @@ def server_properties(server_id):
     response.headers["content-type"] = "text/plain"
     response.content_type = "text/plain"
     return response
-
-@application.route("/server/<server_id>/dashboard", methods=["GET","POST"])
-@login_required
-def dashboard(server_id):
-    server = Server.query.filter_by(id=server_id).first()
-    if (server.owner != current_user):
-        return abort(403)
-
-    if request.method == "POST":
-        # server name
-        server.properties.server_name = request.form['name']
-
-
-        # message of the day`
-        server.properties.motd = request.form['motd']
-
-
-        # mobs
-        #if request.form.get('mobs'):
-            #server.properties.spawn_mobs = "on"
-        #else:
-            #server.properties.spawn_mobs = "off"
-
-        db.session.commit()
-
-        server.reboot_instance()
-
-        return redirect("/server/"+server_id)
-
-
-    else:
-
-        return render_template('dashboard.html',
-                               id = server.id,
-                               name = server.properties.server_name,
-                               motd = server.properties.motd,
-                               mobs = server.properties.spawn_mobs,
-                               )
 
 @application.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
@@ -221,10 +186,12 @@ def _jwt_required():
 
     print("Pem for kid is "+str(pems[kid]))
 
-    if jwt.decode(token,pems[kid],algorithms=['RS256'],audience="7oa9ir0uf69e54krmhkrcno0g6"):
-        print("JWT verified")
-    else:
-        raise JWTError('Bad Request', 'Invalid credentials')
+    try:
+        payload = jwt.decode(token,pems[kid],algorithms=['RS256'],audience="7oa9ir0uf69e54krmhkrcno0g6")
+        stack.top.current_user = payload['cognito:username']
+    except:
+        raise JWTError('Bad Request', 'Invalid or expired credentials')
+
 
 class JWTError(Exception):
     def __init__(self, error, description, status_code=401, headers=None):
@@ -257,9 +224,8 @@ def jwt_required():
 def users():
 
     if request.args.get('id'):
-        user = User.query.filter_by(username=request.args.get('username')).first()
+        user = User(request.args.get('username'))
         return jsonify(users = user.serialize())
-    return jsonify(users=[u.serialize() for u in User.query.all()])
 
 
 @application.route("/api/0.1/servers", methods=["GET", "POST", "DELETE"])
@@ -279,7 +245,7 @@ def servers():
 
         data = request.get_json(force=True)
 
-        user = User(data['username'])
+        user = current_user
 
         if not user:
             return abort(400)
@@ -299,8 +265,6 @@ def servers():
 
         return jsonify(new_server.serialize())
 
-    if request.args.get('user'):
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(username=request.args.get('user'))])
-
-    return jsonify(servers=[s.serialize() for s in Server.query.all()])
+    if current_user:
+        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
 
