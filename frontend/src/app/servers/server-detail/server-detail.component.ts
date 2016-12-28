@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { ServersService } from "../servers.service";
 import { Server } from "../server";
@@ -7,7 +7,8 @@ import { Server } from "../server";
   selector: 'app-server-detail',
   templateUrl: './server-detail.component.html',
   styleUrls: ['./server-detail.component.css'],
-  providers: [ ServersService ]
+  providers: [ ServersService ],
+  encapsulation: ViewEncapsulation.None
 })
 export class ServerDetailComponent implements OnInit {
   id: string;

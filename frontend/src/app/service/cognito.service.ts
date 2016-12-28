@@ -126,6 +126,25 @@ export class CognitoUtil {
             }
         });
     }
+
+    returnAccessToken(): string {
+      if (this.getCurrentUser() != null)
+        this.getCurrentUser().getSession(function (err, session) {
+          if (err) {
+            console.log("CognitoUtil: Can't set the credentials:" + err);
+            return;
+          }
+          else {
+            if (session.isValid()) {
+              let token = session.getAccessToken().getJwtToken();
+              console.log(token);
+              return token;
+            }
+          }
+        });
+      else
+        return
+    }
 }
 
 @Injectable()

@@ -9,6 +9,7 @@ import { DataListModule, DialogModule } from 'primeng/primeng';
 
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from './app.component';
+import { GetHeaders } from "./common/headers";
 
 @NgModule({
   declarations: [
@@ -23,7 +24,7 @@ import { AppComponent } from './app.component';
     DataListModule,
     DialogModule
   ],
-  providers: [ AuthGuard, UserLoginService, CognitoUtil ],
+  providers: [ AuthGuard, UserLoginService, CognitoUtil, GetHeaders ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,14 +1,23 @@
 <app-navbar></app-navbar>
-<p>Going to display info and update/edit/ increase expiry date stuff here for server:</p>
-<div *ngIf="server">
-  {{server.id}}<br/>
-  {{server.expiry_date}}<br/>
-  {{server.creation_date}}<br/>
-  {{server.ip}}<br/>
-  {{server.private_ip}}<br/>
-  {{server.status}}<br/>
-  {{server.type}}<br/>
-</div>
-<div *ngIf="!server">
-  <loading></loading> Loading ...
+<div class="container">
+  <br/>
+  <div *ngIf="server">
+    <p-tabView>
+      <p-tabPanel header="Info" leftIcon="fa-info">
+        {{server.id}}<br/>
+        {{server.expiry_date}}<br/>
+        {{server.creation_date}}<br/>
+        {{server.ip}}<br/>
+        {{server.private_ip}}<br/>
+        {{server.status}}<br/>
+        {{server.type}}<br/>
+      </p-tabPanel>
+      <p-tabPanel header="Payment" leftIcon="fa-eur">
+        Payment stuff here
+      </p-tabPanel>
+    </p-tabView>
+  </div>
+  <div *ngIf="!server">
+    <loading></loading>
+  </div>
 </div>

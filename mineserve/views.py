@@ -221,7 +221,7 @@ def _jwt_required():
 
     print("Pem for kid is "+str(pems[kid]))
 
-    if jwt.decode(token,pems[kid],algorithms=['RS256']):
+    if jwt.decode(token, pems[kid], algorithms=['RS256']):
         print("JWT verified")
     else:
         raise JWTError('Bad Request', 'Invalid credentials')
