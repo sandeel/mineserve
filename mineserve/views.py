@@ -332,4 +332,8 @@ def server_detail():
         s = Server.query.filter_by(id=data['server_id']).first()
         if not s:
             return abort(400)
-        return jsonify({'info': s.serialize(), 'status': s.status, 'ip': s.ip, 'private_ip': s.private_ip})
+        data = s.serialize()
+        data.update(s.status)
+        data.update(s.ip)
+        data.update(s.private_ip)
+        return jsonify(data)

@@ -1,5 +1,5 @@
 <app-navbar></app-navbar>
-<p>Going to display info and update/edit/ increase expiry date stuff here for server:
-  <br/>
-  {{id}}
-</p>
+<p>Going to display info and update/edit/ increase expiry date stuff here for server:</p>
+<div *ngIf="server">
+  {{server.id}}
+</div>
