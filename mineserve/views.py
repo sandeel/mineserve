@@ -3,7 +3,7 @@ from flask import request, render_template, jsonify, abort
 from flask_security import login_required, current_user, roles_accepted
 from mineserve.models import User
 from flask_security.utils import encrypt_password
-from mineserve.models import Server, user_datastore
+from mineserve.models import Server
 from flask import redirect
 import datetime
 import jwt
@@ -221,7 +221,7 @@ def _jwt_required():
 
     print("Pem for kid is "+str(pems[kid]))
 
-    if jwt.decode(token,pems[kid],algorithms=['RS256']):
+    if jwt.decode(token,pems[kid],algorithms=['RS256'],audience="7oa9ir0uf69e54krmhkrcno0g6"):
         print("JWT verified")
     else:
         raise JWTError('Bad Request', 'Invalid credentials')
@@ -256,26 +256,8 @@ def jwt_required():
 @jwt_required()
 def users():
 
-    if request.method == "POST":
-
-        data = request.get_json(force=True)
-
-        if user_datastore.get_user(data['email']):
-            return render_template('landing_page.html', form_error="That email address has already been taken.")
-        else:
-            # create the user
-            encrypted_password = encrypt_password(data['password'])
-
-            user_datastore.create_user(email=data['email'], password=encrypted_password)
-
-            db.session.commit()
-
-            user = user_datastore.get_user(data['email'])
-
-            return jsonify(user.serialize())
-
     if request.args.get('id'):
-        user = User.query.filter_by(id=request.args.get('id')).first()
+        user = User.query.filter_by(username=request.args.get('username')).first()
         return jsonify(users = user.serialize())
     return jsonify(users=[u.serialize() for u in User.query.all()])
 
@@ -297,7 +279,7 @@ def servers():
 
         data = request.get_json(force=True)
 
-        user = User.query.filter_by(id=data['user_id']).first()
+        user = User.query.filter_by(username=data['username']).first()
 
         if not user:
             return abort(400)

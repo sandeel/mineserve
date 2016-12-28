@@ -12,35 +12,14 @@ import boto3
 import time
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
-roles_users = db.Table(
-    'roles_users',
-    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
-)
-
-class Role(db.Model, RoleMixin):
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(80), unique=True)
-    description = db.Column(db.String(255))
-
-    def __str__(self):
-        return self.name
-
 
 class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(255), unique=True)
-    password = db.Column(db.String(255))
-    active = db.Column(db.Boolean())
-    confirmed_at = db.Column(db.DateTime())
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref=db.backref('users', lazy='dynamic'))
+    username = db.Column(db.String(50), primary_key=True)
     servers = db.relationship('Server', back_populates='user')
 
     def serialize(self):
         return {
-            "id": self.id,
-            "email": self.email,
+            "username": self.id,
             "servers": [s.id for s in self.servers]
         }
 
@@ -215,7 +194,7 @@ class Server(db.Model):
     user = db.Column(db.String(255))
     size = db.Column(db.String(255))
     properties = db.relationship("Properties", backref="server", uselist=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    username = db.Column(db.String(50), db.ForeignKey('user.username'))
     user = db.relationship("User", back_populates="servers")
     type = db.Column(db.String(50))
 
@@ -242,7 +221,7 @@ class Server(db.Model):
             "type": str(self.type),
             "expiry_date" : str(self.expiry_date),
             "creation_date" : str(self.creation_date),
-            "user": str(self.user.id),
+            "user": str(self.user.username),
             "name": str(self.name)
         }
 
@@ -489,20 +468,6 @@ admin.add_view(UserAdmin(User,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(ProtectedModelView(Properties,db.session))
 
-# Setup Flask-Security
-user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(application, user_datastore)
-
-# define a context processor for merging flask-admin's template context into the
-# flask-security views.
-@security.context_processor
-def security_context_processor():
-    return dict(
-        admin_base_template=admin.base_template,
-        admin_view=admin.index_view,
-        h=admin_helpers,
-    )
-
 # Executes before the first request is processed.
 @application.before_first_request
 def before_first_request():
@@ -510,21 +475,18 @@ def before_first_request():
     # Create any database tables that don't exist yet.
     db.create_all()
 
-    # Create the Roles "admin" and "end-user" -- unless they already exist
-    user_datastore.find_or_create_role(name='admin', description='Administrator')
-
     # Create two Users for testing purposes -- unless they already exists.
     # In each case, use Flask-Security utility function to encrypt the password.
-    encrypted_password = encrypt_password(application.config['ADMIN_PASSWORD'])
-    if not user_datastore.get_user('adventureservers@kolabnow.com'):
-        user_datastore.create_user(email='adventureservers@kolabnow.com', password=encrypted_password)
+    #encrypted_password = encrypt_password(application.config['ADMIN_PASSWORD'])
+    #if not user_datastore.get_user('adventureservers@kolabnow.com'):
+        #user_datastore.create_user(email='adventureservers@kolabnow.com', password=encrypted_password)
 
     # Commit any database changes; the User and Roles must exist before we can add a Role to the User
-    db.session.commit()
+    #db.session.commit()
 
     # Give one User has the "end-user" role, while the other has the "admin" role. (This will have no effect if the
     # Users already have these Roles.) Again, commit any database changes.
-    user_datastore.add_role_to_user('adventureservers@kolabnow.com', 'admin')
+    #user_datastore.add_role_to_user('adventureservers@kolabnow.com', 'admin')
     db.session.commit()
 
 
