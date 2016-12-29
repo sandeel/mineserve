@@ -234,6 +234,9 @@ def servers():
 
     if request.method == "DELETE":
 
+        if application.config['STUB_AWS_RESOURCES']:
+            abort(200)
+
         data = request.get_json(force=True)
 
         server_to_delete = Server.query.filter_by(id=data['id']).first()

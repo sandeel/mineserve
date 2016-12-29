@@ -13,18 +13,20 @@ class MCPEServer(Server):
                 'polymorphic_identity':'mcpe_server',
             }
 
-    def __init__(self, user, op, name='Adventure Servers', size='micro'):
+
+    def __init__(self, user, name='Adventure Servers', size='micro'):
+        userdata = self.userdata + """
+echo hello world
+"""
         super().__init__(user, size)
 
-        self.op = op
-
-        self.properties.server_name = server_name
+        self.properties.server_name = name
 
         # random seed
-        random.seed(server_name)
+        random.seed(name)
         self.properties.level_seed = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(32))
 
-        self.properties.motd = server_name
+        self.properties.motd = name
 
         self.size=size
 
