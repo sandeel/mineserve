@@ -1,5 +1,5 @@
 from mineserve import application, db, stripe_keys
-from flask import request, render_template, jsonify, abort
+from flask import request, render_template, jsonify, abort, make_response
 from flask_security import login_required, roles_accepted
 from mineserve.models import User
 from flask_security.utils import encrypt_password

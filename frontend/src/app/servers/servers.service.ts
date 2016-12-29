@@ -17,8 +17,8 @@ export class ServersService {
     }).map(res => res.json());
   }
   getServerDetail(serverId: string): Observable<Server> {
-    let url = 'http://192.168.0.108:5000/api/0.1/server-detail';
-    return this.http.post(url, { "server_id": serverId }, {
+    let url = 'http://192.168.0.108:5000/server/' + serverId + "/properties";
+    return this.http.get(url, {
       headers: this.getHeaders.getHeaders()
     }).map(res => res.json());
   }
