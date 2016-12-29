@@ -9,10 +9,12 @@ import { DataListModule, DialogModule } from 'primeng/primeng';
 
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from './app.component';
+import { TokenComponent } from './token/token.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    TokenComponent
   ],
   imports: [
     BrowserModule,

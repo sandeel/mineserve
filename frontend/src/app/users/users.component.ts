@@ -72,7 +72,7 @@ export class LoginComponent implements CognitoCallback, OnInit, LoggedInCallback
       }
     } else { //success
       localStorage.setItem('currentUser', this.username);
-      localStorage.setItem('authToken', result.accessToken.jwtToken);
+      localStorage.setItem('authToken', result.idToken.jwtToken);
       this.router.navigate(['/']);
     }
   }
