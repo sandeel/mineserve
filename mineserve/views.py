@@ -253,8 +253,7 @@ def servers():
         if not user:
             return abort(400)
 
-        #size = data['size']
-        size = 'micro'
+        size = data['size']
         new_server = globals()[data['type']](
                             name=data['server_name'],
                             size = size,

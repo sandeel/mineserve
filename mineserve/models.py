@@ -268,7 +268,11 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
         # instantiate default properties
         self.properties = Properties(server_id = self.id)
 
-        self.instance_id = self.create_cluster()
+        try:
+            self.instance_id = self.create_cluster()
+        except Exception as e:
+            self.delete_cluster()
+            raise ValueError("Could not create cluster "+self.id+" :"+str(e))
 
         self.user = user
 
@@ -403,6 +407,50 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
 
         return instance_id
 
+    def delete_cluster(self):
+        # if we are in debug or it's a stub don't do anything
+        if application.config['STUB_AWS_RESOURCES'] or self.instance_id == 'fake-instance-id':
+            print('In stub mode, nothing to do')
+            return
+
+        # terminate the instance if it exists
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+        try:
+            instance_id = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':[self.id]}])['Reservations'][0]['Instances'][0]['InstanceId']
+            if len(client.describe_instances(InstanceIds=[instance_id,])['Reservations']) > 0:
+                client.terminate_instances(
+                        InstanceIds=[
+                                    instance_id
+                                ]
+                )
+        except:
+            print("Instance not found, moving on")
+
+        # delete the service if it exists
+        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        services = client.describe_services( cluster=self.id, services=[ self.type ] )['services']
+        if len(services) > 0 and services[0]['status'] == 'ACTIVE':
+            client.update_service(
+                    cluster=self.id,
+                    service=str(self.type),
+                    desiredCount=0
+            )
+            client.delete_service(
+                    cluster=self.id,
+                    service=str(self.type)
+            )
+
+        # wait to ensure instance shutting down
+        time.sleep(5)
+
+        # kill the cluster
+        print("Deleting cluster "+self.id)
+        client.delete_cluster(
+                cluster=self.id
+        )
+
+
+
     def apply_promo_code(self,promo_code):
 
         promo_code_days = {
@@ -441,42 +489,7 @@ def check_if_task_definition_exists(name):
 
 @event.listens_for(Server, 'before_delete', propagate=True)
 def receive_before_delete(mapper, connection, target):
-    # if we are in debug or it's a stub don't do anything
-    if application.config['STUB_AWS_RESOURCES'] or target.instance_id == 'fake-instance-id':
-        print('In stub mode, nothing to do')
-        return
-
-    # terminate the instance if it exists
-    client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
-    if len(client.describe_instances(InstanceIds=[target.instance_id,])['Reservations']) > 0:
-        client.terminate_instances(
-                InstanceIds=[
-                            target.instance_id
-                        ]
-        )
-
-    # delete the service if it exists
-    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
-    if client.describe_services( cluster=target.id, services=[ target.type ] )['services'][0]['status'] == 'ACTIVE':
-        client.update_service(
-                cluster=target.id,
-                service=str(target.type),
-                desiredCount=0
-        )
-        client.delete_service(
-                cluster=target.id,
-                service=str(target.type)
-        )
-
-    # wait to ensure instance shutting down
-    time.sleep(10)
-
-    # kill the cluster
-    print("Deleting cluster "+target.id)
-    client.delete_cluster(
-            cluster=target.id
-    )
-
+    target.delete_cluster()
 
 # Create admin
 admin = admin.Admin(application, name='MineServe Admin', template_mode='bootstrap3')
