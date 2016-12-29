@@ -6,6 +6,7 @@ import { DataTableModule, TabViewModule } from 'primeng/primeng';
 import { ServersRoutingModule } from "./servers-routing.module";
 import { ServerDetailComponent } from './server-detail/server-detail.component';
 import { LoadingModule } from "../loading/loading.module";
+import { FooterModule } from "../footer/footer.module";
 
 
 @NgModule({
@@ -15,7 +16,8 @@ import { LoadingModule } from "../loading/loading.module";
     DataTableModule,
     ServersRoutingModule,
     LoadingModule,
-    TabViewModule
+    TabViewModule,
+    FooterModule
   ],
   declarations: [
     ServersComponent,

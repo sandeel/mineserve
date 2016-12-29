@@ -6,6 +6,15 @@
         <h3>My Servers</h3>
       </div>
     </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <div *ngIf="!servers">
+          <div>
+            <loading></loading>
+          </div>
+        </div>
+      </div>
+    </div>
     <div *ngIf="servers && servers.length == 0">
       You have no servers
     </div>
@@ -33,3 +42,4 @@
     </div>
   </div>
 </div>
+<app-footer></app-footer>

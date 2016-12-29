@@ -11,13 +11,12 @@ import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from './app.component';
 import { GetHeaders } from "./common/headers";
 import { TokenComponent } from "./token/token.component";
-import { FooterComponent } from './footer/footer.component';
+import { FooterModule } from "./footer/footer.module";
 
 @NgModule({
   declarations: [
     AppComponent,
-    TokenComponent,
-    FooterComponent
+    TokenComponent
   ],
   imports: [
     BrowserModule,
@@ -26,7 +25,8 @@ import { FooterComponent } from './footer/footer.component';
     JsonpModule,
     AppRoutingModule,
     DataListModule,
-    DialogModule
+    DialogModule,
+    FooterModule
   ],
   providers: [ AuthGuard, UserLoginService, CognitoUtil, GetHeaders ],
   bootstrap: [AppComponent]
