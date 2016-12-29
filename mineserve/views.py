@@ -190,7 +190,7 @@ def _jwt_required():
         payload = jwt.decode(token,pems[kid],algorithms=['RS256'],audience="7oa9ir0uf69e54krmhkrcno0g6")
         stack.top.current_user = payload['cognito:username']
     except:
-        raise JWTError('Bad Request', 'Invalid or expired credentials')
+        abort(403)
 
 
 class JWTError(Exception):
