@@ -2,6 +2,9 @@ img { max-width: 100%; max-height: 70px;}
 .capitalize {
   text-transform: capitalize;
 }
+.ui-widget .ui-widget-header{
+  border: none;
+}
 @media screen and (min-width: 560px) {
   img { display: block; margin:auto;}
   .image-col {

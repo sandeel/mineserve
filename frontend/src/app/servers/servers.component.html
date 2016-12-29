@@ -9,6 +9,9 @@
     <div *ngIf="servers && servers.length == 0">
       You have no servers
     </div>
+    <div *ngIf="errorMessage">
+      {{errorMessage}}
+    </div>
     <div *ngIf="servers && servers.length > 0">
       <p-dataTable [value]="servers"
                    [responsive]="true"

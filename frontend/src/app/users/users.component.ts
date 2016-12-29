@@ -115,12 +115,3 @@ export class LogoutComponent implements LoggedInCallback {
     this.router.navigate(['/']);
   }
 }
-
-
-export class AccessTokenCallback implements Callback {
-  constructor() { }
-  callback() { }
-  callbackWithParam(result) {
-    localStorage.setItem('accessToken', result);
-  }
-}

@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserLoginService, LoggedInCallback } from "../service/cognito.service";
+import { ConfirmationService } from "primeng/components/common/api";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'app-navbar',
@@ -7,7 +9,9 @@ import { UserLoginService, LoggedInCallback } from "../service/cognito.service";
   styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent implements OnInit, LoggedInCallback {
-  constructor(private userLoginService: UserLoginService) {  }
+  constructor(private userLoginService: UserLoginService,
+              private confirmationService: ConfirmationService,
+              private router: Router ) {  }
   private loggedIn: Boolean = false;
   public username: string = localStorage.getItem('currentUser');
   ngOnInit() {
@@ -16,5 +20,16 @@ export class NavbarComponent implements OnInit, LoggedInCallback {
   isLoggedIn(message:string, isLoggedIn:boolean) {
     if (isLoggedIn)
       this.loggedIn = true;
+  }
+  confirmLogout(event) {
+    event.preventDefault();
+    this.confirmationService.confirm({
+      header: 'Logout',
+      icon: 'fa fa-sign-out',
+      message: 'Are you sure that you want to logout?',
+      accept: () => {
+        this.router.navigate(["/users", "logout"]);
+      }
+    });
   }
 }
