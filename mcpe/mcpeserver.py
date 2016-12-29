@@ -15,9 +15,6 @@ class MCPEServer(Server):
 
 
     def __init__(self, user, name='Adventure Servers', size='micro'):
-        userdata = self.userdata + """
-echo hello world
-"""
         super().__init__(user, size)
 
         self.properties.server_name = name
@@ -34,3 +31,8 @@ echo hello world
         data = super().serialize()
         data['type'] = str(self.type)
         return data
+
+    @property
+    def userdata(self):
+        return self._userdata + """Hello world
+"""

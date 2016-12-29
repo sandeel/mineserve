@@ -37,7 +37,7 @@ Resources:
   mcpeservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
-      Family: "msv"
+      Family: "mcpe_server"
       Volumes: 
       - 
         Host: 
@@ -142,14 +142,18 @@ Resources:
         - sshSG
         - GroupId
 
-  ContainerAgentSG:
+  mcpeserversg:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: For container agents
+      GroupDescription: For mcpe
       VpcId:
         Ref: Vpc
+      Tags:
+        -
+          Key: Name
+          Value: mcpe_server_sg
 
-  ContainerAgentInboundRulePmmpTcp:
+  mcpeserverInboundRulePmmpTcp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       IpProtocol: tcp
@@ -158,10 +162,10 @@ Resources:
       CidrIp: 0.0.0.0/0
       GroupId:
         Fn::GetAtt:
-        - ContainerAgentSG
+        - mcpeserversg
         - GroupId
 
-  ContainerAgentInboundRulePmmpUdp:
+  mcpeserverInboundRulePmmpUdp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       IpProtocol: udp
@@ -170,22 +174,10 @@ Resources:
       CidrIp: 0.0.0.0/0
       GroupId:
         Fn::GetAtt:
-        - ContainerAgentSG
+        - mcpeserversg
         - GroupId
 
-  ContainerAgentInboundRuleDestionationUnreachable:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: 'icmp'
-      FromPort: '3'
-      ToPort: '3'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ContainerAgentSG
-        - GroupId
-
-  ContainerAgentInboundRulePocketDockConsole:
+  mcpeserverInboundRulePocketDockConsole:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       IpProtocol: tcp
@@ -194,10 +186,10 @@ Resources:
       CidrIp: 0.0.0.0/0
       GroupId:
         Fn::GetAtt:
-        - ContainerAgentSG
+        - mcpeserversg
         - GroupId
 
-  ContainerAgentInboundRuleSftp:
+  mcpeserverInboundRuleSftp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       IpProtocol: tcp
@@ -206,7 +198,7 @@ Resources:
       CidrIp: 0.0.0.0/0
       GroupId:
         Fn::GetAtt:
-        - ContainerAgentSG
+        - mcpeserversg
         - GroupId
 
   ArkSG:
