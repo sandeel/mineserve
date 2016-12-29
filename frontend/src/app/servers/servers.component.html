@@ -1,6 +1,6 @@
 <app-navbar></app-navbar>
 <div class="container">
-  <div class="dashboard-block capitalize">
+  <div class="capitalize">
     <div class="row">
       <div class="col-xs-12">
         <h3>My Servers</h3>
@@ -8,6 +8,9 @@
     </div>
     <div *ngIf="servers && servers.length == 0">
       You have no servers
+    </div>
+    <div *ngIf="errorMessage">
+      {{errorMessage}}
     </div>
     <div *ngIf="servers && servers.length > 0">
       <p-dataTable [value]="servers"

@@ -72,7 +72,7 @@ export class LoginComponent implements CognitoCallback, OnInit, LoggedInCallback
       }
     } else { //success
       localStorage.setItem('currentUser', this.username);
-      localStorage.setItem('authToken', result.accessToken.jwtToken);
+      localStorage.setItem('authToken', result.idToken.jwtToken);
       this.router.navigate(['/']);
     }
   }
@@ -113,14 +113,5 @@ export class LogoutComponent implements LoggedInCallback {
     }
     localStorage.clear();
     this.router.navigate(['/']);
-  }
-}
-
-
-export class AccessTokenCallback implements Callback {
-  constructor() { }
-  callback() { }
-  callbackWithParam(result) {
-    localStorage.setItem('accessToken', result);
   }
 }

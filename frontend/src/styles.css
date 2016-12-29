@@ -1,3 +1,7 @@
+html {  position:relative;  min-height: 100%; }
+html, body {  margin:0;  padding:0; }
+.pageContentWrapper {  margin-bottom:240px;}
+
 .shadow-block, .dashboard-block {
   margin: 10px 0;
   padding: 0 15px;
@@ -10,4 +14,14 @@
 }
 .dashboard-block:hover {
   box-shadow: 0 1px 4px 1px rgba(0,0,0,0.4);
+}
+
+.loading_wrapper{ text-align: center; }
+
+@media screen and (min-width: 480px){
+
+}
+
+@media screen and (min-width: 768px){
+  .pageContentWrapper {  margin-bottom:180px;}
 }

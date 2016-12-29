@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './common/auth.guard';
+import { TokenComponent } from "./token/token.component";
 
 const routes: Routes = [
   {
@@ -15,6 +16,10 @@ const routes: Routes = [
   {
     path: 'users',
     loadChildren: 'app/users/users.module#UsersModule'
+  },
+  {
+    path: 'token',
+    component: TokenComponent
   }
 ];
 
