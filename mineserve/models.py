@@ -207,6 +207,7 @@ class Server(db.Model):
     properties = db.relationship("Properties", backref="server", uselist=False)
     type = db.Column(db.String(50))
 
+
     sizes = ['micro', 'large']
 
     prices = {
@@ -239,6 +240,20 @@ class Server(db.Model):
     def __init__(self, user, size='micro', name="New Server"):
         self.id = str(uuid.uuid4())
 
+        self._userdata = """#!/bin/bash
+echo ECS_CLUSTER="""+str(self.id)+""" >> /etc/ecs/ecs.config
+ip link set dev eth0 mtu 1460
+echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
+curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+sudo yum -y install unzip
+unzip awscli-bundle.zip
+./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+rm awscli-bundle.zip
+mkdir /plugins
+echo "user:password:::upload" > /home/ec2-user/users.conf
+"""
+
+
         self.name = name
 
         self.size = size
@@ -259,6 +274,11 @@ class Server(db.Model):
 
         db.session.add(self)
         db.session.commit()
+
+    @property
+    def userdata(self):
+        return self._userdata
+
 
     def __str__(self):
         return self.id
@@ -316,22 +336,6 @@ class Server(db.Model):
             clusterName=self.id
         )
 
-        userdata = """#!/bin/bash
-
-echo ECS_CLUSTER="""+self.id+""" >> /etc/ecs/ecs.config
-ip link set dev eth0 mtu 1460
-echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
-mkdir /plugins
-curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-sudo yum -y install unzip
-unzip awscli-bundle.zip
-./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-rm awscli-bundle.zip
-/usr/local/bin/aws s3 cp s3://msv-resourcesbucket-1cy9th89fajoy/plugins/pdc.phar /plugins/
-/usr/local/bin/aws s3 cp s3://msv-resourcesbucket-1cy9th89fajoy/server.properties /home/ec2-user/
-echo "user:password:::upload" > /home/ec2-user/users.conf
-        """
-
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
 
         # get the security group
@@ -342,6 +346,7 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
             return 'fake-instance-id'
 
         # get the subnet
+        subnet_id = ""
         try:
             subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['PublicSubnet1']}])['Subnets'][0]['SubnetId']
         except IndexError:
@@ -354,13 +359,13 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
                 InstanceType='t2.'+str(self.size),
                 MinCount = 1,
                 MaxCount = 1,
-                UserData = userdata,
+                UserData = self.userdata,
                 KeyName = application.config['EC2_KEYPAIR'],
                 IamInstanceProfile={
                     'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
                     },
                 SecurityGroupIds=[security_group_id],
-                SubnetId=subnet_id
+                SubnetId=str(subnet_id)
         )
         instance_id = response['Instances'][0]['InstanceId']
 
@@ -436,8 +441,8 @@ def check_if_task_definition_exists(name):
 
 @event.listens_for(Server, 'before_delete', propagate=True)
 def receive_before_delete(mapper, connection, target):
-    # if we are in debug don't do anything
-    if application.config['STUB_AWS_RESOURCES']:
+    # if we are in debug or it's a stub don't do anything
+    if application.config['STUB_AWS_RESOURCES'] or target.instance_id == 'fake-instance-id':
         print('In stub mode, nothing to do')
         return
 
@@ -467,6 +472,7 @@ def receive_before_delete(mapper, connection, target):
     time.sleep(10)
 
     # kill the cluster
+    print("Deleting cluster "+target.id)
     client.delete_cluster(
             cluster=target.id
     )
