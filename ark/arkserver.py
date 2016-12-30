@@ -10,10 +10,9 @@ class ArkServer(Server):
                 'polymorphic_identity':'ark_server',
             }
 
-    connect_port = 7777
-
     def __init__(self, user, size='micro', name='Ark Server'):
         super().__init__(user, size=size, name=name)
+        self.connect_port = 7777
 
     def serialize(self):
         data = super().serialize()
