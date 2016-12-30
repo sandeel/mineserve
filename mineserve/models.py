@@ -251,7 +251,6 @@ unzip awscli-bundle.zip
 ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
 rm awscli-bundle.zip
 mkdir /plugins
-echo "user:password:::upload" > /home/ec2-user/users.conf
 """
 
 

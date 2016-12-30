@@ -45,12 +45,12 @@ Resources:
         Name: "sftpconfig"
       - 
         Host: 
-          SourcePath: "/home/ec2-user/server.properties"
+          SourcePath: "/home/ec2-user/ftp/server.properties"
         Name: "server-properties"
       - 
         Host: 
-          SourcePath: "/plugins"
-        Name: "plugins"
+          SourcePath: "/home/ec2-user/ftp"
+        Name: "ftp"
       ContainerDefinitions: 
       - 
         Name: "pmmp"
@@ -72,9 +72,6 @@ Resources:
         Memory: 6144
         MountPoints: 
         - 
-          SourceVolume: "plugins"
-          ContainerPath: "/pocketmine/plugins"
-        - 
           SourceVolume: "server-properties"
           ContainerPath: "/pocketmine/server.properties"
       - 
@@ -92,8 +89,8 @@ Resources:
           SourceVolume: "sftpconfig"
           ContainerPath: "/etc/sftp-users.conf"
         - 
-          SourceVolume: "plugins"
-          ContainerPath: "/home/user/plugins"
+          SourceVolume: "ftp"
+          ContainerPath: "/home/msv"
 
   arkservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
