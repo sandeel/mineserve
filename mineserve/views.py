@@ -256,7 +256,7 @@ def servers():
         size = data['size']
         new_server = globals()[data['type']](
                             name=data['server_name'],
-                            size = size,
+                            size=size,
                             user=user)
 
         new_server.properties.max_players = Server.max_players[new_server.size]
