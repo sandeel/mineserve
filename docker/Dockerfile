@@ -10,6 +10,8 @@ RUN git clone --recursive https://github.com/pmmp/pocketmine-mp.git pocketmine
 
 WORKDIR /pocketmine
 
+RUN git checkout mcpe-1.0
+
 RUN wget https://bintray.com/pocketmine/PocketMine/download_file?file_path=PHP_7.0.6_x86-64_Linux.tar.gz -O php.tar.gz
 
 RUN tar zxvf php.tar.gz

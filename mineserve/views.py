@@ -187,8 +187,8 @@ def _jwt_required():
     print("Pem for kid is "+str(pems[kid]))
 
     try:
-        payload = jwt.decode(token,pems[kid],algorithms=['RS256'],audience="7oa9ir0uf69e54krmhkrcno0g6")
-        stack.top.current_user = payload['cognito:username']
+        payload = jwt.decode(token,pems[kid],algorithms=['RS256'])
+        stack.top.current_user = payload['username']
     except:
         abort(403)
 
