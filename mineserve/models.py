@@ -426,6 +426,15 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
                                     instance_id
                                 ]
                 )
+
+            # wait to ensure instance terminated
+            waiter = client.get_waiter('instance_terminated')
+            waiter.wait(
+                InstanceIds=[
+                            instance_id
+                        ],
+            )
+
         except:
             print("Instance not found, moving on")
 
@@ -442,9 +451,6 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
                     cluster=self.id,
                     service=str(self.type)
             )
-
-        # wait to ensure instance shutting down
-        time.sleep(5)
 
         # kill the cluster
         print("Deleting cluster "+self.id)
