@@ -11,7 +11,7 @@ export class ServersService {
   constructor( private http: Http, private getHeaders: GetHeaders ) {
   }
   getServers(): Observable<Server[]> {
-      let url = 'http://192.168.0.108:5000/api/0.1/servers';
+      let url = 'http://52.51.32.218:8000/api/0.1/servers';
     return this.http.get(url, {
       headers: this.getHeaders.getHeaders()
     }).map(res => res.json());

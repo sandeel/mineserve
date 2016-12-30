@@ -234,7 +234,8 @@ class Server(db.Model):
             "user": str(self.user),
             "name": str(self.name),
             "status": str(self.status),
-            "ip": str(self.ip)
+            "ip": str(self.ip),
+            "connect_port": self.connect_port
         }
 
     def __init__(self, user, size='micro', name="New Server"):
@@ -298,8 +299,10 @@ echo "user:password:::upload" > /home/ec2-user/users.conf
         except:
             instance_status = 'Unknown'
 
-        if instance_status == 'ok' and ((datetime.datetime.now() - self.creation_date).seconds < 120):
-            instance_status = 'Preparing Genisys'
+        if instance_status == 'initializing' or (instance_status == 'ok' and ((datetime.datetime.now() - self.creation_date).seconds < 120)):
+            instance_status = 'Preparing'
+        elif instance_status == 'ok':
+            instance_status = 'Available'
 
         return instance_status
 

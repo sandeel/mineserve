@@ -13,6 +13,7 @@ class MCPEServer(Server):
                 'polymorphic_identity':'mcpe_server',
             }
 
+    connect_port = 19132
 
     def __init__(self, user, name='Adventure Servers', size='micro'):
         super().__init__(user, size)
