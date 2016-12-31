@@ -27,7 +27,6 @@
                    [stacked]="stacked"
                    selectionMode="single"
                    [(selection)]="selectedCar2"
-                   (onRowSelect)="selectServer($event)"
       >
         <p-column [styleClass]="'image-col'" field="type">
           <template let-col let-server="rowData" pTemplate="body">
@@ -36,8 +35,15 @@
         </p-column>
         <p-column field="name" header="Server name" [sortable]="true" (click)="selectServer()"></p-column>
         <p-column field="type" header="Game type" [sortable]="true"></p-column>
-        <p-column field="creation_date" header="Creation date" [sortable]="true"></p-column>
-        <p-column field="expiry_date" header="Expiry date" [sortable]="true"></p-column>
+        <p-column field="time_remaining" header="Creation date" [sortable]="true"></p-column>
+        <p-column [styleClass]="'delete-col'" field="type">
+          <template pTemplate="header">
+            Delete
+          </template>
+          <template let-col let-server="rowData" pTemplate="body">
+            <i (click)="deleteServer(server)" class="fa fa-trash" aria-hidden="true"></i>
+          </template>
+        </p-column>
       </p-dataTable>
     </div>
   </div>

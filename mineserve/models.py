@@ -10,6 +10,7 @@ import random
 from flask_admin import helpers as admin_helpers
 import boto3
 import time
+import math
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 
@@ -225,17 +226,30 @@ class Server(db.Model):
                 'polymorphic_on':type
             }
 
+    def seconds_to_dhms(self):
+        if self.expiry_date > datetime.datetime.now():
+            time_remaining = self.expiry_date - datetime.datetime.now()
+            days = math.floor(time_remaining.seconds / 86400)
+            remainder = time_remaining.seconds % 84600
+            hours = math.floor(remainder / 3600)
+            remainder %= 60
+            minutes = math.floor(remainder / 60)
+            return str(days) + " days, " + str(hours) + " hours, " + str(minutes) + " minutes"
+        else:
+            return "Server expired"
+
     def serialize(self):
+
         return {
             "id": str(self.id),
             "type": str(self.type),
             "expiry_date" : str(self.expiry_date),
-            "creation_date" : str(self.creation_date),
+            "creation_date": str(self.creation_date),
+            "time_remaining": self.seconds_to_dhms(),
             "user": str(self.user),
             "name": str(self.name),
             "status": str(self.status),
             "ip": str(self.ip),
-            "connect_port": self.connect_port
         }
 
     def __init__(self, user, size='micro', name="New Server"):

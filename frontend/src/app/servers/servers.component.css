@@ -10,4 +10,8 @@ img { max-width: 100%; max-height: 70px;}
   .image-col {
     width:10%;
   }
+  .delete-col {
+    width:10%;
+    text-align: center;
+  }
 }

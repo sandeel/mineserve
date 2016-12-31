@@ -21,12 +21,11 @@ export class ServersComponent implements OnInit {
     this.serversService.getServers()
       .subscribe(
         servers => this.servers = servers['servers'],
-        error =>  this.router.navigate(["/users/logout"])
+        error =>  this.errorMessage = error
       );
   }
 
-  selectServer(event) {
-    this.selectedServer = event.data;
-    this.router.navigate(['/servers/', this.selectedServer.id]);
+  deleteServer(server: Server){
+    console.log("Deleting Server: " + server.id);
   }
 }

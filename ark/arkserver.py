@@ -11,10 +11,10 @@ class ArkServer(Server):
             }
 
     def __init__(self, user, size='micro', name='Ark Server'):
-        super().__init__(user, size=size, name=name)
-        self.connect_port = 7777
+        super().__init__(user, size=size, name=name, )
 
     def serialize(self):
         data = super().serialize()
         data['type'] = str(self.type)
+        data['connect_port'] = '7777'
         return data
