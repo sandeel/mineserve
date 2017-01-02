@@ -20,6 +20,9 @@ from werkzeug.local import LocalProxy
 
 current_user = LocalProxy(lambda: getattr(stack.top, 'current_user', None))
 
+#factorio
+from factorio.factorioserver import FactorioServer
+
 #mcpe
 from mcpe.mcpeserver import MCPEServer
 

@@ -34,6 +34,22 @@ Parameters:
 
 Resources:
 
+  factorioservertaskdefinition: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: "factorio_server"
+      ContainerDefinitions: 
+      - 
+        Name: "factorio"
+        Image: "carloe/docker-factorio"
+        PortMappings:
+          - 
+            ContainerPort: 34197
+            HostPort: 34197
+            Protocol: udp
+        Essential: "true"
+        Memory: 6144
+
   mcpeservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
@@ -47,6 +63,10 @@ Resources:
         Host: 
           SourcePath: "/home/ec2-user/ftp/server.properties"
         Name: "server-properties"
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/ftp/ops.txt"
+        Name: "ops"
       - 
         Host: 
           SourcePath: "/home/ec2-user/ftp"
@@ -74,6 +94,9 @@ Resources:
         - 
           SourceVolume: "server-properties"
           ContainerPath: "/pocketmine/server.properties"
+        - 
+          SourceVolume: "ops"
+          ContainerPath: "/pocketmine/ops.txt"
       - 
         Name: "ftp"
         Image: "atmoz/sftp"
@@ -196,6 +219,29 @@ Resources:
       GroupId:
         Fn::GetAtt:
         - mcpeserversg
+        - GroupId
+
+  FactorioSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: For container agents
+      VpcId:
+        Ref: Vpc
+      Tags:
+        -
+          Key: Name
+          Value: factorio_server_sg
+
+  FactorioInboundRule34197udp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: udp
+      FromPort: '34197'
+      ToPort: '34197'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - FactorioSG
         - GroupId
 
   ArkSG:

@@ -424,10 +424,6 @@ mkdir /plugins
         return instance_id
 
     def delete_cluster(self):
-        # if we are in debug or it's a stub don't do anything
-        if application.config['STUB_AWS_RESOURCES'] or self.instance_id == 'fake-instance-id':
-            print('In stub mode, nothing to do')
-            return
 
         # terminate the instance if it exists
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
