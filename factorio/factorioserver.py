@@ -14,7 +14,7 @@ class FactorioServer(Server):
     connect_port = 34197
 
     def __init__(self, user, name, size='micro'):
-        super().__init__(name, size, user)
+        super().__init__(name=name, size=size, user=user)
 
     def serialize(self):
         data = super().serialize()
