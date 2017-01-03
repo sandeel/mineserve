@@ -20,3 +20,8 @@ class FactorioServer(Server):
         data = super().serialize()
         data['type'] = str(self.type)
         return data
+
+    @property
+    def userdata(self):
+        return self._userdata + """echo "msv:password:::" > /home/ec2-user/users.conf
+"""

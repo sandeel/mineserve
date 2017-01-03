@@ -38,10 +38,27 @@ Resources:
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
       Family: "factorio_server"
+      Volumes: 
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/factorio/saves"
+        Name: "saves"
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/factorio/data/server-settings.json"
+        Name: "server-settings"
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/users.conf"
+        Name: "sftpconfig"
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/factorio"
+        Name: "factorio"
       ContainerDefinitions: 
       - 
         Name: "factorio"
-        Image: "carloe/docker-factorio"
+        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/fact:latest"
         PortMappings:
           - 
             ContainerPort: 34197
@@ -49,6 +66,30 @@ Resources:
             Protocol: udp
         Essential: "true"
         Memory: 6144
+        MountPoints: 
+        - 
+          SourceVolume: "saves"
+          ContainerPath: "/opt/factorio/saves"
+        - 
+          SourceVolume: "server-settings"
+          ContainerPath: "/opt/factorio/data/server-settings.json"
+      - 
+        Name: "ftp"
+        Image: "atmoz/sftp"
+        PortMappings:
+          - 
+            ContainerPort: 22
+            HostPort: 2222
+            Protocol: tcp
+        Essential: "true"
+        Memory: 128
+        MountPoints: 
+        - 
+          SourceVolume: "sftpconfig"
+          ContainerPath: "/etc/sftp-users.conf"
+        - 
+          SourceVolume: "factorio"
+          ContainerPath: "/home/msv"
 
   mcpeservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
@@ -106,7 +147,7 @@ Resources:
             HostPort: 2222
             Protocol: tcp
         Essential: "true"
-        Memory: 512
+        Memory: 128
         MountPoints: 
         - 
           SourceVolume: "sftpconfig"
@@ -238,6 +279,18 @@ Resources:
       IpProtocol: udp
       FromPort: '34197'
       ToPort: '34197'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - FactorioSG
+        - GroupId
+
+  FactorioInboundRuleSftp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '2222'
+      ToPort: '2222'
       CidrIp: 0.0.0.0/0
       GroupId:
         Fn::GetAtt:

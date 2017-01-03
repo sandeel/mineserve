@@ -35,5 +35,5 @@ class MCPEServer(Server):
 
     @property
     def userdata(self):
-        return self._userdata + """echo "user:password:::upload" > /home/ec2-user/users.conf
+        return self._userdata + """echo "msv:password:::" > /home/ec2-user/users.conf
 """
