@@ -45,6 +45,10 @@ Resources:
         Name: "saves"
       - 
         Host: 
+          SourcePath: "/home/ec2-user/factorio/mods"
+        Name: "mods"
+      - 
+        Host: 
           SourcePath: "/home/ec2-user/factorio/data/server-settings.json"
         Name: "server-settings"
       - 
@@ -70,6 +74,9 @@ Resources:
         - 
           SourceVolume: "saves"
           ContainerPath: "/opt/factorio/saves"
+        - 
+          SourceVolume: "mods"
+          ContainerPath: "/opt/factorio/mods"
         - 
           SourceVolume: "server-settings"
           ContainerPath: "/opt/factorio/data/server-settings.json"

@@ -24,4 +24,8 @@ class FactorioServer(Server):
     @property
     def userdata(self):
         return self._userdata + """echo "msv:password:::" > /home/ec2-user/users.conf
+mkdir /home/ec2-user/factorio
+mkdir /home/ec2-user/factorio/mods
+mkdir /home/ec2-user/factorio/saves
+chmod 777 -R /home/ec2-user/factorio
 """
