@@ -157,11 +157,7 @@ def _jwt_required():
 
     token = parts[1]
 
-    print("JWT token = "+token)
-
     kid = jwt.get_unverified_header(token)['kid']
-
-    print("Pem for kid is "+str(pems[kid]))
 
     try:
         payload = jwt.decode(token,pems[kid],algorithms=['RS256'])
@@ -251,7 +247,7 @@ def server(id):
 
         db.session.commit()
 
-        abort(200)
+        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
 
     elif request.method == "GET":
         return jsonify(server.serialize())

@@ -13,6 +13,7 @@ import time
 import math
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
+from threading import Thread
 
 class User():
 
@@ -372,6 +373,7 @@ mkdir /plugins
 
         time.sleep(1)
 
+
         # tag the instance
         response = client.create_tags(
             Resources=[
@@ -405,6 +407,10 @@ mkdir /plugins
         return instance_id
 
     def delete_cluster(self):
+        t = Thread(target=self._delete_cluster)
+        t.start()
+
+    def _delete_cluster(self):
 
         # terminate the instance if it exists
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
