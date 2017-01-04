@@ -63,21 +63,6 @@ class ProtectedModelView(sqla.ModelView):
                 # login
                 return redirect(url_for('security.login', next=request.url))
 
-
-# Customized server admin
-class ServerAdmin(ProtectedModelView):
-    column_display_pk=True
-
-    column_list = (
-        'id',
-        'instance_id',
-        'status',
-        'ip',
-        'creation_date',
-        'expiry_date',
-        'size',
-    )
-
 class PromoCode(db.Model):
     code = db.Column(db.String(255), primary_key=True)
     activated = db.Column(db.Boolean)
@@ -510,7 +495,6 @@ def receive_before_delete(mapper, connection, target):
 
 # Create admin
 admin = admin.Admin(application, name='MineServe Admin', template_mode='bootstrap3')
-admin.add_view(ServerAdmin(Server,db.session))
 admin.add_view(PromoCodeAdmin(PromoCode,db.session))
 admin.add_view(ProtectedModelView(Properties,db.session))
 

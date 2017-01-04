@@ -289,7 +289,7 @@ Resources:
       Tags:
         -
           Key: Name
-          Value: fact_server_sg
+          Value: factorio_server_sg
 
   FactorioInboundRule34197udp:
     Type: AWS::EC2::SecurityGroupIngress

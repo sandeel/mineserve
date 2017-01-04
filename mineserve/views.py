@@ -29,14 +29,7 @@ from mcpe.mcpeserver import MCPEServer
 #ark
 from ark.arkserver import ArkServer
 
-@application.route("/server/<server_id>/properties", methods=["GET"])
-def server_properties(server_id):
-    server = Server.query.filter_by(id=server_id).first()
-    response = make_response(server.properties.generate_file())
-    response.headers["content-type"] = "text/plain"
-    response.content_type = "text/plain"
-    return response
-
+"""
 @application.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
 
@@ -108,26 +101,7 @@ def server(server_id):
             price='{0:.02f}'.format(float(Server.prices[server.size]) / 100.0),
             error_message=error_message,
             )
-
-def rcon(server, command):
-    Popen(['/opt/mcrcon/mcrcon/mcrcon', '-H', server.private_ip, '-P', '33775', '-p', 'password', command])
-
-@application.route("/admin", methods=["GET","POST"])
-@roles_accepted('admin')
-def main_admin_page():
-    pass
-
-@application.route("/admin/messenger", methods=["GET","POST"])
-@roles_accepted('admin')
-def messenger():
-    if request.method == "GET":
-        return render_template('messenger.html')
-    elif request.method == "POST":
-        if request.form['message'] and request.form['server_id']:
-            server = Server.query.filter_by(id=request.form['server_id']).first()
-            message = request.form['message']
-            rcon(server, "say "+message)
-            return render_template('messenger.html')
+"""
 
 # set up jwt
 def intarr2long(arr):
@@ -235,18 +209,6 @@ def users():
 @jwt_required()
 def servers():
 
-    if request.method == "DELETE":
-
-        if application.config['STUB_AWS_RESOURCES']:
-            abort(200)
-
-        data = request.get_json(force=True)
-
-        server_to_delete = Server.query.filter_by(id=data['id']).first()
-
-        db.session.delete(server_to_delete)
-        db.session.commit()
-
     if request.method == "POST":
 
         data = request.get_json(force=True)
@@ -273,3 +235,22 @@ def servers():
     if current_user:
         return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
 
+
+@application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])
+@jwt_required()
+def server(id):
+    server = Server.query.filter_by(id=id).first()
+
+    if request.method == "DELETE":
+
+        if application.config['STUB_AWS_RESOURCES']:
+            abort(200)
+
+
+        db.session.delete(server)
+
+        db.session.commit()
+
+    elif request.method == "GET":
+        if current_user:
+            return jsonify(server.serialize())
