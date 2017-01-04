@@ -7,6 +7,7 @@ import { ServersRoutingModule } from "./servers-routing.module";
 import { ServerDetailComponent } from './server-detail/server-detail.component';
 import { LoadingModule } from "../loading/loading.module";
 import { FooterModule } from "../footer/footer.module";
+import { ServerAddComponent } from './server-add/server-add.component';
 
 
 @NgModule({
@@ -21,7 +22,8 @@ import { FooterModule } from "../footer/footer.module";
   ],
   declarations: [
     ServersComponent,
-    ServerDetailComponent
+    ServerDetailComponent,
+    ServerAddComponent
   ]
 })
 export class ServersModule { }

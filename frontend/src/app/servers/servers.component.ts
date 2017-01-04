@@ -35,6 +35,7 @@ export class ServersComponent implements OnInit {
   }
 
   deleteServer(server: Server){
+    this.serversService.deleteServer(server.id).subscribe(res => this.errorMessage = res);
     console.log("Deleting Server: " + server.id);
   }
 }
