@@ -287,19 +287,16 @@ mkdir /plugins
 
     @property
     def status(self):
-        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
-        try:
-            instance_status = client.describe_instance_status(
-                InstanceIds=[
-                    self.instance_id
-                ])['InstanceStatuses'][0].get('InstanceStatus').get('Status')
-        except:
-            instance_status = 'Unknown'
+        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        response = client.list_tasks(cluster=self.id)
 
-        if instance_status == 'initializing' or (instance_status == 'ok' and ((datetime.datetime.now() - self.creation_date).seconds < 120)):
-            instance_status = 'Preparing'
-        elif instance_status == 'ok':
+        instance_status = 'Unknown'
+
+        if (len(response['taskArns']) > 0):
             instance_status = 'Available'
+
+        else:
+            instance_status = 'Preparing'
 
         return instance_status
 
