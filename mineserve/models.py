@@ -267,7 +267,6 @@ rm awscli-bundle.zip
 mkdir /plugins
 """
 
-
         self.name = name
 
         self.size = size

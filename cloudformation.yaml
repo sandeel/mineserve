@@ -34,6 +34,11 @@ Parameters:
 
 Resources:
 
+  msvLogGroup: 
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      RetentionInDays: 7
+
   factorioservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
@@ -70,6 +75,12 @@ Resources:
             Protocol: udp
         Essential: "true"
         Memory: 6144
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref msvLogGroup
+            awslogs-region: !Ref 'AWS::Region'
+            awslogs-stream-prefix: msv
         MountPoints: 
         - 
           SourceVolume: "saves"
@@ -269,7 +280,7 @@ Resources:
         - mcpeserversg
         - GroupId
 
-  FactorioSG:
+  FactSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: For container agents
@@ -278,7 +289,7 @@ Resources:
       Tags:
         -
           Key: Name
-          Value: factorio_server_sg
+          Value: fact_server_sg
 
   FactorioInboundRule34197udp:
     Type: AWS::EC2::SecurityGroupIngress
@@ -289,7 +300,7 @@ Resources:
       CidrIp: 0.0.0.0/0
       GroupId:
         Fn::GetAtt:
-        - FactorioSG
+        - FactSG
         - GroupId
 
   FactorioInboundRuleSftp:
@@ -301,7 +312,7 @@ Resources:
       CidrIp: 0.0.0.0/0
       GroupId:
         Fn::GetAtt:
-        - FactorioSG
+        - FactSG
         - GroupId
 
   ArkSG:
