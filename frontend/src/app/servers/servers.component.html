@@ -16,7 +16,8 @@
       </div>
     </div>
     <div *ngIf="servers && servers.length == 0">
-      You have no servers
+      You have no servers<br/>
+      <a [routerLink]="['add']">Add one now?</a>
     </div>
     <div *ngIf="errorMessage">
       {{errorMessage}}

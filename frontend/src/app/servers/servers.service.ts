@@ -13,7 +13,7 @@ export class ServersService {
   constructor( private http: Http, private getHeaders: GetHeaders ) {
   }
   getServers(): Observable<Server[]> {
-      let url = 'http://52.51.32.218:8000/api/0.1/servers';
+    let url = 'http://52.51.32.218:8000/api/0.1/servers';
     return this.http.get(url, {
       headers: this.getHeaders.getHeaders()
     }).map(res => res.json());
@@ -21,6 +21,19 @@ export class ServersService {
   getServerDetail(serverId: string): Observable<Server> {
     let url = 'http://192.168.0.109:5000/server/' + serverId + "/properties";
     return this.http.get(url, {
+      headers: this.getHeaders.getHeaders()
+    }).map(res => res.json());
+  }
+  addServer(){
+    let url = 'http://52.51.32.218:8000/api/0.1/servers';
+    let body = {"size": "micro", "type": "ArkServer", "server_name": "New server"}
+    return this.http.post(url, body, {
+      headers: this.getHeaders.getHeaders()
+    }).map(res => res.json());
+  }
+  deleteServer(serverId: string){
+    let url = 'http://52.51.32.218:8000/api/0.1/servers/' + serverId;
+    return this.http.delete(url, {
       headers: this.getHeaders.getHeaders()
     }).map(res => res.json());
   }
