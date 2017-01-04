@@ -208,7 +208,6 @@ def users():
 @application.route("/api/0.1/servers", methods=["GET", "POST", "DELETE"])
 @jwt_required()
 def servers():
-
     if request.method == "POST":
 
         data = request.get_json(force=True)
@@ -239,6 +238,7 @@ def servers():
 @application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])
 @jwt_required()
 def server(id):
+    print(current_user)
     server = Server.query.filter_by(id=id).first()
     if (server.user != current_user):
         abort(403)
@@ -261,4 +261,4 @@ def server(id):
 
         server.restart()
 
-        return ('', 200)
+        return jsonify(server.serialize())

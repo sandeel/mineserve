@@ -36,6 +36,14 @@
         <p-column field="name" header="Server name" [sortable]="true" (click)="selectServer()"></p-column>
         <p-column field="type" header="Game type" [sortable]="true"></p-column>
         <p-column field="time_remaining" header="Creation date" [sortable]="true"></p-column>
+        <p-column [styleClass]="'restart-col'" field="type">
+          <template pTemplate="header">
+            Restart
+          </template>
+          <template let-col let-server="rowData" pTemplate="body">
+            <i (click)="restartServer(server)" class="fa fa-refresh" aria-hidden="true"></i>
+          </template>
+        </p-column>
         <p-column [styleClass]="'delete-col'" field="type">
           <template pTemplate="header">
             Delete
