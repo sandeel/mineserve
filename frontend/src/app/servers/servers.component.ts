@@ -27,6 +27,7 @@ export class ServersComponent implements OnInit {
 
   restartServer(server: Server){
     this.serversService.restartServer(server.id).subscribe(error => this.errorMessage = <any>error);
+    alert("Server restarting. Please wait a few minutes for it to come back up.");
   }
 
   deleteServer(server: Server){
