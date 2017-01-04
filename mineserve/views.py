@@ -240,17 +240,25 @@ def servers():
 @jwt_required()
 def server(id):
     server = Server.query.filter_by(id=id).first()
+    if (server.user != current_user):
+        abort(403)
 
     if request.method == "DELETE":
 
         if application.config['STUB_AWS_RESOURCES']:
             abort(200)
 
-
         db.session.delete(server)
 
         db.session.commit()
 
+        abort(200)
+
     elif request.method == "GET":
-        if current_user:
-            return jsonify(server.serialize())
+        return jsonify(server.serialize())
+
+    elif request.method == "POST":
+
+        server.restart()
+
+        return ('', 200)

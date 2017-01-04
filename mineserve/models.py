@@ -452,6 +452,12 @@ mkdir /plugins
         )
 
 
+    def restart(self):
+        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        taskarn = client.list_tasks(cluster=self.id)['taskArns'][0]
+
+        client.stop_task(cluster=self.id,task=taskarn)
+
 
     def apply_promo_code(self,promo_code):
 
