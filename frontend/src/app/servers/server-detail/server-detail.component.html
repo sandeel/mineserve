@@ -1,20 +1,5 @@
-<app-navbar></app-navbar>
 <div class="container">
-  <br/>
-  <div *ngIf="server">
-    <p-tabView>
-      <p-tabPanel header="Info" leftIcon="fa-info">
-        {{server.id}}<br/>
-        {{server.expiry_date}}<br/>
-        {{server.creation_date}}<br/>
-        {{server.ip}}<br/>
-        {{server.private_ip}}<br/>
-        {{server.status}}<br/>
-        {{server.type}}<br/>
-      </p-tabPanel>
-      <p-tabPanel header="Payment" leftIcon="fa-eur">
-        Payment stuff here
-      </p-tabPanel>
-    </p-tabView>
+  <div class="dashboard-block">
+    {{game.id}}{{game.name}}
   </div>
 </div>

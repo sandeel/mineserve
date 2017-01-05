@@ -1,0 +1,7 @@
+<div class="container">
+  <div class="dashboard-block">
+    <div *ngFor="let game of games">
+      <a [routerLink]="game.id">{{game.name}}</a>
+    </div>
+  </div>
+</div>

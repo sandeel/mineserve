@@ -1,4 +1,3 @@
-
 export class Server{
   id: string;
   type: string;
@@ -10,3 +9,4 @@ export class Server{
   status: string;
   time_remaining: string;
 }
+

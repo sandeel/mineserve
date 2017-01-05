@@ -4,7 +4,7 @@ import {ServersService} from "../servers.service";
 @Component({
   selector: 'app-server-add',
   templateUrl: './server-add.component.html',
-  styleUrls: ['./server-add.component.css'],
+  styleUrls: [ './server-add.component.css' ],
   providers: [ ServersService ]
 })
 export class ServerAddComponent implements OnInit {

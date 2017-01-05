@@ -8,6 +8,7 @@ import { ServerDetailComponent } from './server-detail/server-detail.component';
 import { LoadingModule } from "../loading/loading.module";
 import { FooterModule } from "../footer/footer.module";
 import { ServerAddComponent } from './server-add/server-add.component';
+import { GameComponent } from './game/game.component';
 
 
 @NgModule({
@@ -23,7 +24,8 @@ import { ServerAddComponent } from './server-add/server-add.component';
   declarations: [
     ServersComponent,
     ServerDetailComponent,
-    ServerAddComponent
+    ServerAddComponent,
+    GameComponent
   ]
 })
 export class ServersModule { }

@@ -2,7 +2,8 @@ import { NgModule }             from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { ServersComponent } from './servers.component';
-import {ServerDetailComponent} from "./server-detail/server-detail.component";
+import { ServerDetailComponent} from "./server-detail/server-detail.component";
+import { GameComponent } from "./game/game.component";
 import {ServerAddComponent} from "./server-add/server-add.component";
 
 const serversRoutes: Routes = [
@@ -12,7 +13,18 @@ const serversRoutes: Routes = [
   },
   {
     path: 'add',
-    component: ServerAddComponent
+    component: ServerAddComponent,
+    children: [
+      {
+        path: ':id',
+        component: ServerDetailComponent
+      },
+      {
+        path: '',
+        pathMatch: 'full',
+        component: GameComponent
+      }
+    ]
   },
   {
     path: ':id',
