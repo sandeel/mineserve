@@ -11,7 +11,7 @@ class FactorioServer(Server):
                 'polymorphic_identity':'factorio_server',
             }
 
-    connect_port = 34197
+    port = 34197
 
     def __init__(self, user, name, size='micro'):
         self.server_settings ="""{

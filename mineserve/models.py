@@ -236,6 +236,7 @@ class Server(db.Model):
             "name": str(self.name),
             "status": str(self.status),
             "ip": str(self.ip),
+            "port": str(self.port)
         }
 
     def __init__(self, user, size='micro', name="New Server"):
