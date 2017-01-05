@@ -178,20 +178,17 @@ Resources:
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
       Family: "ark_server"
+      Volumes: 
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/ark"
+        Name: "ark"
       ContainerDefinitions: 
       - 
-        Name: "steam"
-        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/pmmp:latest"
+        Name: "ark"
+        Image: "turzam/ark"
         PortMappings:
           - 
-            ContainerPort: 27015
-            HostPort: 27015
-            Protocol: tcp
-          -
-            ContainerPort: 27015
-            HostPort: 27015
-            Protocol: udp
-          - 
             ContainerPort: 7777
             HostPort: 7777
             Protocol: tcp
@@ -199,8 +196,30 @@ Resources:
             ContainerPort: 7777
             HostPort: 7777
             Protocol: udp
+          - 
+            ContainerPort: 7778
+            HostPort: 7778
+            Protocol: tcp
+          - 
+            ContainerPort: 7778
+            HostPort: 7778
+            Protocol: udp
+        MountPoints: 
+        - 
+          SourceVolume: "ark"
+          ContainerPath: "/ark"
         Essential: "true"
         Memory: 6144
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref msvLogGroup
+            awslogs-region: !Ref 'AWS::Region'
+            awslogs-stream-prefix: msv
+        Environment:
+          -
+            Name: SERVERPORT
+            Value: 7777
 
   sshSG:
     Type: AWS::EC2::SecurityGroup
@@ -251,6 +270,18 @@ Resources:
       FromPort: '19132'
       ToPort: '19132'
       CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - mcpeserversg
+        - GroupId
+
+  mcpeserverOutboundRulePmmpUdp:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '0'
+      ToPort: '65535'
+      CidrIp: 127.0.0.1/32
       GroupId:
         Fn::GetAtt:
         - mcpeserversg

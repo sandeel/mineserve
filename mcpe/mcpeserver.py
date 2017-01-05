@@ -13,7 +13,7 @@ class MCPEServer(Server):
                 'polymorphic_identity':'mcpe_server',
             }
 
-    connect_port = 19132
+    port = 19132
 
     def __init__(self, user, name='Adventure Servers', size='micro'):
         super().__init__(user, size)
@@ -36,4 +36,5 @@ class MCPEServer(Server):
     @property
     def userdata(self):
         return self._userdata + """echo "msv:password:::" > /home/ec2-user/users.conf
+mkdir /plugins
 """

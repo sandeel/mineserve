@@ -246,12 +246,6 @@ class Server(db.Model):
 echo ECS_CLUSTER="""+str(self.id)+""" >> /etc/ecs/ecs.config
 ip link set dev eth0 mtu 1460
 echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
-curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
-sudo yum -y install unzip
-unzip awscli-bundle.zip
-./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
-rm awscli-bundle.zip
-mkdir /plugins
 """
 
         self.name = name
