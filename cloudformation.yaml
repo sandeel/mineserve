@@ -216,6 +216,10 @@ Resources:
             awslogs-group: !Ref msvLogGroup
             awslogs-region: !Ref 'AWS::Region'
             awslogs-stream-prefix: msv
+        Environment:
+          -
+            Name: SERVERPORT
+            Value: 7777
 
   sshSG:
     Type: AWS::EC2::SecurityGroup
