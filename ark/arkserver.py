@@ -19,6 +19,7 @@ class ArkServer(Server):
     def userdata(self):
         return self._userdata + """echo "fs.file-max=100000" >> /etc/sysctl.conf
 echo "session required pam_limits.so" > /etc/pam.d/common-session
+echo "msv:password:::" > /home/ec2-user/users.conf
 """
 
     def serialize(self):
