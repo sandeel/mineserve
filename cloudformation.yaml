@@ -247,9 +247,10 @@ Resources:
             Name: SERVERPORT
             Value: 7777
         Ulimits:
-          Name: nofile
-          HardLimit: 100000
-          SoftLimit: 100000
+          -
+            Name: nofile
+            HardLimit: 100000
+            SoftLimit: 100000
 
   sshSG:
     Type: AWS::EC2::SecurityGroup
