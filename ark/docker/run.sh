@@ -41,6 +41,8 @@ cp /home/steam/crontab /ark/template/crontab
 [ ! -f /ark/crontab ] && cp /ark/template/crontab /ark/crontab
 
 
+arkmanager installmods
+
 
 if [ ! -d /ark/server  ] || [ ! -f /ark/server/arkversion ];then 
 	echo "No game files found. Installing..."
@@ -70,8 +72,6 @@ if [ $CRONNUMBER -gt 0 ]; then
 else
 	echo "No crontab set."
 fi
-
-arkmanager installmods
 
 # Launching ark server
 if [ $UPDATEONSTART -eq 0 ]; then
