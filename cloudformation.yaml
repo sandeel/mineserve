@@ -186,7 +186,7 @@ Resources:
       ContainerDefinitions: 
       - 
         Name: "ark"
-        Image: "turzam/ark"
+        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/ark:latest"
         PortMappings:
           - 
             ContainerPort: 7777
