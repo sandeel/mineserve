@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, HostBinding} from '@angular/core';
 
 @Component({
   selector: 'app-footer',
@@ -6,7 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./footer.component.css']
 })
 export class FooterComponent implements OnInit {
-
+  @HostBinding('style.class') 'footer';
   constructor() { }
 
   ngOnInit() {

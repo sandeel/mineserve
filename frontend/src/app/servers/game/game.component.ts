@@ -11,7 +11,7 @@ import { Game } from "./game";
 export class GameComponent implements OnInit {
   @HostBinding('@routeAnimation') routeAnimation = true;
   @HostBinding('style.display')   display = 'block';
-  @HostBinding('style.position')  position = 'absolute';
+  @HostBinding('style.position')  position = 'relative';
   @HostBinding('style.width')  width = '100%';
   games: Game[];
   constructor() {

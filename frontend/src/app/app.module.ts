@@ -12,6 +12,7 @@ import { AppComponent } from './app.component';
 import { GetHeaders } from "./common/headers";
 import { TokenComponent } from "./token/token.component";
 import { FooterModule } from "./footer/footer.module";
+import { NavbarModule } from "./navbar/navbar.module";
 
 @NgModule({
   declarations: [
@@ -26,6 +27,7 @@ import { FooterModule } from "./footer/footer.module";
     AppRoutingModule,
     DataListModule,
     DialogModule,
+    NavbarModule,
     FooterModule
   ],
   providers: [ AuthGuard, UserLoginService, CognitoUtil, GetHeaders ],

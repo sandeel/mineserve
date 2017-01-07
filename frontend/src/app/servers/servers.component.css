@@ -1,4 +1,4 @@
-img { max-width: 100%; max-height: 70px;}
+img.list-image { max-width: 100%; max-height: 70px;}
 .capitalize {
   text-transform: capitalize;
 }

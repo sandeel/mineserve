@@ -1,4 +1,3 @@
-<app-navbar></app-navbar>
 <div class="container">
   <div class="capitalize">
     <div class="row">
@@ -31,7 +30,7 @@
       >
         <p-column [styleClass]="'image-col'" field="type">
           <template let-col let-server="rowData" pTemplate="body">
-            <img src="assets/image/{{server.type}}.png"/>
+            <img class="list-image" src="assets/image/{{server.type}}.png"/>
           </template>
         </p-column>
         <p-column field="name" header="Server name" [sortable]="true" (click)="selectServer()"></p-column>
@@ -60,4 +59,3 @@
     </div>
   </div>
 </div>
-<app-footer></app-footer>
