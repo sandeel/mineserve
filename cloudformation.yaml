@@ -181,13 +181,8 @@ Resources:
       Volumes: 
       - 
         Host: 
-          SourcePath: "/home/ec2-user/ark"
-        Name: "ftp"
-      - 
-        Host: 
           SourcePath: "/home/ec2-user/users.conf"
         Name: "sftpconfig"
-      Volumes: 
       - 
         Host: 
           SourcePath: "/home/ec2-user/ark"
@@ -208,7 +203,7 @@ Resources:
           SourceVolume: "sftpconfig"
           ContainerPath: "/etc/sftp-users.conf"
         - 
-          SourceVolume: "ftp"
+          SourceVolume: "ark"
           ContainerPath: "/home/msv"
       - 
         Name: "ark"
@@ -230,6 +225,10 @@ Resources:
             ContainerPort: 7778
             HostPort: 7778
             Protocol: udp
+          - 
+            ContainerPort: 32330
+            HostPort: 32330
+            Protocol: tcp
         MountPoints: 
         - 
           SourceVolume: "ark"
@@ -430,6 +429,18 @@ Resources:
       IpProtocol: udp
       FromPort: '7777'
       ToPort: '7777'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRuleRCON:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '32330'
+      ToPort: '32330'
       CidrIp: 0.0.0.0/0
       GroupId:
         Fn::GetAtt:
