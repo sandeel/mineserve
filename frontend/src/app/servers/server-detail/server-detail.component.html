@@ -1,5 +1,35 @@
 <div class="container">
-  <div class="dashboard-block">
-    {{game.id}}{{game.name}}
+  <div class="dashboard-block container">
+    <div class="row">
+      <div class="col-lg-4">
+        <img src="assets/image/{{game.name}}.png"/>
+      </div>
+      <div class="col-lg-8">
+        <h3>{{game.name}}</h3>
+        <form>
+          <div class="form-group">
+            <label for="name">Server name</label>
+            <input type="text" class="form-control" id="name"
+                   required
+                   ngModel="server.name"
+                   name="name"
+                   #name >
+            <div [hidden]="name.valid || name.pristine"
+                 class="alert alert-danger">
+              Server name is required
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="size">Server size: </label>
+            <select class="form-control" id="size"
+                    required
+                    name="size"
+                    #size >
+              <option *ngFor="let size of sizes" [value]="size">{{size}}</option>
+            </select>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </div>

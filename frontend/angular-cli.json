@@ -23,7 +23,8 @@
         "../node_modules/primeng/resources/primeng.min.css",
         "../node_modules/primeng/resources/themes/aristo/theme.css",
         "styles.css",
-        "assets/css/loading.css"
+        "assets/css/loading.css",
+        "assets/css/users.css"
       ],
       "scripts": [
         "../node_modules/jquery/dist/jquery.min.js",

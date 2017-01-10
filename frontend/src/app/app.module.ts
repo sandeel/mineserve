@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule, JsonpModule } from '@angular/http';
 
 import { AuthGuard } from './common/auth.guard';
-import { UserLoginService, CognitoUtil } from "./service/cognito.service";
+import { UserLoginService, CognitoUtil, UserRegistrationService } from "./service/cognito.service";
 import { DataListModule, DialogModule } from 'primeng/primeng';
 
 import { AppRoutingModule } from "./app-routing.module";
@@ -30,7 +30,7 @@ import { NavbarModule } from "./navbar/navbar.module";
     NavbarModule,
     FooterModule
   ],
-  providers: [ AuthGuard, UserLoginService, CognitoUtil, GetHeaders ],
-  bootstrap: [AppComponent]
+  providers: [ AuthGuard, UserLoginService, UserRegistrationService, CognitoUtil, GetHeaders ],
+  bootstrap: [ AppComponent ]
 })
 export class AppModule { }

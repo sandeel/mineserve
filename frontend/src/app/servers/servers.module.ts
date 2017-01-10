@@ -7,6 +7,7 @@ import { ServerDetailComponent } from './server-detail/server-detail.component';
 import { LoadingModule } from "../loading/loading.module";
 import { ServerAddComponent } from './server-add/server-add.component';
 import { GameComponent } from './game/game.component';
+import { NavbarModule } from "../navbar/navbar.module";
 
 
 @NgModule({
@@ -16,6 +17,7 @@ import { GameComponent } from './game/game.component';
     ServersRoutingModule,
     LoadingModule,
     TabViewModule,
+    NavbarModule
   ],
   declarations: [
     ServersComponent,

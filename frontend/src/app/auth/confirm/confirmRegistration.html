@@ -1,0 +1,49 @@
+<div class="login-content">
+  <div class="modal-dialog">
+    <div class="loginmodal-container dashboard-block">
+      <form class="form-signin" method="POST" action="#" role="form">
+        <div class="form-group">
+            <h3>Confirm Registration</h3>
+        </div>
+        <div *ngIf="errorMessage!=null" class="alert alert-danger">
+            {{ errorMessage }}
+        </div>
+        <div class="form-group" *ngIf="email===null">
+          <div class="input-group">
+            <span class="input-group-addon"><i class="fa fa-user" aria-hidden="true"></i></span>
+            <input id="email" type="email"
+                   maxlength="50" class="form-control"
+                   [(ngModel)]="email"
+                   [ngModelOptions]="{standalone: true}"
+                   placeholder="Confirmation code"
+            >
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="input-group">
+            <span class="input-group-addon"><i class="fa fa-user" aria-hidden="true"></i></span>
+            <input id="confirmationCode" type="text"
+                   maxlength="50" class="form-control"
+                   [(ngModel)]="confirmationCode"
+                   [ngModelOptions]="{standalone: true}"
+                   placeholder="Confirmation code"
+            >
+          </div>
+        </div>
+        <div class="form-group">
+            <button (click)="onConfirmRegistration($event)" id="confirmRegistration" type="submit"
+                    class="btn btn-info btn-block">Confirm
+            </button>
+        </div>
+        <hr>
+        <p>Can't find your code?
+          <a [routerLink]="['/users/resendCode']">  ResendCode</a>
+        </p>
+        <p>
+          <a [routerLink]="['/users/register']">Register</a>
+          <a [routerLink]="['/users/login']">Login</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>

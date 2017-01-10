@@ -1,18 +1,13 @@
 import { Component, OnInit, HostBinding } from '@angular/core';
-import { slideInRightAnimation } from "../../animations";
 import { Game } from "./game";
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
-  styleUrls: ['./game.component.css'],
-  animations: [ slideInRightAnimation ]
+  styleUrls: ['./game.component.css'
+  ]
 })
 export class GameComponent implements OnInit {
-  @HostBinding('@routeAnimation') routeAnimation = true;
-  @HostBinding('style.display')   display = 'block';
-  @HostBinding('style.position')  position = 'relative';
-  @HostBinding('style.width')  width = '100%';
   games: Game[];
   constructor() {
   }
