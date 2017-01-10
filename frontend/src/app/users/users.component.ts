@@ -26,7 +26,6 @@ export class LoginComponent implements CognitoCallback, OnInit, LoggedInCallback
 
   ngOnInit() {
     this.errorMessage = null;
-    console.log("Checking if the user is already authenticated. If so, then redirect to the secure site");
     this.userLoginService.isAuthenticated(this);
   }
 

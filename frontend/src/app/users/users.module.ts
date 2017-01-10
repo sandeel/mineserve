@@ -10,6 +10,7 @@ import { RegisterComponent } from "../auth/register/registration.component";
 import { RegistrationConfirmationComponent } from "../auth/confirm/confirmRegistration.component";
 import { ResendCodeComponent } from "../auth/resend/resendCode.component";
 import { ForgotPasswordStep1Component, ForgotPassword2Component } from "../auth/forgot/forgotPassword.component";
+import { NavbarModule } from "../navbar/navbar.module";
 
 @NgModule({
   imports: [
@@ -17,7 +18,8 @@ import { ForgotPasswordStep1Component, ForgotPassword2Component } from "../auth/
     UsersRoutingModule,
     FormsModule,
     LoadingModule,
-    MessagesModule
+    MessagesModule,
+    NavbarModule
   ],
   declarations: [
     LoginComponent,

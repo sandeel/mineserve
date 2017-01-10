@@ -7,14 +7,13 @@ nav img{
   max-height: 80%;
   vertical-align: middle;
 }
+.navbar-right a:hover{color: #ffffff;}
 .navbar-default .navbar-collapse, .navbar-default .navbar-form {border-color: #333;}
 .navbar { background: #01303F; box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.5); border: none; margin-bottom: 0; border-radius: 0; }
 .navbar img { max-height: 25px; display: inline-block; margin-right: -20px; }
 .navigation img { max-height: 25px; display: inline-block; }
 .navbar a, .navigation a, .navbar-inverse .navbar-brand { color: #fff; }
 .navbar .dropdown-menu a { color: #fff; line-height: 30px; height: 30px; padding-top: 0; }
-#settings-cog { background: #01303F!important; font-size: 20px; }
-.navbar .dropdown-menu { background: #075A6D; }
 .navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.open>a { background: #075A6D; }
 .navbar-brand, .navbar-nav li a, .navbar-right li a { line-height: 60px; height: 60px; padding-top: 0; }
 .navbar-toggle {
