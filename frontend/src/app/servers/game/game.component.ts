@@ -1,5 +1,6 @@
 import { Component, OnInit, HostBinding } from '@angular/core';
 import { Game } from "./game";
+import {StepsService} from "../../steps/steps-service";
 
 @Component({
   selector: 'app-game',
@@ -9,9 +10,10 @@ import { Game } from "./game";
 })
 export class GameComponent implements OnInit {
   games: Game[];
-  constructor() {
+  constructor(private stepsService: StepsService) {
   }
   ngOnInit() {
+    this.stepsService.increaseStep(0);
     this.games = games;
   }
 }

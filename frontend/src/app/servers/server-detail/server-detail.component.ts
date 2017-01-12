@@ -1,9 +1,10 @@
-import {Component, OnInit, ViewEncapsulation, HostBinding} from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { ServersService } from "../servers.service";
 import { games } from "../game/game.component";
 import { Game } from "../game/game";
-import {Server} from "../server";
+import { Server} from "../server";
+import { StepsService } from "../../steps/steps-service";
 
 @Component({
   selector: 'app-server-detail',
@@ -21,7 +22,9 @@ export class ServerDetailComponent implements OnInit {
   server: Server;
   sizes = ['micro', 'large'];
 
-  constructor( private route: ActivatedRoute) {}
+  constructor( private route: ActivatedRoute, stepsService: StepsService ) {
+    stepsService.increaseStep(1);
+  }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -29,5 +32,4 @@ export class ServerDetailComponent implements OnInit {
     });
     this.game = this.games.filter(game => game.id === this.id)[0];
   }
-
 }

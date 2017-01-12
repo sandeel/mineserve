@@ -6,19 +6,7 @@
       </div>
       <div class="col-lg-8">
         <h3>{{game.name}}</h3>
-        <form>
-          <div class="form-group">
-            <label for="name">Server name</label>
-            <input type="text" class="form-control" id="name"
-                   required
-                   ngModel="server.name"
-                   name="name"
-                   #name >
-            <div [hidden]="name.valid || name.pristine"
-                 class="alert alert-danger">
-              Server name is required
-            </div>
-          </div>
+        <form #form="ngForm" (ngSubmit)="submitForm(form.value)">
           <div class="form-group">
             <label for="size">Server size: </label>
             <select class="form-control" id="size"
@@ -27,6 +15,10 @@
                     #size >
               <option *ngFor="let size of sizes" [value]="size">{{size}}</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" class="form-control" id="name" required>
           </div>
         </form>
       </div>
