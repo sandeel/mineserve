@@ -14,6 +14,7 @@ import math
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 from threading import Thread
+import libnfs
 
 class User():
 
@@ -243,9 +244,84 @@ class Server(db.Model):
         self.id = str(uuid.uuid4())
 
         self._userdata = """#!/bin/bash
-echo ECS_CLUSTER="""+str(self.id)+""" >> /etc/ecs/ecs.config
+Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
+MIME-Version: 1.0
+
+--===============BOUNDARY==
+MIME-Version: 1.0
+Content-Type: text/x-shellscript; charset="us-ascii"
+
+#! /bin/bash
 ip link set dev eth0 mtu 1460
 echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
+
+--===============BOUNDARY==
+MIME-Version: 1.0
+Content-Type: text/cloud-boothook; charset="us-ascii"
+
+#cloud-boothook
+#Join the ECS cluster
+echo ECS_CLUSTER="""+str(self.id)+""" >> /etc/ecs/ecs.config
+PATH=$PATH:/usr/local/bin
+#Instance should be added to an security group that allows HTTP outbound
+yum update
+#Install jq, a JSON parser
+yum -y install jq
+#Install NFS client
+if ! rpm -qa | grep -qw nfs-utils; then
+    yum -y install nfs-utils
+fi
+if ! rpm -qa | grep -qw python27; then
+	yum -y install python27
+fi
+#Install pip
+yum -y install python27-pip
+#Install awscli
+pip install awscli
+#Upgrade to the latest version of the awscli
+#pip install --upgrade awscli
+#Add support for EFS to the CLI configuration
+aws configure set preview.efs true
+#Get region of EC2 from instance metadata
+EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
+EC2_INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+SERVER_ID="`aws ec2 describe-tags --output text --region eu-west-1  --filters Name=resource-type,Values="instance" Name=key,Values=Name Name=resource-id,Values=\"$EC2_INSTANCE_ID\"  | cut -f5`"
+#Create mount point
+mkdir /mnt/efs
+#Get EFS FileSystemID attribute
+#Instance needs to be added to a EC2 role that give the instance at least read access to EFS
+EFS_FILE_SYSTEM_ID=`/usr/local/bin/aws efs describe-file-systems --region $EC2_REGION | jq '.FileSystems[]' | jq 'select(.Name=="ContainerDataFileSystem")' | jq -r '.FileSystemId'`
+#Check to see if the variable is set. If not, then exit.
+if [-z "$EFS_FILE_SYSTEM_ID"]; then
+	echo "ERROR: variable not set" 1> /etc/efssetup.log
+	exit
+fi
+#Instance needs to be a member of security group that allows 2049 inbound/outbound
+#The security group that the instance belongs to has to be added to EFS file system configuration
+#Create variables for source and target
+DIR_SRC=$EC2_AVAIL_ZONE.$EFS_FILE_SYSTEM_ID.efs.$EC2_REGION.amazonaws.com:/
+DIR_TGT=/mnt/efs
+
+#Mount EFS file system
+mount -t nfs4 $DIR_SRC $DIR_TGT
+
+#make dir for data
+mkdir -p /mnt/efs/container_data/$SERVER_ID
+
+umount /mnt/efs
+
+DIR_SRC=$EC2_AVAIL_ZONE.$EFS_FILE_SYSTEM_ID.efs.$EC2_REGION.amazonaws.com:/container_data/$SERVER_ID
+DIR_TGT=/mnt/efs
+
+#Mount EFS file system
+mount -t nfs4 $DIR_SRC $DIR_TGT
+
+#Backup fstab
+cp -p /etc/fstab /etc/fstab.back-$(date +%F)
+#Append line to fstab
+echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /etc/fstab
+--===============BOUNDARY==--
 """
 
         self.name = name

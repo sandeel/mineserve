@@ -627,6 +627,9 @@ Resources:
         OptionName: DB_HOST
         Value: !GetAtt [DB, Endpoint.Address]
       - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: DB_USER
+        Value: 'msv'
+      - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: DB_PASS
         Value: !Ref 'DatabasePassword'
       - Namespace: aws:elasticbeanstalk:application:environment
@@ -803,7 +806,7 @@ Resources:
       DBInstanceClass: db.t2.micro
       Engine: MySQL
       EngineVersion: '5.7'
-      MasterUsername: 'mineserve'
+      MasterUsername: 'msv'
       MasterUserPassword: !Ref 'DatabasePassword'
       DBName: 'mineserve'
       VPCSecurityGroups: [!Ref 'DatabaseSG']
@@ -886,22 +889,42 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref 'CodePipelineS3Bucket'
-  ResourcesBucket:
-    Type: AWS::S3::Bucket
+
+  ContainerDataFileSystem: 
+    Type: "AWS::EFS::FileSystem"
+    Properties: 
+      FileSystemTags: 
+        - 
+          Key: "Name"
+          Value: "ContainerDataFileSystem"
+  MountTarget: 
+    Type: "AWS::EFS::MountTarget"
+    Properties: 
+      FileSystemId: 
+        Ref: "ContainerDataFileSystem"
+      SubnetId: 
+        Ref: "PublicSubnet1"
+      SecurityGroups: 
+        - 
+          Ref: "MountTargetSecurityGroup"
+  MountTargetSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      AccessControl: PublicRead
-  PublicRead:
-    Type: AWS::S3::BucketPolicy
+      GroupDescription: Port 2049
+      VpcId:
+        Ref: Vpc
+
+  MountTargetSecurityGroupnboundRule:
+    Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Bucket: !Ref 'ResourcesBucket'
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Sid: AddPerm
-          Effect: Allow
-          Principal: '*'
-          Action: ['s3:GetObject']
-          Resource: !Join ['', ['arn:aws:s3:::', !Ref 'ResourcesBucket', /*]]
+      IpProtocol: tcp
+      FromPort: '2049'
+      ToPort: '2049'
+      CidrIp: 10.0.0.0/24
+      GroupId:
+        Fn::GetAtt:
+        - MountTargetSecurityGroup
+        - GroupId
 
 
 Mappings: 
