@@ -185,7 +185,7 @@ Resources:
         Name: "sftpconfig"
       - 
         Host: 
-          SourcePath: "/home/ec2-user/ark"
+          SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/SavedArks"
         Name: "ark"
       ContainerDefinitions: 
       - 
@@ -232,7 +232,7 @@ Resources:
         MountPoints: 
         - 
           SourceVolume: "ark"
-          ContainerPath: "/ark"
+          ContainerPath: "/ark/server/ShooterGame/Saved/SavedArks"
         Essential: "true"
         Memory: 6144
         LogConfiguration:
@@ -447,6 +447,30 @@ Resources:
         - ArkSG
         - GroupId
 
+  ArkInboundRuleSsh:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRuleSFTP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '2222'
+      ToPort: '2222'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
 
   GitRepo:
     Type: "AWS::CodeCommit::Repository"
@@ -516,65 +540,6 @@ Resources:
           StatusCode: 200
 
 
-  Vpc:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsHostnames: 'true'
-      EnableDnsSupport: 'true'
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-  AttachGateway:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref 'Vpc'
-      InternetGatewayId: !Ref 'InternetGateway'
-  PublicSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.0.0/24
-      Tags:
-      - Key: Name
-        Value: PublicSubnet1
-      MapPublicIpOnLaunch: 'true'
-  PublicRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref 'Vpc'
-      Tags:
-      - Key: Name
-        Value: PublicRouteTable
-  PublicSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref 'PublicSubnet1'
-      RouteTableId: !Ref 'PublicRouteTable'
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: AttachGateway
-    Properties:
-      RouteTableId: !Ref 'PublicRouteTable'
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref 'InternetGateway'
-  PrivateSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.1.0/24
-      Tags:
-      - Key: Name
-        Value: PrivateSubnet
-      AvailabilityZone: !Select ['0', !GetAZs {Ref: 'AWS::Region'}]
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.3.0/24
-      Tags:
-      - Key: Name
-        Value: PrivateSubnet
-      AvailabilityZone: !Select ['1', !GetAZs {Ref: 'AWS::Region'}]
   Website:
     Type: AWS::ElasticBeanstalk::Application
   ProdEnvironment:
@@ -689,8 +654,8 @@ Resources:
         ToPort: '33775'
         CidrIp: 0.0.0.0/0
       - IpProtocol: tcp
-        FromPort: '22'
-        ToPort: '22'
+        FromPort: '2222'
+        ToPort: '2222'
         CidrIp: 10.0.0.0/16
   DatabaseSG:
     Type: AWS::EC2::SecurityGroup
@@ -925,6 +890,74 @@ Resources:
         Fn::GetAtt:
         - MountTargetSecurityGroup
         - GroupId
+
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref 'Vpc'
+      InternetGatewayId: !Ref 'InternetGateway'
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.0.0/24
+      Tags:
+      - Key: Name
+        Value: PublicSubnet1
+      MapPublicIpOnLaunch: 'true'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'Vpc'
+      Tags:
+      - Key: Name
+        Value: PublicRouteTable
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'PublicSubnet1'
+      RouteTableId: !Ref 'PublicRouteTable'
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref 'PublicRouteTable'
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref 'InternetGateway'
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.1.0/24
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet
+      AvailabilityZone: !Select ['0', !GetAZs {Ref: 'AWS::Region'}]
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.3.0/24
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet
+      AvailabilityZone: !Select ['1', !GetAZs {Ref: 'AWS::Region'}]
 
 
 Mappings: 

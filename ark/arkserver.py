@@ -15,13 +15,6 @@ class ArkServer(Server):
     def __init__(self, user, size='micro', name='Ark Server'):
         super().__init__(user, size=size, name=name, )
 
-    @property
-    def userdata(self):
-        return self._userdata + """echo "fs.file-max=100000" >> /etc/sysctl.conf
-echo "session required pam_limits.so" > /etc/pam.d/common-session
-echo "msv:password:::" > /home/ec2-user/users.conf
-"""
-
     def serialize(self):
         data = super().serialize()
         data['type'] = str(self.type)

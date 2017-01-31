@@ -243,8 +243,7 @@ class Server(db.Model):
     def __init__(self, user, size='micro', name="New Server"):
         self.id = str(uuid.uuid4())
 
-        self._userdata = """#!/bin/bash
-Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
+        self._userdata = """Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
 MIME-Version: 1.0
 
 --===============BOUNDARY==
@@ -254,6 +253,10 @@ Content-Type: text/x-shellscript; charset="us-ascii"
 #! /bin/bash
 ip link set dev eth0 mtu 1460
 echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
+echo "fs.file-max=100000" >> /etc/sysctl.conf
+echo "session required pam_limits.so" > /etc/pam.d/common-session
+echo "msv:password:0::" > /home/ec2-user/users.conf
+mkdir -p /mnt/efs/ark/server/ShooterGame/Saved/SavedArks
 
 --===============BOUNDARY==
 MIME-Version: 1.0
@@ -316,6 +319,8 @@ DIR_TGT=/mnt/efs
 
 #Mount EFS file system
 mount -t nfs4 $DIR_SRC $DIR_TGT
+
+chmod 777 -R /mnt/efs
 
 #Backup fstab
 cp -p /etc/fstab /etc/fstab.back-$(date +%F)
