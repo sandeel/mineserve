@@ -51,13 +51,16 @@ RUN usermod -a -G sudo steam
 # Copy & rights to folders
 COPY run.sh /home/steam/run.sh
 COPY user.sh /home/steam/user.sh
+COPY install.sh /home/steam/install.sh
 COPY crontab /home/steam/crontab
 COPY arkmanager-user.cfg /home/steam/arkmanager.cfg
 
 RUN touch /root/.bash_profile
 RUN chmod 777 /home/steam/run.sh
 RUN chmod 777 /home/steam/user.sh
-RUN mkdir  /ark
+RUN chmod 777 /home/steam/install.sh
+RUN mkdir /ark
+RUN chmod 777 /ark
 
 
 # We use the git method, because api github has a limit ;)
@@ -95,10 +98,8 @@ EXPOSE ${STEAMPORT} 32330 ${SERVERPORT}
 # Add UDP
 EXPOSE ${STEAMPORT}/udp ${SERVERPORT}/udp
 
-VOLUME  /ark 
-
 # Change the working directory to /arkd
 WORKDIR /ark
 
 # Update game launch the game.
-ENTRYPOINT ["/home/steam/user.sh"]
+ENTRYPOINT ["su", "-p", "-", "steam", "-c", "/home/steam/user.sh"]

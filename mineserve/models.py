@@ -255,7 +255,7 @@ ip link set dev eth0 mtu 1460
 echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
 echo "fs.file-max=100000" >> /etc/sysctl.conf
 echo "session required pam_limits.so" > /etc/pam.d/common-session
-echo "msv:password:0::" > /home/ec2-user/users.conf
+echo "msv:password" > /home/ec2-user/users.conf
 mkdir -p /mnt/efs/ark/server/ShooterGame/Saved/SavedArks
 
 --===============BOUNDARY==
@@ -321,6 +321,13 @@ DIR_TGT=/mnt/efs
 mount -t nfs4 $DIR_SRC $DIR_TGT
 
 chmod 777 -R /mnt/efs
+
+# set up ark dirs
+mkdir -p /mnt/efs/ark/server/ShooterGame/Saved/SavedArks
+cd /mnt/efs/ark/
+yum -y install wget
+wget https://raw.githubusercontent.com/TuRz4m/Ark-docker/master/arkmanager-user.cfg
+mv arkmanager-user.cfg arkmanager.cfg
 
 #Backup fstab
 cp -p /etc/fstab /etc/fstab.back-$(date +%F)

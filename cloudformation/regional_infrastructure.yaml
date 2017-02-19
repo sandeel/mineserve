@@ -5,6 +5,9 @@ Parameters:
   KeyName: 
     Description: Amazon EC2 Key Pair
     Type: "AWS::EC2::KeyPair::KeyName"
+  ContainerAgentInstanceProfileName: 
+    Description: Container Agent Instance Profile name
+    Type: "string"
 
 Resources:
 
@@ -28,7 +31,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.0.0/24
+      CidrBlock: 10.0.0.0/18
       Tags:
       - Key: Name
         Value: PublicSubnet1
@@ -56,22 +59,46 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref 'InternetGateway'
 
-  PrivateSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.1.0/24
-      Tags:
-      - Key: Name
-        Value: PrivateSubnet
-      AvailabilityZone: !Select ['0', !GetAZs {Ref: 'AWS::Region'}]
+	ContainerAgentLaunchConfiguration: 
+		Type: "AWS::AutoScaling::LaunchConfiguration"
+		Properties: 
+			ImageId: 
+				Fn::FindInMap: 
+					- "RegionMap"
+					- Ref: "AWS::Region"
+					- "ecsoptimized"
+			InstanceType: 
+				Ref: "InstanceType"
+			IamInstanceProfile: 
+				Ref: ContainerAgentInstanceProfileName
 
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.3.0/24
-      Tags:
-      - Key: Name
-        Value: PrivateSubnet
-      AvailabilityZone: !Select ['1', !GetAZs {Ref: 'AWS::Region'}]
+Mappings: 
+  RegionMap: 
+    us-east-1: 
+      AMI: "ami-6411e20d"
+    us-west-1: 
+      AMI: "ami-9398d3e0"
+    eu-west-1: 
+      amazon: "ami-9398d3e0"
+      ubuntu: "ami-0d77397e"
+      ecsoptimized: "ami-a1491ad2"
+    ap-southeast-1: 
+      AMI: "ami-66f28c34"
+    ap-northeast-1: 
+      AMI: "ami-9c03a89d"
+
+  Beanstalk2Route53HostedZoneId:
+    us-east-1:
+      HostedZoneId: Z3DZXE0Q79N41H
+    us-west-1:
+      HostedZoneId: Z1M58G0W56PQJA
+    us-west-2:
+      HostedZoneId: Z33MTJ483KN6FU
+    eu-west-1:
+      HostedZoneId: Z3NF1Z3NOM5OY2
+    ap-northeast-1:
+      HostedZoneId: Z2YN17T5R711GT
+    ap-southeast-1:
+      HostedZoneId: Z1WI8VXHPB1R38
+    sa-east-1:
+      HostedZoneId: Z2ES78Y61JGQKS

@@ -185,8 +185,16 @@ Resources:
         Name: "sftpconfig"
       - 
         Host: 
-          SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/SavedArks"
+          SourcePath: "/mnt/efs/ark"
         Name: "ark"
+      - 
+        Host: 
+          SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/SavedArks"
+        Name: "SavedArks"
+      - 
+        Host: 
+          SourcePath: "/mnt/efs/ark/arkmanager.cfg"
+        Name: "arkmanager"
       ContainerDefinitions: 
       - 
         Name: "ftp"
@@ -197,7 +205,7 @@ Resources:
             HostPort: 2222
             Protocol: tcp
         Essential: "true"
-        Memory: 128
+        MemoryReservation: 128
         MountPoints: 
         - 
           SourceVolume: "sftpconfig"
@@ -231,10 +239,13 @@ Resources:
             Protocol: tcp
         MountPoints: 
         - 
-          SourceVolume: "ark"
+          SourceVolume: "SavedArks"
           ContainerPath: "/ark/server/ShooterGame/Saved/SavedArks"
+        - 
+          SourceVolume: "arkmanager"
+          ContainerPath: "/ark/arkmanager.cfg"
         Essential: "true"
-        Memory: 6144
+        MemoryReservation: 3826
         LogConfiguration:
           LogDriver: awslogs
           Options:
@@ -243,8 +254,11 @@ Resources:
             awslogs-stream-prefix: msv
         Environment:
           -
-            Name: SERVERPORT
-            Value: 7777
+            Name: ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION
+            Value: 1
+          -
+            Name: ECS_IMAGE_CLEANUP_INTERVAL
+            Value: 10
         Ulimits:
           -
             Name: nofile
@@ -911,7 +925,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.0.0/24
+      CidrBlock: 10.0.0.0/19
       Tags:
       - Key: Name
         Value: PublicSubnet1
@@ -943,7 +957,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.1.0/24
+      CidrBlock: 10.0.32.0/24
       Tags:
       - Key: Name
         Value: PrivateSubnet
@@ -953,12 +967,11 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.3.0/24
+      CidrBlock: 10.0.33.0/24
       Tags:
       - Key: Name
         Value: PrivateSubnet
       AvailabilityZone: !Select ['1', !GetAZs {Ref: 'AWS::Region'}]
-
 
 Mappings: 
   RegionMap: 
@@ -990,3 +1003,8 @@ Mappings:
       HostedZoneId: Z1WI8VXHPB1R38
     sa-east-1:
       HostedZoneId: Z2ES78Y61JGQKS
+
+Outputs:
+  ContainerAgentInstanceProfileName:
+    Description: Name of instance profile for container agents
+    Value: !Ref ContainerAgentInstanceProfile

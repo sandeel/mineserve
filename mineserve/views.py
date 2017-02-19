@@ -219,8 +219,6 @@ def servers():
                             size=size,
                             user=user)
 
-        new_server.properties.max_players = Server.max_players[new_server.size]
-
         db.session.add(new_server)
 
         db.session.commit()
