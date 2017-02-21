@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BASE_REGION=eu-west-1
-BASE_STACK_NAME=msv
+BASE_STACK_NAME=msv2
 
 stack_exists=`aws cloudformation --region $BASE_REGION describe-stacks --stack-name $BASE_STACK_NAME`
 
