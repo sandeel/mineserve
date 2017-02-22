@@ -579,10 +579,13 @@ Resources:
         Value: 'true'
       - Namespace: aws:elasticbeanstalk:environment
         OptionName: ServiceRole
-        Value: !Ref 'ElasticBeanstalkServiceRole'
+        Value: !Ref ElasticBeanstalkServiceRole
       - Namespace: aws:autoscaling:launchconfiguration
         OptionName: IamInstanceProfile
-        Value: !Ref 'ElasticBeanstalkInstanceProfile'
+        Value: !Ref ElasticBeanstalkInstanceProfile
+      - Namespace:  aws:elasticbeanstalk:healthreporting:system
+        OptionName: SystemType
+        Value: enhanced
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: ADVSRVS_AWS_REGION
         Value: !Ref 'AWS::Region'
@@ -652,6 +655,18 @@ Resources:
       - Namespace: aws:autoscaling:asg
         OptionName: MaxSize
         Value: '4'
+      - Namespace: aws:elasticbeanstalk:managedactions
+        OptionName: ManagedActionsEnabled
+        Value: true
+      - Namespace: aws:elasticbeanstalk:managedactions
+        OptionName: PreferredStartTime
+        Value: "Tue:10:00"
+      - Namespace: aws:elasticbeanstalk:managedactions:platformupdate
+        OptionName: UpdateLevel
+        Value: minor
+      - Namespace: aws:elasticbeanstalk:managedactions:platformupdate
+        OptionName: InstanceRefreshEnabled
+        Value: true
   ContainerAgentSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -699,19 +714,14 @@ Resources:
         Statement:
         - Effect: Allow
           Action:
-            - 'elasticloadbalancing:DescribeInstanceHealth'
-            - 'ec2:DescribeInstances'
-            - 'ec2:DescribeInstanceStatus'
-            - 'ec2:GetConsoleOutput'
-            - 'ec2:AssociateAddress'
-            - 'ec2:DescribeAddresses'
-            - 'ec2:DescribeSecurityGroups'
-            - 'sqs:GetQueueAttributes'
-            - 'sqs:GetQueueUrl'
-            - 'autoscaling:DescribeAutoScalingGroups'
-            - 'autoscaling:DescribeAutoScalingInstances'
-            - 'autoscaling:DescribeScalingActivities'
-            - 'autoscaling:DescribeNotificationConfigurations'
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:GetLogEvents'
+            - 'logs:PutLogEvents'
+            - 'logs:DescribeLogGroups'
+            - 'logs:DescribeLogStreams'
+            - 'logs:PutRetentionPolicy'
+            - 'logs:PutMetricFilter'
           Resource: ['*']
       Roles: [!Ref 'ElasticBeanstalkServiceRole']
   ElasticBeanstalkInstanceProfilePolicy:
@@ -751,6 +761,9 @@ Resources:
   ElasticBeanstalkServiceRole:
     Type: AWS::IAM::Role
     Properties:
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkService'
+        - 'arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -864,6 +877,7 @@ Resources:
               - 'logs:CreateLogGroup'
               - 'logs:CreateLogStream'
               - 'logs:PutRetentionPolicy'
+              - 'logs:PutMetricFilter'
             Resource: '*'
             Effect: Allow
   AppPipeline:
@@ -874,7 +888,7 @@ Resources:
       Stages:
       - Name: Source
         Actions:
-        - Name: SourceAction
+        - Name: SourceMaster
           ActionTypeId:
             Category: Source
             Owner: ThirdParty
@@ -886,6 +900,20 @@ Resources:
             Owner: sandeel
             Repo: mineserve
             Branch: master
+            OAuthToken: !Ref 'GithubToken'
+          RunOrder: 1
+        - Name: SourceDev
+          ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Version: '1'
+            Provider: GitHub
+          OutputArtifacts:
+          - Name: SourceOutput
+          Configuration:
+            Owner: sandeel
+            Repo: mineserve
+            Branch: development
             OAuthToken: !Ref 'GithubToken'
           RunOrder: 1
       - Name: Prod
