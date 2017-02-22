@@ -895,11 +895,11 @@ Resources:
             Version: '1'
             Provider: GitHub
           OutputArtifacts:
-          - Name: SourceOutput
+          - Name: SourceOutputDev
           Configuration:
             Owner: sandeel
             Repo: mineserve
-            Branch: master
+            Branch: development
             OAuthToken: !Ref 'GithubToken'
           RunOrder: 1
         - Name: SourceDev
@@ -909,18 +909,18 @@ Resources:
             Version: '1'
             Provider: GitHub
           OutputArtifacts:
-          - Name: SourceOutput
+          - Name: SourceOutputMaster
           Configuration:
             Owner: sandeel
             Repo: mineserve
-            Branch: development
+            Branch: master
             OAuthToken: !Ref 'GithubToken'
           RunOrder: 1
       - Name: Prod
         Actions:
         - Name: BuildArkImage
           InputArtifacts:
-          - Name: SourceOutput
+          - Name: SourceOutputMaster
           ActionTypeId:
             Category: Build
             Owner: AWS
@@ -931,7 +931,7 @@ Resources:
           RunOrder: 1
         - Name: ProdAction
           InputArtifacts:
-          - Name: SourceOutput
+          - Name: SourceOutputMaster
           ActionTypeId:
             Category: Deploy
             Owner: AWS
