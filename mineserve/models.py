@@ -14,7 +14,6 @@ import math
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 from threading import Thread
-import libnfs
 
 class User():
 
