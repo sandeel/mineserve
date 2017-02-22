@@ -741,12 +741,12 @@ Resources:
             - 'logs:DescribeLogStreams'
             - 'logs:PutRetentionPolicy'
           Resource: !Join ['', ['arn:aws:logs:', !Ref 'AWS::Region', ':*']]
-				- Effect: Allow
-					Action:
-						- 'logs:PutLogEvents'
-						- 'logs:CreateLogStream'
-					Resource:
-						'arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk*'
+        - Effect: Allow
+          Action:
+            - 'logs:PutLogEvents'
+            - 'logs:CreateLogStream'
+          Resource:
+            'arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk*'
       Roles: [!Ref 'ElasticBeanstalkInstanceProfileRole']
   ElasticBeanstalkServiceRole:
     Type: AWS::IAM::Role
@@ -851,6 +851,19 @@ Resources:
             Resource: '*'
             Effect: Allow
           - Action: ['lambda:InvokeFunction', 'lambda:ListFunctions']
+            Resource: '*'
+            Effect: Allow
+          - Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 'elasticbeanstalk:*'
+              - 'lambda:InvokeFunction'
+              - 'cloudformation:CreateStack'
+              - 'codebuild:BatchGetBuilds'
+              - 'codebuild:StartBuild'
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutRetentionPolicy'
             Resource: '*'
             Effect: Allow
   AppPipeline:
@@ -1020,8 +1033,14 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/docker:1.12.1
         EnvironmentVariables:
-        - Name: varName
-          Value: varValue
+        - Name: AWS_ACCOUNT_ID
+          Value: !Ref AWS::AccountId
+        - Name: AWS_DEFAULT_REGION
+          Value: !Ref AWS::Region
+        - Name: IMAGE_REPO_NAME
+          Value: ark
+        - Name: IMAGE_TAG
+          Value: latest
       Source:
         Type: CODEPIPELINE
       TimeoutInMinutes: 60
@@ -1046,29 +1065,22 @@ Resources:
         Version: '2012-10-17'
         Statement:
         - Effect: Allow
-          Action: [
-            'iam:AddRoleToInstanceProfile',
-            'iam:AttachRolePolicy',
-            'iam:CreateInstanceProfile',
-            'iam:CreatePolicy',
-            'iam:CreateRole',
-            'iam:GetRole',
-            'iam:ListAttachedRolePolicies',
-            'iam:ListPolicies',
-            'iam:ListRoles',
-            'iam:PassRole',
-            'iam:PutRolePolicy',
-            'iam:UpdateAssumeRolePolicy',
-            'ecr:CreateRepository',
-            'ecr:BatchCheckLayerAvailability',
-            'ecr:CompleteLayerUpload',
-            'ecr:GetAuthorizationToken',
-            'ecr:InitiateLayerUpload',
-            'ecr:PutImage',
-            'ecr:UploadLayerPart'
-            ]
+          Action:
+            - 'ecr:CreateRepository'
+            - 'ecr:BatchCheckLayerAvailability'
+            - 'ecr:CompleteLayerUpload'
+            - 'ecr:GetAuthorizationToken'
+            - 'ecr:InitiateLayerUpload'
+            - 'ecr:PutImage'
+            - 'ecr:UploadLayerPart'
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:PutLogEvents'
+            - 's3:GetObject'
+            - 's3:GetObjectVersion'
+            - 's3:PutObject'
           Resource: ['*']
-      Roles: [!Ref 'CodePipelineServiceRole']
+      Roles: [!Ref 'CodeBuildServiceRole']
 
 Mappings: 
   RegionMap: 
