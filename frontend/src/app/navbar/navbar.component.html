@@ -1,5 +1,5 @@
 <nav class="navbar navbar-default">
-  <div class="container-fluid">
+  <div class="container">
     <!-- Brand and toggle get grouped for better mobile display -->
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed"
@@ -18,10 +18,13 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav navbar-right">
         <li *ngIf="!loggedIn">
-          <a (click)="auth.login()" *ngIf="!auth.authenticated()">Log In</a>
+          <a href="#" (click)="auth.login()" *ngIf="!auth.authenticated()">Log In</a>
         </li>
         <li *ngIf="auth.authenticated()">
-          <a [routerLink]="['/']">{{ username }}</a>
+          <a [routerLink]="['/']"><img src="{{auth.userProfile.picture}}" alt="gameserve-profile-pic"/></a>
+        </li>
+        <li *ngIf="auth.authenticated()">
+          <a [routerLink]="['/']">{{auth.userProfile.name}}</a>
         </li>
         <li *ngIf="auth.authenticated()">
           <a [routerLink]="['/servers']">My Servers</a>

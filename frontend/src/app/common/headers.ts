@@ -1,10 +1,9 @@
 import { Headers } from '@angular/http';
-import { Callback, UserLoginService } from "../service/cognito.service";
 import { Injectable, OnInit } from "@angular/core";
 
 @Injectable()
 export class GetHeaders{
-  constructor(private userLoginService: UserLoginService) { }
+  constructor() { }
 
   getHeaders() {
     let contentHeaders = new Headers();

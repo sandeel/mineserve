@@ -14,10 +14,6 @@ const routes: Routes = [
     canLoad: [ AuthGuard ]
   },
   {
-    path: 'users',
-    loadChildren: 'app/users/users.module#UsersModule'
-  },
-  {
     path: 'token',
     component: TokenComponent
   }
