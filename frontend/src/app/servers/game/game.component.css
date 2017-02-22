@@ -1,3 +1,20 @@
 .dashboard-block img {
   max-width: 50%;
 }
+
+.game-block {
+  background: #fff;
+  position: relative;
+  border: #ececec 1px solid;
+  z-index: 2;
+  -webkit-transition: all .1s;
+  -moz-transition: all .1s;
+  transition: all .1s;
+}
+
+.game-block:hover {
+  z-index: 3;
+  -webkit-box-shadow: 0 0 14px rgba(0,40,53,0.25);
+  -moz-box-shadow: 0 0 14px rgba(0,40,53,0.25);
+  box-shadow: 0 0 15px rgba(0,40,53,0.5);
+}

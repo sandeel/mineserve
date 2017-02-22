@@ -4,6 +4,7 @@
   border: 1px solid #d6d6d6;
   box-sizing: border-box;
   padding: 10px;
+  transition: all 0.3s ease-in-out;
 }
 .step-item.highlight {
   border: 1px solid #156090;

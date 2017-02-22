@@ -18,18 +18,15 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav navbar-right">
         <li *ngIf="!loggedIn">
-          <a [routerLink]="['/users', 'login']">Log In</a>
+          <a (click)="auth.login()" *ngIf="!auth.authenticated()">Log In</a>
         </li>
-        <li *ngIf="!loggedIn">
-          <a [routerLink]="['/users', 'register']">Register</a>
-        </li>
-        <li *ngIf="loggedIn">
+        <li *ngIf="auth.authenticated()">
           <a [routerLink]="['/']">{{ username }}</a>
         </li>
-        <li *ngIf="loggedIn">
+        <li *ngIf="auth.authenticated()">
           <a [routerLink]="['/servers']">My Servers</a>
         </li>
-        <li *ngIf="loggedIn">
+        <li *ngIf="auth.authenticated()">
           <a href="#" (click)="confirmLogout($event)">Log Out</a>
         </li>
       </ul>

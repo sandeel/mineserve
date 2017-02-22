@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NavbarComponent } from './navbar.component';
 import { ConfirmDialogModule, ConfirmationService } from 'primeng/primeng';
+import { Auth } from '../auth/auth.service';
+
 @NgModule({
   imports: [
     CommonModule,
@@ -10,7 +12,7 @@ import { ConfirmDialogModule, ConfirmationService } from 'primeng/primeng';
     ConfirmDialogModule
   ],
   declarations: [NavbarComponent],
-  providers: [ ConfirmationService ],
+  providers: [ ConfirmationService, Auth ],
   exports: [
     NavbarComponent
   ]

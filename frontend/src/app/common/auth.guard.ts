@@ -1,27 +1,22 @@
 import { Injectable } from '@angular/core';
-import {Router, CanActivate, CanLoad, CanActivateChild} from '@angular/router';
-import {LoggedInCallback, UserLoginService} from "../service/cognito.service";
-
-
+import { Router, CanActivate, CanLoad, CanActivateChild } from '@angular/router';
+import { Auth } from '../auth/auth.service';
 
 @Injectable()
-export class AuthGuard implements CanActivate, CanActivateChild, CanLoad, LoggedInCallback {
+export class AuthGuard implements CanActivate, CanActivateChild, CanLoad {
   errorMessage: string;
-  constructor(private router: Router, private userService: UserLoginService) {}
+  constructor(private router: Router, private auth: Auth) {}
 
   canActivate() {
-    this.userService.isAuthenticated(this);
-    return true;
+    return this.auth.authenticated();
   }
 
   canActivateChild() {
-    this.userService.isAuthenticated(this);
-    return true;
+    return this.auth.authenticated();
   }
 
   canLoad(){
-    this.userService.isAuthenticated(this);
-    return true;
+    return this.auth.authenticated();
   }
 
   isLoggedIn(message:string, isLoggedIn:boolean) {

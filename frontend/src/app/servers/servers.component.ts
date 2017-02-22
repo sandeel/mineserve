@@ -21,7 +21,7 @@ export class ServersComponent implements OnInit {
     this.serversService.getServers()
       .subscribe(
         servers => this.servers = servers['servers'],
-        error =>  this.router.navigate(["/users/logout"])
+        error =>  console.log(error)
       );
   }
 

@@ -56,7 +56,4 @@ export class ServerAddComponent implements OnInit {
       }
     ];
   }
-  addServer(){
-    this.serversService.addServer().subscribe(data => this.res = data);
-  }
 }

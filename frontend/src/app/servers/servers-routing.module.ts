@@ -4,7 +4,9 @@ import { RouterModule, Routes } from '@angular/router';
 import { ServersComponent } from './servers.component';
 import { ServerDetailComponent} from "./server-detail/server-detail.component";
 import { GameComponent } from "./game/game.component";
-import {ServerAddComponent} from "./server-add/server-add.component";
+import { ServerAddComponent} from "./server-add/server-add.component";
+import { ServerPayComponent} from "./server-pay/server-pay.component";
+import {ServerConfirmComponent} from "./server-confirm/server-confirm.component";
 
 const serversRoutes: Routes = [
   {
@@ -16,6 +18,14 @@ const serversRoutes: Routes = [
     component: ServerAddComponent,
     children: [
       {
+        path: 'pay',
+        component: ServerPayComponent
+      },
+      {
+        path: 'confirm',
+        component: ServerConfirmComponent
+      },
+      {
         path: ':id',
         component: ServerDetailComponent
       },
@@ -25,10 +35,6 @@ const serversRoutes: Routes = [
         component: GameComponent
       }
     ]
-  },
-  {
-    path: ':id',
-    component: ServerDetailComponent
   }
 ];
 @NgModule({

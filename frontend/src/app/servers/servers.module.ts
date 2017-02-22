@@ -11,6 +11,9 @@ import { GameComponent } from './game/game.component';
 import { NavbarModule } from "../navbar/navbar.module";
 import {FormsModule} from "@angular/forms";
 import {StepsService} from "../steps/steps-service";
+import { ServerPayComponent } from './server-pay/server-pay.component';
+import { ServerConfirmComponent } from './server-confirm/server-confirm.component';
+import {ServerAddService} from "./server-add/server-add.service";
 
 
 @NgModule({
@@ -28,8 +31,10 @@ import {StepsService} from "../steps/steps-service";
     ServersComponent,
     ServerDetailComponent,
     ServerAddComponent,
-    GameComponent
+    GameComponent,
+    ServerPayComponent,
+    ServerConfirmComponent
   ],
-  providers: [StepsService]
+  providers: [StepsService, ServerAddService]
 })
 export class ServersModule { }

@@ -1,15 +1,17 @@
 <div class="container">
-  <div class="dashboard-block container">
+  <div class="dashboard-block container-fluid">
     <div class="row">
       <div class="col-lg-4">
         <img src="assets/image/{{game.name}}.png"/>
       </div>
       <div class="col-lg-8">
         <h3>{{game.name}}</h3>
-        <form #form="ngForm" (ngSubmit)="submitForm(form.value)">
+        <form #form="ngForm" (ngSubmit)="goToPayment(form.value)">
           <div class="form-group">
             <label for="size">Server size: </label>
-            <select class="form-control" id="size"
+            <select class="form-control"
+                    id="size"
+                    [ngModel]="selectedSize"
                     required
                     name="size"
                     #size >
@@ -18,7 +20,12 @@
           </div>
           <div class="form-group">
             <label for="name">Name</label>
-            <input type="text" class="form-control" id="name" required>
+            <input #name name="name" [(ngModel)]="serverName" type="text" class="form-control" id="name" required>
+          </div>
+          <div class="form-group">
+            <button id="next" type="submit"
+                    class="btn btn-primary btn-block">Pay now
+            </button>
           </div>
         </form>
       </div>

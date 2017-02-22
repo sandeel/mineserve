@@ -22,9 +22,9 @@ export class ServersService {
       headers: this.getHeaders.getHeaders()
     }).map(res => res.json());
   }
-  addServer(){
+  addServer(name: string, size: string){
     let url = 'http://52.51.32.218:8000/api/0.1/servers';
-    let body = {"size": "micro", "type": "ArkServer", "server_name": "New server"}
+    let body = {"size": size, "type": "ArkServer", "server_name": name}
     return this.http.post(url, body, {
       headers: this.getHeaders.getHeaders()
     }).map(res => res.json());
