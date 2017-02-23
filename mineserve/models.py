@@ -14,6 +14,9 @@ import math
 from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 from threading import Thread
+from pynamodb.models import Model
+from pynamodb.attributes import UnicodeAttribute, BooleanAttribute
+import string
 
 class User():
 
@@ -64,122 +67,25 @@ class ProtectedModelView(sqla.ModelView):
                 # login
                 return redirect(url_for('security.login', next=request.url))
 
-class PromoCode(db.Model):
-    code = db.Column(db.String(255), primary_key=True)
-    activated = db.Column(db.Boolean)
-    reward_code = db.Column(db.String(255))
+class PromoCode(Model):
+    """ Promo Code for the site
+    Can have various uses including free top-up time
+    """
+    class Meta:
+        region = application.config['AWS_REGION']
+        table_name = 'msv-promocode'
+
+    code = UnicodeAttribute()
+    activated = BooleanAttribute()
+    reward_code = UnicodeAttribute()
 
     def __init__(self, reward_code='BetaTest'):
-        self.code = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        self.code = ''.join(random.SystemRandom()
+                            .choice(string.ascii_uppercase + string.digits)
+                            for _ in range(6))
         self.activated = False
         self.reward_code = reward_code
 
-# Customized promo code admin
-class PromoCodeAdmin(ProtectedModelView):
-    column_display_pk=True
-
-    form_choices = { 'reward_code': [('BetaTest', 'BetaTest'),
-                                     ('5Days', '5Days')],}
-
-# Customized user admin view
-class UserAdmin(ProtectedModelView):
-    column_display_pk=True
-
-    column_list = (
-        'email',
-        'active',
-    )
-
-class Properties(db.Model):
-    __tablename__ = 'properties'
-    id = db.Column(db.Integer, primary_key=True)
-    server_id = db.Column(db.String(255), db.ForeignKey('server.id'))
-
-    #properties
-    server_name = db.Column(db.String(255))
-    motd = db.Column(db.String(255))
-    server_port = db.Column(db.String(255))
-    memory_limit= db.Column(db.String(255))
-    gamemode = db.Column(db.String(255))
-    max_players = db.Column(db.String(255))
-    spawn_protection = db.Column(db.String(255))
-    level_name = db.Column(db.String(255))
-    level_type = db.Column(db.String(255))
-    announce_player_achievements = db.Column(db.String(255))
-    white_list = db.Column(db.String(255))
-    enable_query = db.Column(db.String(255))
-    enable_rcon = db.Column(db.String(255))
-    allow_flight = db.Column(db.String(255))
-    spawn_animals = db.Column(db.String(255))
-    spawn_mobs = db.Column(db.String(255))
-    force_gamemode = db.Column(db.String(255))
-    hardcore = db.Column(db.String(255))
-    pvp = db.Column(db.String(255))
-    difficulty = db.Column(db.String(255))
-    generator_settings = db.Column(db.String(255))
-    level_seed = db.Column(db.String(255))
-    rcon_password = db.Column(db.String(255))
-    auto_save = db.Column(db.String(255))
-
-    def __init__(self, server_id):
-
-        self.server_id = server_id
-
-        # set the default properties
-        self.server_name = 'The Server'
-        self.motd = 'Adventure Servers Server'
-        self.server_port = '33775'
-        self.memory_limit = ''
-        self.gamemode = '0'
-        self.max_players = '60'
-        self.spawn_protection = '0'
-        self.level_name = 'world'
-        self.level_type = 'DEFAULT'
-        self.announce_player_achievements = 'on'
-        self.white_list = 'off'
-        self.enable_query = 'on'
-        self.enable_rcon = 'on'
-        self.allow_flight = 'off'
-        self.spawn_animals = 'on'
-        self.spawn_mobs = 'off'
-        self.force_gamemode = 'on'
-        self.hardcore = 'off'
-        self.pvp = 'on'
-        self.difficulty = '1'
-        self.generator_settings = ''
-        self.level_seed = ''
-        self.rcon_password = 'password'
-        self.auto_save = 'yes'
-
-    def generate_file(self):
-
-        file = ""
-        file += 'server-name='+str(self.server_name)+'\n'
-        file += 'motd='+str(self.motd)+'\n'
-        file += 'server-port='+str(self.server_port)+'\n'
-        file += 'memory-limit='+str(self.memory_limit)+'\n'
-        file += 'gamemode='+str(self.gamemode)+'\n'
-        file += 'max-players='+str(self.max_players)+'\n'
-        file += 'spawn-protection='+str(self.spawn_protection)+'\n'
-        file += 'level-name='+str(self.level_name)+'\n'
-        file += 'level-type='+str(self.level_type)+'\n'
-        file += 'announce-player-achievements='+str(self.announce_player_achievements)+'\n'
-        file += 'white-list='+str(self.white_list)+'\n'
-        file += 'enable-query='+str(self.enable_query)+'\n'
-        file += 'enable-rcon='+str(self.enable_rcon)+'\n'
-        file += 'allow-flight='+str(self.allow_flight)+'\n'
-        file += 'spawn-animals='+str( self.spawn_animals)+'\n'
-        file += 'spawn-mobs='+str(self.spawn_mobs)+'\n'
-        file += 'force-gamemode='+str(self.force_gamemode)+'\n'
-        file += 'hardcore='+str(self.hardcore)+'\n'
-        file += 'pvp='+str(self.pvp)+'\n'
-        file += 'difficulty='+str(self.difficulty)+'\n'
-        file += 'generator-settings='+str(self.generator_settings)+'\n'
-        file += 'level-seed='+str(self.level_seed)+'\n'
-        file += 'rcon.password='+str(self.rcon_password)+'\n'
-        file += 'auto-save='+str(self.auto_save)+'\n'
-
-        return file
 
 class Server(db.Model):
 

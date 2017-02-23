@@ -3,7 +3,7 @@
 BASE_REGION=eu-west-1
 BASE_STACK_NAME=msv
 GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
-STACK_NAME=$BASE_REGION-$GIT_BRANCH
+STACK_NAME=$BASE_STACK_NAME-$GIT_BRANCH
 
 echo "Note: this will spin up a stack for the current Git branch ($GIT_BRANCH)."
 
