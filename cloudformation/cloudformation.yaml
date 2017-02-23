@@ -625,6 +625,9 @@ Resources:
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: ADVSRVS_RESOURCES_ENDPOINT
         Value: !GetAtt [ResourcesBucket, DomainName]
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: EC2KeyName
+        Value: !Ref 'KeyPair'
   ContainerAgentSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
