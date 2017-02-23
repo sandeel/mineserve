@@ -67,6 +67,7 @@ class ProtectedModelView(sqla.ModelView):
                 # login
                 return redirect(url_for('security.login', next=request.url))
 
+
 class PromoCode(Model):
     """ Promo Code for the site
     Can have various uses including free top-up time
@@ -75,16 +76,9 @@ class PromoCode(Model):
         region = application.config['AWS_REGION']
         table_name = 'msv-promocode'
 
-    code = UnicodeAttribute()
-    activated = BooleanAttribute()
-    reward_code = UnicodeAttribute()
-
-    def __init__(self, reward_code='BetaTest'):
-        self.code = ''.join(random.SystemRandom()
-                            .choice(string.ascii_uppercase + string.digits)
-                            for _ in range(6))
-        self.activated = False
-        self.reward_code = reward_code
+    code = UnicodeAttribute(hash_key=True,default=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6)))
+    activated = BooleanAttribute(default=False)
+    reward_code = UnicodeAttribute(default='BetaTest')
 
 
 class Server(db.Model):
@@ -97,7 +91,6 @@ class Server(db.Model):
     creation_date = db.Column(db.DateTime)
     user = db.Column(db.String(255))
     size = db.Column(db.String(255))
-    properties = db.relationship("Properties", backref="server", uselist=False)
     type = db.Column(db.String(50))
 
 
@@ -251,9 +244,6 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         now = datetime.datetime.now()
         now_plus_1_hours = now + datetime.timedelta(minutes=65)
         self.expiry_date = now_plus_1_hours
-
-        # instantiate default properties
-        self.properties = Properties(server_id = self.id)
 
         try:
             self.instance_id = self.create_cluster()
@@ -489,11 +479,6 @@ def check_if_task_definition_exists(name):
 @event.listens_for(Server, 'before_delete', propagate=True)
 def receive_before_delete(mapper, connection, target):
     target.delete_cluster()
-
-# Create admin
-admin = admin.Admin(application, name='MineServe Admin', template_mode='bootstrap3')
-admin.add_view(PromoCodeAdmin(PromoCode,db.session))
-admin.add_view(ProtectedModelView(Properties,db.session))
 
 # Executes before the first request is processed.
 @application.before_first_request

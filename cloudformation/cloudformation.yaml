@@ -1042,6 +1042,23 @@ Resources:
           Resource: ['*']
       Roles: [!Ref 'CodeBuildServiceRole']
 
+
+  PromoCodeDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "code"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "code"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: 'msv-promocode'
+
 Mappings: 
   RegionMap: 
     us-east-1: 
