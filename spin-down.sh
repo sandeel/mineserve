@@ -11,5 +11,9 @@ else
 fi
 
 aws cloudformation delete-stack \
-    --stack-name msv \
+    --stack-name msv-master \
+    --region eu-west-1
+
+aws cloudformation delete-stack \
+    --stack-name msv-development \
     --region eu-west-1

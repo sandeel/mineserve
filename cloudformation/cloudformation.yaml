@@ -6,6 +6,9 @@ Parameters:
     Type: String
     Description: Generate on Github account
     NoEcho: 'true'
+  GitBranch:
+    Type: String
+    Description: Git branch to use
   KeyPair:
     Description: Amazon EC2 Key Pair
     Type: AWS::EC2::KeyPair::KeyName
@@ -858,39 +861,25 @@ Resources:
       Stages:
       - Name: Source
         Actions:
-        - Name: SourceMaster
+        - Name: Source
           ActionTypeId:
             Category: Source
             Owner: ThirdParty
             Version: '1'
             Provider: GitHub
           OutputArtifacts:
-          - Name: SourceOutputDev
+          - Name: SourceOutput
           Configuration:
             Owner: sandeel
             Repo: mineserve
-            Branch: development
-            OAuthToken: !Ref 'GithubToken'
-          RunOrder: 1
-        - Name: SourceDev
-          ActionTypeId:
-            Category: Source
-            Owner: ThirdParty
-            Version: '1'
-            Provider: GitHub
-          OutputArtifacts:
-          - Name: SourceOutputMaster
-          Configuration:
-            Owner: sandeel
-            Repo: mineserve
-            Branch: master
+            Branch: !Ref GitBranch
             OAuthToken: !Ref 'GithubToken'
           RunOrder: 1
       - Name: Prod
         Actions:
         - Name: BuildArkImage
           InputArtifacts:
-          - Name: SourceOutputMaster
+          - Name: SourceOutput
           ActionTypeId:
             Category: Build
             Owner: AWS
@@ -901,7 +890,7 @@ Resources:
           RunOrder: 1
         - Name: ProdAction
           InputArtifacts:
-          - Name: SourceOutputMaster
+          - Name: SourceOutput
           ActionTypeId:
             Category: Deploy
             Owner: AWS
