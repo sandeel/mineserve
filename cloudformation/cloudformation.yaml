@@ -566,7 +566,7 @@ Resources:
     DependsOn: Website
     Properties:
       ApplicationName: !Ref 'Website'
-      SolutionStackName: 64bit Amazon Linux 2016.09 v2.2.0 running Python 3.4
+      SolutionStackName: 64bit Amazon Linux 2016.09 v2.3.1 running Python 3.4
       OptionSettings:
       - Namespace: aws:ec2:vpc
         OptionName: Subnets
@@ -601,6 +601,9 @@ Resources:
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: STRIPE_PUBLISHABLE_KEY
         Value: !Ref 'StripePublishableKey'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: APP_NAME
+        Value: !Ref AWS::StackName
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: ADVSRVS_CONTAINER_AGENT_SUBNET
         Value: !Ref 'PublicSubnet1'
@@ -1057,8 +1060,24 @@ Resources:
       ProvisionedThroughput: 
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
-      TableName: 'msv-promocode'
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', promocodes ] ]
 
+
+  UserDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', users ] ]
 Mappings: 
   RegionMap: 
     us-east-1: 

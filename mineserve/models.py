@@ -1,24 +1,19 @@
 from mineserve import db, application
-from flask_security import Security, SQLAlchemyUserDatastore, \
-    UserMixin, RoleMixin, current_user, roles_accepted
-from flask_security.utils import encrypt_password, verify_password
-from flask_admin.contrib import sqla
-import flask_admin as admin
 import datetime
 import uuid
 import random
-from flask_admin import helpers as admin_helpers
 import boto3
 import time
 import math
-from flask import Flask, redirect, url_for, request
 from sqlalchemy import event
 from threading import Thread
 from pynamodb.models import Model
-from pynamodb.attributes import UnicodeAttribute, BooleanAttribute
+from pynamodb.attributes import UnicodeAttribute, BooleanAttribute, UTCDateTimeAttribute
 import string
 
 class User():
+    """ User of site site (Cognito)
+    """
 
     def __init__(self, username):
         client = boto3.client('cognito-idp', region_name=application.config['AWS_REGION'])
@@ -43,105 +38,35 @@ class User():
     def __str__(self):
         return self.username
 
-# Create customized model view class
-class ProtectedModelView(sqla.ModelView):
-
-    def is_accessible(self):
-        if not current_user.is_active or not current_user.is_authenticated:
-            return False
-
-        if current_user.has_role('admin'):
-            return True
-
-        return False
-
-    def _handle_view(self, name, **kwargs):
-        """
-        Override builtin _handle_view in order to redirect users when a view is not accessible.
-        """
-        if not self.is_accessible():
-            if current_user.is_authenticated:
-                # permission denied
-                abort(403)
-            else:
-                # login
-                return redirect(url_for('security.login', next=request.url))
-
-
 class PromoCode(Model):
     """ Promo Code for the site
     Can have various uses including free top-up time
     """
     class Meta:
         region = application.config['AWS_REGION']
-        table_name = 'msv-promocode'
+        table_name = application.config['APP_NAME']+'-promocodes'
 
     code = UnicodeAttribute(hash_key=True,default=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6)))
     activated = BooleanAttribute(default=False)
     reward_code = UnicodeAttribute(default='BetaTest')
 
 
-class Server(db.Model):
+class Server(Model):
 
-    __tablename__ = 'server'
-    id = db.Column(db.String(255), primary_key=True)
-    instance_id = db.Column(db.String(255))
-    name = db.Column(db.String(255))
-    expiry_date = db.Column(db.DateTime)
+    class Meta:
+        region = application.config['AWS_REGION']
+        table_name = application.config['APP_NAME']+'-servers'
+
+    id = UnicodeAttribute(hash_key=True,default=str(uuid.uuid4()))
+    instance_id = UnicodeAttribute()
+    name = UnicodeAttribute()
+    expiry_date = UTCDateTimeAttribute()
     creation_date = db.Column(db.DateTime)
-    user = db.Column(db.String(255))
-    size = db.Column(db.String(255))
-    type = db.Column(db.String(50))
+    user = UnicodeAttribute()
+    size = UnicodeAttribute()
+    type = UnicodeAttribute()
 
-
-    sizes = ['micro', 'large']
-
-    prices = {
-                'micro': 800,
-                'large': 1600
-                }
-
-    max_players = {
-                    'micro': 20,
-                    'large': 80
-                    }
-
-    __mapper_args__ = {
-                'polymorphic_identity':'server',
-                'polymorphic_on':type
-            }
-
-    def seconds_to_dhms(self):
-        if self.expiry_date > datetime.datetime.now():
-            time_remaining = self.expiry_date - datetime.datetime.now()
-            days = math.floor(time_remaining.seconds / 86400)
-            remainder = time_remaining.seconds % 84600
-            hours = math.floor(remainder / 3600)
-            remainder %= 60
-            minutes = math.floor(remainder / 60)
-            return str(days) + " days, " + str(hours) + " hours, " + str(minutes) + " minutes"
-        else:
-            return "Server expired"
-
-    def serialize(self):
-
-        return {
-            "id": str(self.id),
-            "type": str(self.type),
-            "expiry_date" : str(self.expiry_date),
-            "creation_date": str(self.creation_date),
-            "time_remaining": self.seconds_to_dhms(),
-            "user": str(self.user),
-            "name": str(self.name),
-            "status": str(self.status),
-            "ip": str(self.ip),
-            "port": str(self.port)
-        }
-
-    def __init__(self, user, size='micro', name="New Server"):
-        self.id = str(uuid.uuid4())
-
-        self._userdata = """Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
+    userdata = """Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
 MIME-Version: 1.0
 
 --===============BOUNDARY==
@@ -162,7 +87,11 @@ Content-Type: text/cloud-boothook; charset="us-ascii"
 
 #cloud-boothook
 #Join the ECS cluster
-echo ECS_CLUSTER="""+str(self.id)+""" >> /etc/ecs/ecs.config
+EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+EC2_INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
+SERVER_ID="`aws ec2 describe-tags --output text --region $EC2_REGION --filters Name=resource-type,Values="instance" Name=key,Values=Name Name=resource-id,Values=\"$EC2_INSTANCE_ID\"  | cut -f5`"
+echo ECS_CLUSTER=$SERVER_ID >> /etc/ecs/ecs.config
 PATH=$PATH:/usr/local/bin
 #Instance should be added to an security group that allows HTTP outbound
 yum update
@@ -184,10 +113,6 @@ pip install awscli
 #Add support for EFS to the CLI configuration
 aws configure set preview.efs true
 #Get region of EC2 from instance metadata
-EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
-EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
-EC2_INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
-SERVER_ID="`aws ec2 describe-tags --output text --region eu-west-1  --filters Name=resource-type,Values="instance" Name=key,Values=Name Name=resource-id,Values=\"$EC2_INSTANCE_ID\"  | cut -f5`"
 #Create mount point
 mkdir /mnt/efs
 #Get EFS FileSystemID attribute
@@ -234,6 +159,51 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 --===============BOUNDARY==--
 """
 
+    sizes = ['micro', 'large']
+
+    prices = {
+                'micro': 800,
+                'large': 1600
+                }
+
+    max_players = {
+                    'micro': 20,
+                    'large': 80
+                    }
+
+    __mapper_args__ = {
+                'polymorphic_identity':'server',
+                'polymorphic_on':type
+            }
+
+    def seconds_to_dhms(self):
+        if self.expiry_date > datetime.datetime.now():
+            time_remaining = self.expiry_date - datetime.datetime.now()
+            days = math.floor(time_remaining.seconds / 86400)
+            remainder = time_remaining.seconds % 84600
+            hours = math.floor(remainder / 3600)
+            remainder %= 60
+            minutes = math.floor(remainder / 60)
+            return str(days) + " days, " + str(hours) + " hours, " + str(minutes) + " minutes"
+        else:
+            return "Server expired"
+
+    def serialize(self):
+
+        return {
+            "id": str(self.id),
+            "type": str(self.type),
+            "expiry_date" : str(self.expiry_date),
+            "creation_date": str(self.creation_date),
+            "time_remaining": self.seconds_to_dhms(),
+            "user": str(self.user),
+            "name": str(self.name),
+            "status": str(self.status),
+            "ip": str(self.ip),
+            "port": str(self.port)
+        }
+
+    def __init__(self, user, size='micro', name="New Server"):
         self.name = name
 
         self.size = size
