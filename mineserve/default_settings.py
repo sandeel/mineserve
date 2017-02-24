@@ -1,6 +1,8 @@
 import os
 from datetime import timedelta
 
+APP_NAME = os.getenv('APP_NAME')
+
 # aws settings
 AWS_REGION = "eu-west-1"
 EC2_KEYPAIR = "id_rsa"
@@ -17,8 +19,8 @@ MYSQL_DATABASE_HOST = os.getenv('DB_HOST','localhost')
 
 # app settings
 BETA = True
-STRIPE_SECRET_KEY = "sk_test_T86oR2vE8opYYtbfbYRV6Oz9"
-STRIPE_PUBLISHABLE_KEY = "pk_test_2d9cGno2Xf42e9zZZ9Oh3y1V"
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 ADVSRVS_BETA = "False"
 ADVSRVS_ADMIN_PASSWORD = "password"
 FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'True')
