@@ -1,4 +1,4 @@
-from mineserve import db, application
+from mineserve import application
 import datetime
 import uuid
 import random
@@ -44,7 +44,7 @@ class PromoCode(Model):
     """
     class Meta:
         region = application.config['AWS_REGION']
-        table_name = application.config['APP_NAME']+'-promocodes'
+        table_name = str(application.config['APP_NAME'])+'-promocodes'
 
     code = UnicodeAttribute(hash_key=True,default=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6)))
     activated = BooleanAttribute(default=False)
@@ -55,13 +55,13 @@ class Server(Model):
 
     class Meta:
         region = application.config['AWS_REGION']
-        table_name = application.config['APP_NAME']+'-servers'
+        table_name = str(application.config['APP_NAME'])+'-servers'
 
     id = UnicodeAttribute(hash_key=True,default=str(uuid.uuid4()))
     instance_id = UnicodeAttribute()
     name = UnicodeAttribute()
     expiry_date = UTCDateTimeAttribute()
-    creation_date = db.Column(db.DateTime)
+    creation_date = UTCDateTimeAttribute()
     user = UnicodeAttribute()
     size = UnicodeAttribute()
     type = UnicodeAttribute()
@@ -204,6 +204,8 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         }
 
     def __init__(self, user, size='micro', name="New Server"):
+        super().__init__()
+
         self.name = name
 
         self.size = size
@@ -223,8 +225,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
         self.user = user
 
-        db.session.add(self)
-        db.session.commit()
+        self.save()
 
     @property
     def userdata(self):
@@ -421,12 +422,11 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
         if promo_code and not promo_code.activated:
             self.expiry_date = self.expiry_date + datetime.timedelta(days=promo_code_days[promo_code.reward_code])
-            db.session.add(self)
 
             promo_code.activated=True
-            db.session.add(promo_code)
 
-            db.session.commit()
+            promo_code.save()
+            self.save()
 
     def reboot_instance(self):
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
@@ -449,27 +449,3 @@ def check_if_task_definition_exists(name):
 @event.listens_for(Server, 'before_delete', propagate=True)
 def receive_before_delete(mapper, connection, target):
     target.delete_cluster()
-
-# Executes before the first request is processed.
-@application.before_first_request
-def before_first_request():
-
-    # Create any database tables that don't exist yet.
-    db.create_all()
-
-    # Create two Users for testing purposes -- unless they already exists.
-    # In each case, use Flask-Security utility function to encrypt the password.
-    #encrypted_password = encrypt_password(application.config['ADMIN_PASSWORD'])
-    #if not user_datastore.get_user('adventureservers@kolabnow.com'):
-        #user_datastore.create_user(email='adventureservers@kolabnow.com', password=encrypted_password)
-
-    # Commit any database changes; the User and Roles must exist before we can add a Role to the User
-    #db.session.commit()
-
-    # Give one User has the "end-user" role, while the other has the "admin" role. (This will have no effect if the
-    # Users already have these Roles.) Again, commit any database changes.
-    #user_datastore.add_role_to_user('adventureservers@kolabnow.com', 'admin')
-    db.session.commit()
-
-
-
