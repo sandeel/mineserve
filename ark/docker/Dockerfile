@@ -58,9 +58,7 @@ COPY arkmanager-user.cfg /home/steam/arkmanager.cfg
 RUN touch /root/.bash_profile
 RUN chmod 777 /home/steam/run.sh
 RUN chmod 777 /home/steam/user.sh
-RUN chmod 777 /home/steam/install.sh
 RUN mkdir /ark
-RUN chmod 777 /ark
 
 
 # We use the git method, because api github has a limit ;)
@@ -102,4 +100,4 @@ EXPOSE ${STEAMPORT}/udp ${SERVERPORT}/udp
 WORKDIR /ark
 
 # Update game launch the game.
-ENTRYPOINT ["su", "-p", "-", "steam", "-c", "/home/steam/user.sh"]
+ENTRYPOINT ["/home/steam/user.sh"]

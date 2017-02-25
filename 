@@ -79,14 +79,15 @@ class Server(Model):
         region = application.config['AWS_REGION']
         table_name = str(application.config['APP_NAME'])+'-servers'
 
-    id = UnicodeAttribute(hash_key=True, default=str(uuid.uuid4()))
-    cluster_id = UnicodeAttribute(default='none')
-    name = UnicodeAttribute(default='Server')
-    expiry_date = UTCDateTimeAttribute(default=datetime.datetime.now()+datetime.timedelta(minutes=65))
-    creation_date = UTCDateTimeAttribute(default=datetime.datetime.now())
-    user = UnicodeAttribute()
+    id = UnicodeAttribute(hash_key=True,default=str(uuid.uuid4()))
+    instance_id = UnicodeAttribute()
+    name = UnicodeAttribute()
+    expiry_date = UTCDateTimeAttribute()
+    creation_date = UTCDateTimeAttribute()
     user_index = ServerUserIndex()
-    size = UnicodeAttribute(default='micro')
+    user = UnicodeAttribute()
+    size = UnicodeAttribute()
+
 
     userdata = """Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
 MIME-Version: 1.0
@@ -108,6 +109,12 @@ MIME-Version: 1.0
 Content-Type: text/cloud-boothook; charset="us-ascii"
 
 #cloud-boothook
+#Join the ECS cluster
+EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+EC2_INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
+SERVER_ID="`aws ec2 describe-tags --output text --region $EC2_REGION --filters Name=resource-type,Values="instance" Name=key,Values=Name Name=resource-id,Values=\"$EC2_INSTANCE_ID\"  | cut -f5`"
+echo ECS_CLUSTER=$SERVER_ID >> /etc/ecs/ecs.config
 PATH=$PATH:/usr/local/bin
 #Instance should be added to an security group that allows HTTP outbound
 yum update
@@ -128,13 +135,7 @@ pip install awscli
 #pip install --upgrade awscli
 #Add support for EFS to the CLI configuration
 aws configure set preview.efs true
-#Join the ECS cluster
-EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
-EC2_INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
-EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
-SERVER_ID="`aws ec2 describe-tags --output text --region $EC2_REGION --filters Name=resource-type,Values="instance" Name=key,Values=Name Name=resource-id,Values=\"$EC2_INSTANCE_ID\"  | cut -f5`"
-echo ECS_CLUSTER=$SERVER_ID >> /etc/ecs/ecs.config
-
+#Get region of EC2 from instance metadata
 #Create mount point
 mkdir /mnt/efs
 #Get EFS FileSystemID attribute
@@ -224,6 +225,33 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             "port": str(self.port)
         }
 
+    def __init__(self,
+                 user,
+                 size='micro',
+                 name='New Server',
+                 creation_date=datetime.datetime.now(),
+                 expiry_date=None):
+        super().__init__()
+        self.name = name
+        self.size = size
+        self.creation_date = creation_date
+        self.expiry_date = expiry_date
+
+        try:
+            self.instance_id = self.create_cluster()
+        except Exception as e:
+            self.delete_cluster()
+            raise ValueError("Could not create cluster "+self.id+" :"+str(e))
+
+        self.user = user
+
+        self.save()
+
+    @property
+    def userdata(self):
+        return self._userdata
+
+
     def __str__(self):
         return self.id
 
@@ -268,133 +296,93 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
         return private_ip
 
+    def create_cluster(self):
+
+        if application.config['STUB_AWS_RESOURCES']:
+            return 'fake-instance-id'
+
+        # create the ECS cluster
+        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        response = client.create_cluster(
+            clusterName=self.id
+        )
+
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+
+        # get the security group
+        try:
+            security_group_id = client.describe_security_groups(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':[self.type+'_sg']}])['SecurityGroups'][0]['GroupId']
+        except IndexError:
+            print("Error getting the security group for "+self.type+". Has it been created?")
+            return 'fake-instance-id'
+
+        # get the subnet
+        subnet_id = ""
+        try:
+            subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['PublicSubnet1']}])['Subnets'][0]['SubnetId']
+        except IndexError:
+            print("Error getting the subnet for server. Has it been created?")
+            return 'fake-instance-id'
+
+        # create the instance
+        response = client.run_instances(
+                ImageId=application.config['CONTAINER_AGENT_AMI'],
+                InstanceType='t2.'+str(self.size),
+                MinCount = 1,
+                MaxCount = 1,
+                UserData = self.userdata,
+                KeyName = application.config['EC2_KEYPAIR'],
+                IamInstanceProfile={
+                    'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
+                    },
+                SecurityGroupIds=[security_group_id],
+                SubnetId=str(subnet_id)
+        )
+        instance_id = response['Instances'][0]['InstanceId']
+
+        time.sleep(1)
+
+        # tag the instance
+        response = client.create_tags(
+            Resources=[
+                instance_id,
+            ],
+            Tags=[
+                {
+                    'Key': 'Name',
+                    'Value': self.id
+                },
+                {
+                    'Key': 'mineserv_role',
+                    'Value': 'container_agent'
+                },
+            ]
+        )
+
+        # create the service
+        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        client.create_service(
+            cluster=self.id,
+            serviceName=str(self.type),
+            taskDefinition=str(self.type),
+            desiredCount=1,
+            deploymentConfiguration={
+                        'maximumPercent': 100,
+                        'minimumHealthyPercent': 0
+                    }
+        )
+
+        return instance_id
+
     def delete(delete):
-        cluster.delete()
+        self.delete_cluster()
         super().delete()
 
-    def restart(self):
-        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
-        taskarn = client.list_tasks(cluster=self.id)['taskArns'][0]
-
-        client.stop_task(cluster=self.id,task=taskarn)
-
-    def apply_promo_code(self,promo_code):
-
-        promo_code_days = {
-                'BetaTest': 30,
-                '5Days': 5
-                }
-
-        promo_code = PromoCode.query.filter_by(code=promo_code).first()
-
-        if promo_code and not promo_code.activated:
-            self.expiry_date = self.expiry_date + datetime.timedelta(days=promo_code_days[promo_code.reward_code])
-
-            promo_code.activated=True
-
-            promo_code.save()
-            self.save()
-
-
-def check_if_task_definition_exists(name):
-    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
-    response = client.list_task_definitions(
-            familyPrefix=name,
-    )
-    if response['taskDefinitionArns']:
-        return True
-    return False
-
-class Cluster:
-
-    def __init__(self, type, instance_size):
-        try:
-            if application.config['STUB_AWS_RESOURCES']:
-                self.id = 'fake-cluster-id'
-
-            self.id = str(uuid.uuid4())
-            self.type = type
-
-            # create the ECS cluster
-            client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
-            response = client.create_cluster(
-                clusterName=self.id
-            )
-
-            client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
-
-            # get the security group
-            try:
-                security_group_id = client.describe_security_groups(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':[type+'_sg']}])['SecurityGroups'][0]['GroupId']
-            except IndexError:
-                print("Error getting the security group for "+type+". Has it been created?")
-                self.id = 'fake-cluster-id'
-
-            # get the subnet
-            subnet_id = ""
-            try:
-                subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['PublicSubnet1']}])['Subnets'][0]['SubnetId']
-            except IndexError:
-                print("Error getting the subnet for server. Has it been created?")
-                self.id = 'fake-cluster-id'
-
-            # create the instance
-            response = client.run_instances(
-                    ImageId=application.config['CONTAINER_AGENT_AMI'],
-                    InstanceType='t2.'+str(instance_size),
-                    MinCount = 1,
-                    MaxCount = 1,
-                    UserData = str(Server.userdata),
-                    KeyName = application.config['EC2_KEYPAIR'],
-                    IamInstanceProfile={
-                        'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
-                        },
-                    SecurityGroupIds=[security_group_id],
-                    SubnetId=str(subnet_id)
-            )
-            instance_id = response['Instances'][0]['InstanceId']
-
-            time.sleep(1)
-
-            # tag the instance
-            response = client.create_tags(
-                Resources=[
-                    instance_id,
-                ],
-                Tags=[
-                    {
-                        'Key': 'Name',
-                        'Value': self.id
-                    },
-                    {
-                        'Key': 'mineserv_role',
-                        'Value': 'container_agent'
-                    },
-                ]
-            )
-
-            # create the service
-            client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
-            client.create_service(
-                cluster=self.id,
-                serviceName=str(type),
-                taskDefinition=str(type),
-                desiredCount=1,
-                deploymentConfiguration={
-                            'maximumPercent': 100,
-                            'minimumHealthyPercent': 0
-                        }
-            )
-
-        except Exception as e:
-            self.delete()
-            raise ValueError("Could not create cluster "+self.id+" :"+str(e))
-
-    def delete(self):
-        t = Thread(target=self._delete)
+    def delete_cluster(self):
+        t = Thread(target=self._delete_cluster)
         t.start()
 
-    def _delete(self):
+    def _delete_cluster(self):
 
         # terminate the instance if it exists
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
@@ -437,5 +425,47 @@ class Cluster:
         client.delete_cluster(
                 cluster=self.id
         )
+
+    def restart(self):
+        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        taskarn = client.list_tasks(cluster=self.id)['taskArns'][0]
+
+        client.stop_task(cluster=self.id,task=taskarn)
+
+    def apply_promo_code(self,promo_code):
+
+        promo_code_days = {
+                'BetaTest': 30,
+                '5Days': 5
+                }
+
+        promo_code = PromoCode.query.filter_by(code=promo_code).first()
+
+        if promo_code and not promo_code.activated:
+            self.expiry_date = self.expiry_date + datetime.timedelta(days=promo_code_days[promo_code.reward_code])
+
+            promo_code.activated=True
+
+            promo_code.save()
+            self.save()
+
+    def reboot_instance(self):
+        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+        response = client.reboot_instances(
+            InstanceIds=[
+                self.instance_id,
+            ]
+        )
+        return response
+
+
+def check_if_task_definition_exists(name):
+    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+    response = client.list_task_definitions(
+            familyPrefix=name,
+    )
+    if response['taskDefinitionArns']:
+        return True
+    return False
 
 

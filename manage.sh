@@ -49,7 +49,7 @@ case $key in
 
         if [ -n "$codepipeline_bucket_physical_name" ]; then
             echo "Emptying the CodePipeline S3 bucket"
-            pip install boto3
+            pip install boto3 > /dev/null
             python empty_bucket.py $codepipeline_bucket_physical_name
         else
             echo "CodePipeline S3 Bucket already deleted"

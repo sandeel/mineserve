@@ -287,6 +287,7 @@ Resources:
         - sshSG
         - GroupId
 
+
   mcpeserversg:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -906,7 +907,7 @@ Resources:
       IpProtocol: tcp
       FromPort: '2049'
       ToPort: '2049'
-      CidrIp: 10.0.0.0/24
+      CidrIp: 10.0.0.0/16
       GroupId:
         Fn::GetAtt:
         - MountTargetSecurityGroup

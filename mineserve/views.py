@@ -214,14 +214,16 @@ def servers():
             return abort(400)
 
         size = data['size']
+
+        self.expiry_date = now_plus_1_hours
+
         new_server = globals()[data['type']](
                             name=data['server_name'],
                             size=size,
-                            user=user)
+                            user=user,
+                            expiry_date=now_plus_1_hours)
 
-        db.session.add(new_server)
-
-        db.session.commit()
+        new_server.save()
 
         return jsonify(new_server.serialize())
 
