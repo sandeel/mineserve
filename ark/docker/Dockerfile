@@ -51,7 +51,6 @@ RUN usermod -a -G sudo steam
 # Copy & rights to folders
 COPY run.sh /home/steam/run.sh
 COPY user.sh /home/steam/user.sh
-COPY install.sh /home/steam/install.sh
 COPY crontab /home/steam/crontab
 COPY arkmanager-user.cfg /home/steam/arkmanager.cfg
 
@@ -66,8 +65,6 @@ RUN  git clone https://github.com/FezVrasta/ark-server-tools.git /home/steam/ark
 WORKDIR /home/steam/ark-server-tools/
 # Install 
 WORKDIR /home/steam/ark-server-tools/tools
-RUN chmod +x install.sh 
-RUN ./install.sh steam 
 
 # Allow crontab to call arkmanager
 RUN ln -s /usr/local/bin/arkmanager /usr/bin/arkmanager
