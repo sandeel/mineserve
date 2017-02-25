@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:14.04
 
 MAINTAINER TuRzAm
 
@@ -32,8 +32,7 @@ ENV GID 1000
 
 # Install dependencies 
 RUN apt-get update &&\ 
-    apt-get install -y curl lib32gcc1 lsof git sudo
-RUN rm -rf /var/lib/apt/lists/*
+    apt-get install -y curl lib32gcc1 lsof git
 
 # Enable passwordless sudo for users under the "sudo" group
 RUN sed -i.bkp -e \
