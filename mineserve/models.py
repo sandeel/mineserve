@@ -367,7 +367,7 @@ class Cluster:
                         'Value': self.id
                     },
                     {
-                        'Key': 'mineserv_role',
+                        'Key': 'msv_role',
                         'Value': 'container_agent'
                     },
                 ]
