@@ -226,7 +226,7 @@ def servers():
         return jsonify(new_server.serialize())
 
     if current_user:
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(current_user)])
 
 
 @application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])

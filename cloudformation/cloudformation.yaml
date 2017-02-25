@@ -489,19 +489,15 @@ Resources:
         - GroupId
 
 
-  GitRepo:
-    Type: "AWS::CodeCommit::Repository"
-    Properties: 
-      RepositoryDescription: "msv"
-      RepositoryName: "msv"
-
   ResourcesBucket:
     Type: AWS::S3::Bucket
+
 
   MsvApi:
     Type: "AWS::ApiGateway::RestApi"
     Properties:
       Name: "MsvApi"
+
 
   Servers: 
     Type: "AWS::ApiGateway::Resource"
@@ -1078,6 +1074,39 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', users ] ]
+
+
+  ServersDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+        - 
+          AttributeName: "user"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', servers ] ]
+      GlobalSecondaryIndexes: 
+        - 
+          IndexName: "user-index"
+          KeySchema: 
+            - 
+              AttributeName: "user"
+              KeyType: "HASH"
+          Projection: 
+            ProjectionType: "KEYS_ONLY"
+          ProvisionedThroughput: 
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
 Mappings: 
   RegionMap: 
     us-east-1: 
@@ -1087,7 +1116,7 @@ Mappings:
     eu-west-1: 
       amazon: "ami-9398d3e0"
       ubuntu: "ami-0d77397e"
-      ecsoptimized: "ami-a1491ad2"
+      ecsoptimized: "ami-a7f2acc1"
     ap-southeast-1: 
       AMI: "ami-66f28c34"
     ap-northeast-1: 

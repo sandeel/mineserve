@@ -10,6 +10,8 @@ from threading import Thread
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, BooleanAttribute, UTCDateTimeAttribute
 import string
+from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
+from pynamodb.attributes import NumberAttribute
 
 class User():
     """ User of site site (Cognito)
@@ -38,10 +40,12 @@ class User():
     def __str__(self):
         return self.username
 
+
 class PromoCode(Model):
     """ Promo Code for the site
     Can have various uses including free top-up time
     """
+
     class Meta:
         region = application.config['AWS_REGION']
         table_name = str(application.config['APP_NAME'])+'-promocodes'
@@ -51,7 +55,25 @@ class PromoCode(Model):
     reward_code = UnicodeAttribute(default='BetaTest')
 
 
+class ServerUserIndex(GlobalSecondaryIndex):
+    """
+    This class represents a global secondary index
+    """
+    class Meta:
+        read_capacity_units = 1
+        write_capacity_units = 1
+        # All attributes are projected
+        projection = AllProjection()
+        index_name = 'user-index'
+
+    # This attribute is the hash key for the index
+    # Note that this attribute must also exist
+    # in the model
+    id = UnicodeAttribute(hash_key=True)
+
 class Server(Model):
+    """ A game server
+    """
 
     class Meta:
         region = application.config['AWS_REGION']
@@ -62,9 +84,10 @@ class Server(Model):
     name = UnicodeAttribute()
     expiry_date = UTCDateTimeAttribute()
     creation_date = UTCDateTimeAttribute()
+    user_index = ServerUserIndex()
     user = UnicodeAttribute()
     size = UnicodeAttribute()
-    type = UnicodeAttribute()
+
 
     userdata = """Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
 MIME-Version: 1.0
@@ -189,7 +212,6 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             return "Server expired"
 
     def serialize(self):
-
         return {
             "id": str(self.id),
             "type": str(self.type),
@@ -203,14 +225,14 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             "port": str(self.port)
         }
 
-    def __init__(self, user, size='micro', name="New Server"):
+    def __init__(self, user, size='micro', name="New Server", creation_date=datetime.datetime.now()):
         super().__init__()
 
         self.name = name
 
         self.size = size
 
-        self.creation_date=datetime.datetime.now()
+        self.creation_date=creation_date
 
         # give 1 hour and 5 minutes free
         now = datetime.datetime.now()
@@ -322,7 +344,6 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
         time.sleep(1)
 
-
         # tag the instance
         response = client.create_tags(
             Resources=[
@@ -354,6 +375,10 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         )
 
         return instance_id
+
+    def delete(delete):
+        self.delete_cluster()
+        super().delete()
 
     def delete_cluster(self):
         t = Thread(target=self._delete_cluster)
@@ -403,13 +428,11 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                 cluster=self.id
         )
 
-
     def restart(self):
         client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
         taskarn = client.list_tasks(cluster=self.id)['taskArns'][0]
 
         client.stop_task(cluster=self.id,task=taskarn)
-
 
     def apply_promo_code(self,promo_code):
 
@@ -437,6 +460,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         )
         return response
 
+
 def check_if_task_definition_exists(name):
     client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
     response = client.list_task_definitions(
@@ -446,6 +470,4 @@ def check_if_task_definition_exists(name):
         return True
     return False
 
-@event.listens_for(Server, 'before_delete', propagate=True)
-def receive_before_delete(mapper, connection, target):
-    target.delete_cluster()
+
