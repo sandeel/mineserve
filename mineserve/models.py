@@ -69,7 +69,7 @@ class ServerUserIndex(GlobalSecondaryIndex):
     # This attribute is the hash key for the index
     # Note that this attribute must also exist
     # in the model
-    id = UnicodeAttribute(hash_key=True)
+    user = UnicodeAttribute(hash_key=True)
 
 class Server(Model):
     """ A game server
@@ -80,10 +80,10 @@ class Server(Model):
         table_name = str(application.config['APP_NAME'])+'-servers'
 
     id = UnicodeAttribute(hash_key=True, default=str(uuid.uuid4()))
-    cluster_id = UnicodeAttribute(default='none')
     name = UnicodeAttribute(default='Server')
     expiry_date = UTCDateTimeAttribute(default=datetime.datetime.now()+datetime.timedelta(minutes=65))
     creation_date = UTCDateTimeAttribute(default=datetime.datetime.now())
+    type = UnicodeAttribute(default='ark_server')
     user = UnicodeAttribute()
     user_index = ServerUserIndex()
     size = UnicodeAttribute(default='micro')
@@ -181,8 +181,6 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 --===============BOUNDARY==--
 """
 
-    sizes = ['micro', 'large']
-
     prices = {
                 'micro': 800,
                 'large': 1600
@@ -197,6 +195,10 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                 'polymorphic_identity':'server',
                 'polymorphic_on':type
             }
+
+    def __init__(self, hash_key=None, range_key=None, **attrs):
+        super().__init__(hash_key, range_key, **attrs)
+        self.create_cluster()
 
     def seconds_to_dhms(self):
         if self.expiry_date > datetime.datetime.now():
@@ -213,7 +215,6 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
     def serialize(self):
         return {
             "id": str(self.id),
-            "type": str(self.type),
             "expiry_date" : str(self.expiry_date),
             "creation_date": str(self.creation_date),
             "time_remaining": self.seconds_to_dhms(),
@@ -221,7 +222,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             "name": str(self.name),
             "status": str(self.status),
             "ip": str(self.ip),
-            "port": str(self.port)
+            #"port": str(self.port)
         }
 
     def __str__(self):
@@ -295,40 +296,31 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             promo_code.save()
             self.save()
 
-
-def check_if_task_definition_exists(name):
-    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
-    response = client.list_task_definitions(
-            familyPrefix=name,
-    )
-    if response['taskDefinitionArns']:
-        return True
-    return False
-
-class Cluster:
-
-    def __init__(self, type, instance_size):
+    def create_cluster(self):
         try:
             if application.config['STUB_AWS_RESOURCES']:
-                self.id = 'fake-cluster-id'
-
-            self.id = str(uuid.uuid4())
-            self.type = type
+                return
 
             # create the ECS cluster
             client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
-            response = client.create_cluster(
-                clusterName=self.id
-            )
+            if 'MISSING' in str(client.describe_clusters(clusters=[self.id,])):
+                try:
+                    response = client.create_cluster(
+                        clusterName=str(self.id)
+                    )
+                except IndexError:
+                    print('Error describing cluster '+self.id)
+                    return
+            else:
+                return
 
             client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
 
             # get the security group
             try:
-                security_group_id = client.describe_security_groups(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':[type+'_sg']}])['SecurityGroups'][0]['GroupId']
+                security_group_id = client.describe_security_groups(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':[self.type+'_sg']}])['SecurityGroups'][0]['GroupId']
             except IndexError:
-                print("Error getting the security group for "+type+". Has it been created?")
-                self.id = 'fake-cluster-id'
+                print("Error getting the security group for "+self.type+". Has it been created?")
 
             # get the subnet
             subnet_id = ""
@@ -336,12 +328,11 @@ class Cluster:
                 subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['PublicSubnet1']}])['Subnets'][0]['SubnetId']
             except IndexError:
                 print("Error getting the subnet for server. Has it been created?")
-                self.id = 'fake-cluster-id'
 
             # create the instance
             response = client.run_instances(
                     ImageId=application.config['CONTAINER_AGENT_AMI'],
-                    InstanceType='t2.'+str(instance_size),
+                    InstanceType='t2.'+str(self.size),
                     MinCount = 1,
                     MaxCount = 1,
                     UserData = str(Server.userdata),
@@ -377,8 +368,8 @@ class Cluster:
             client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
             client.create_service(
                 cluster=self.id,
-                serviceName=str(type),
-                taskDefinition=str(type),
+                serviceName=str(self.type),
+                taskDefinition=str(self.type),
                 desiredCount=1,
                 deploymentConfiguration={
                             'maximumPercent': 100,
@@ -393,6 +384,7 @@ class Cluster:
     def delete(self):
         t = Thread(target=self._delete)
         t.start()
+        super().delete()
 
     def _delete(self):
 
@@ -437,5 +429,15 @@ class Cluster:
         client.delete_cluster(
                 cluster=self.id
         )
+
+
+def check_if_task_definition_exists(name):
+    client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+    response = client.list_task_definitions(
+            familyPrefix=name,
+    )
+    if response['taskDefinitionArns']:
+        return True
+    return False
 
 

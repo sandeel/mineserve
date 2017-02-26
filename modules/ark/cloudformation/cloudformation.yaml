@@ -6,7 +6,108 @@ Parameters:
     Description: Amazon EC2 Key Pair
     Type: "AWS::EC2::KeyPair::KeyName"
 
+  Vpc: 
+    Description: The VPC
+    Type: AWS::EC2::VPC::Id
+
 Resources:
+
+  ArkSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: For container agents
+      VpcId:
+        Ref: Vpc
+      Tags:
+        -
+          Key: Name
+          Value: ark_server_sg
+
+  ArkInboundRule27015tcp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '27015'
+      ToPort: '27015'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule27015udp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: udp
+      FromPort: '27015'
+      ToPort: '27015'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule7777tcp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '7777'
+      ToPort: '7777'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule7777udp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: udp
+      FromPort: '7777'
+      ToPort: '7777'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRuleRCON:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '32330'
+      ToPort: '32330'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRuleSsh:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRuleSFTP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '2222'
+      ToPort: '2222'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+
 
   ArkLogGroup: 
     Type: "AWS::Logs::LogGroup"

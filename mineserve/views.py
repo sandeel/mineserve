@@ -26,9 +26,6 @@ from factorio.factorioserver import FactorioServer
 #mcpe
 from mcpe.mcpeserver import MCPEServer
 
-#ark
-from ark.arkserver import ArkServer
-
 """
 @application.route("/server/<server_id>", methods=["GET","POST"])
 def server(server_id):
@@ -228,7 +225,7 @@ def servers():
         return jsonify(new_server.serialize())
 
     if current_user:
-        return jsonify(servers=[s.serialize() for s in Server.user_index.query(current_user)])
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(current_user))])
 
 
 @application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])

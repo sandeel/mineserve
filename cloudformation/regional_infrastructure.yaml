@@ -11,9 +11,10 @@ Resources:
   ArkStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: 'https://s3.amazonaws.com/testingnestedstacks/cloudformation.yaml'
+      TemplateURL: 'https://s3.amazonaws.com/msv-templates/ark.yaml'
       Parameters:
         KeyName: !Ref KeyName
+        Vpc: !Ref Vpc
 
   Vpc:
     Type: AWS::EC2::VPC

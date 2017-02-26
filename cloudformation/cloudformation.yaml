@@ -305,102 +305,6 @@ Resources:
         - FactSG
         - GroupId
 
-  ArkSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: For container agents
-      VpcId:
-        Ref: Vpc
-      Tags:
-        -
-          Key: Name
-          Value: ark_server_sg
-
-  ArkInboundRule27015tcp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '27015'
-      ToPort: '27015'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRule27015udp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: udp
-      FromPort: '27015'
-      ToPort: '27015'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRule7777tcp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '7777'
-      ToPort: '7777'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRule7777udp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: udp
-      FromPort: '7777'
-      ToPort: '7777'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRuleRCON:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '32330'
-      ToPort: '32330'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRuleSsh:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '22'
-      ToPort: '22'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRuleSFTP:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '2222'
-      ToPort: '2222'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-
   ResourcesBucket:
     Type: AWS::S3::Bucket
 
@@ -434,7 +338,7 @@ Resources:
       Integration: 
         Type: "HTTP"
         Uri:
-          !Join ['', ['http://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
+          !Join ['', ['http://', !GetAtt [ApiEnvironment, EndpointURL], '/api/0.1/servers']]
         IntegrationHttpMethod: "GET"
         IntegrationResponses:
           -
@@ -455,7 +359,7 @@ Resources:
       Integration: 
         Type: "HTTP"
         Uri:
-          !Join ['', ['http://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
+          !Join ['', ['http://', !GetAtt [ApiEnvironment, EndpointURL], '/api/0.1/servers']]
         IntegrationHttpMethod: "GET"
         IntegrationResponses:
           -
@@ -469,7 +373,7 @@ Resources:
     Type: AWS::ElasticBeanstalk::Application
 
 
-  ProdEnvironment:
+  ApiEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     DependsOn: Website
     Properties:
@@ -678,7 +582,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       AliasTarget:
-        DNSName: !GetAtt [ProdEnvironment, EndpointURL]
+        DNSName: !GetAtt [ApiEnvironment, EndpointURL]
         HostedZoneId: !FindInMap [Beanstalk2Route53HostedZoneId, !Ref 'AWS::Region',
           HostedZoneId]
       HostedZoneId: !Ref 'HostedZone'
@@ -739,7 +643,7 @@ Resources:
             Effect: Allow
   AppPipeline:
     Type: AWS::CodePipeline::Pipeline
-    DependsOn: ProdEnvironment
+    DependsOn: ApiEnvironment
     Properties:
       RoleArn: !GetAtt [CodePipelineServiceRole, Arn]
       Stages:
@@ -782,7 +686,7 @@ Resources:
             Provider: ElasticBeanstalk
           Configuration:
             ApplicationName: !Ref 'Website'
-            EnvironmentName: !Ref 'ProdEnvironment'
+            EnvironmentName: !Ref 'ApiEnvironment'
           RunOrder: 1
       ArtifactStore:
         Type: S3

@@ -17,11 +17,8 @@ case $key in
         echo "Creating bucket for CloudFormation templates..."
         aws s3 mb s3://msv-templates
 
-        echo "Uploading regional template for us-east-1."
-        aws s3 cp modules/ark/cloudformation/cloudformation.yaml s3://msv-templates
-
-        echo "Spinning up regional stack for us-east-1."
-        aws cloudformation create-stack --region us-east-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+        echo "Uploading ark template..."
+        aws s3 cp modules/ark/cloudformation/cloudformation.yaml s3://msv-templates/ark.yaml
 
         stack_exists=`aws cloudformation --region $BASE_REGION describe-stacks --stack-name $STACK_NAME` || echo "Stack not found".
 
@@ -49,6 +46,28 @@ case $key in
                 --parameters ParameterKey=GitBranch,ParameterValue=$GIT_BRANCH \
                 ParameterKey=KeyPair,ParameterValue=id_rsa ParameterKey=FlaskDebug,ParameterValue=True ParameterKey=GithubToken,ParameterValue=$MSV_GITHUB_TOKEN ParameterKey=DatabasePassword,ParameterValue=123moon12 ParameterKey=StripePublishableKey,ParameterValue=$MSV_STRIPE_PK ParameterKey=StripeSecretKey,ParameterValue=$MSV_STRIPE_SK ParameterKey=AdminPassword,ParameterValue=$MSV_ADMIN_PASS ParameterKey=Beta,ParameterValue=True --capabilities CAPABILITY_IAM
         fi
+
+        # eu-west-1 regional
+        stack_exists=`aws cloudformation --region eu-west-1 describe-stacks --stack-name $STACK_NAME-regional` || echo "Stack not found".
+        if [ -n "$stack_exists" ]; then
+            echo "Regional stack in eu-west-1 exists. Updating..."
+            aws cloudformation update-stack --region eu-west-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+        else
+            echo "Spinning up regional stack for eu-west-1"
+            aws cloudformation create-stack --region eu-west-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+        fi
+
+        # us-east-1 regional
+        stack_exists=`aws cloudformation --region us-east-1 describe-stacks --stack-name $STACK_NAME-regional` || echo "Stack not found".
+        if [ -n "$stack_exists" ]; then
+            echo "Regional stack in us-east-1 exists. Updating..."
+            aws cloudformation update-stack --region us-east-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+        else
+            echo "Spinning up regional stack for us-east-1"
+            aws cloudformation create-stack --region us-east-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+        fi
+
+
         ;;
 
         spin-down)
@@ -69,7 +88,10 @@ case $key in
             --stack-name $STACK_NAME \
             --region $BASE_REGION
 
-        echo "Terminating stack $STACK_NAME-regional in us-east-1"
+        echo "Terminating regional stack $STACK_NAME-regional in eu-west-1"
+        aws cloudformation delete-stack --region eu-west-1 --stack-name $STACK_NAME-regional
+
+        echo "Terminating regional stack $STACK_NAME-regional in us-east-1"
         aws cloudformation delete-stack --region us-east-1 --stack-name $STACK_NAME-regional
 
         echo "Emptying template bucket..."
