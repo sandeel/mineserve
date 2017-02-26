@@ -325,7 +325,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             # get the subnet
             subnet_id = ""
             try:
-                subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['PublicSubnet1']}])['Subnets'][0]['SubnetId']
+                subnet_id = client.describe_subnets(Filters=[{'Name':'tag-key','Values':['Name'],'Name':'tag-value','Values':['msv-container-agent-subnet']}])['Subnets'][0]['SubnetId']
             except IndexError:
                 print("Error getting the subnet for server. Has it been created?")
 

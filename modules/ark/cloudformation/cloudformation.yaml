@@ -107,14 +107,11 @@ Resources:
         - ArkSG
         - GroupId
 
-
-
   ArkLogGroup: 
     Type: "AWS::Logs::LogGroup"
     Properties: 
       RetentionInDays: 7
       LogGroupName: 'msv-ark'
-
 
   arkservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"

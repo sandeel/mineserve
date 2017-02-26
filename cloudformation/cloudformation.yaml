@@ -308,12 +308,10 @@ Resources:
   ResourcesBucket:
     Type: AWS::S3::Bucket
 
-
   MsvApi:
     Type: "AWS::ApiGateway::RestApi"
     Properties:
       Name: "MsvApi"
-
 
   Servers: 
     Type: "AWS::ApiGateway::Resource"
@@ -918,7 +916,7 @@ Resources:
               AttributeName: "user"
               KeyType: "HASH"
           Projection: 
-            ProjectionType: "KEYS_ONLY"
+            ProjectionType: "ALL"
           ProvisionedThroughput: 
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1

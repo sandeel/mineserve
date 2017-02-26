@@ -39,7 +39,7 @@ Resources:
       CidrBlock: 10.0.0.0/18
       Tags:
       - Key: Name
-        Value: PublicSubnet1
+        Value: msv-container-agent-subnet
       MapPublicIpOnLaunch: 'true'
 
   PublicRouteTable:
