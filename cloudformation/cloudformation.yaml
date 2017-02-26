@@ -637,6 +637,7 @@ Resources:
               - 'logs:CreateLogStream'
               - 'logs:PutRetentionPolicy'
               - 'logs:PutMetricFilter'
+              - 'logs:DeleteMetricFilter'
             Resource: '*'
             Effect: Allow
   AppPipeline:
