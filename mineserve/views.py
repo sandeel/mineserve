@@ -139,7 +139,7 @@ def _jwt_required():
     auth_header = request.headers.get('Authorization', None)
 
     if not auth_header:
-        return
+        abort(403)
 
     allowed_auth_header_prefixes = ['jwt']
 
