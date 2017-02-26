@@ -37,10 +37,11 @@ Parameters:
 
 Resources:
 
-  msvLogGroup: 
+  FactorioLogGroup: 
     Type: "AWS::Logs::LogGroup"
     Properties: 
       RetentionInDays: 7
+      LogGroupName: 'msv-factorio'
 
   factorioservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
@@ -81,7 +82,7 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref msvLogGroup
+            awslogs-group: !Ref FactorioLogGroup
             awslogs-region: !Ref 'AWS::Region'
             awslogs-stream-prefix: msv
         MountPoints: 
@@ -177,96 +178,6 @@ Resources:
           SourceVolume: "ftp"
           ContainerPath: "/home/msv"
 
-  arkservertaskdefinition: 
-    Type: "AWS::ECS::TaskDefinition"
-    Properties: 
-      Family: "ark_server"
-      Volumes: 
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/users.conf"
-        Name: "sftpconfig"
-      - 
-        Host: 
-          SourcePath: "/mnt/efs/ark"
-        Name: "ark"
-      - 
-        Host: 
-          SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/SavedArks"
-        Name: "SavedArks"
-      - 
-        Host: 
-          SourcePath: "/mnt/efs/ark/arkmanager.cfg"
-        Name: "arkmanager"
-      ContainerDefinitions: 
-      - 
-        Name: "ftp"
-        Image: "atmoz/sftp"
-        PortMappings:
-          - 
-            ContainerPort: 22
-            HostPort: 2222
-            Protocol: tcp
-        Essential: "true"
-        MemoryReservation: 128
-        MountPoints: 
-        - 
-          SourceVolume: "sftpconfig"
-          ContainerPath: "/etc/sftp-users.conf"
-        - 
-          SourceVolume: "ark"
-          ContainerPath: "/home/msv"
-      - 
-        Name: "ark"
-        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/ark:latest"
-        PortMappings:
-          - 
-            ContainerPort: 7777
-            HostPort: 7777
-            Protocol: tcp
-          - 
-            ContainerPort: 7777
-            HostPort: 7777
-            Protocol: udp
-          - 
-            ContainerPort: 7778
-            HostPort: 7778
-            Protocol: tcp
-          - 
-            ContainerPort: 7778
-            HostPort: 7778
-            Protocol: udp
-          - 
-            ContainerPort: 32330
-            HostPort: 32330
-            Protocol: tcp
-        MountPoints: 
-        - 
-          SourceVolume: "SavedArks"
-          ContainerPath: "/ark/server/ShooterGame/Saved/SavedArks"
-        - 
-          SourceVolume: "arkmanager"
-          ContainerPath: "/ark/arkmanager.cfg"
-        Essential: "true"
-        MemoryReservation: 3826
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group: !Ref msvLogGroup
-            awslogs-region: !Ref 'AWS::Region'
-            awslogs-stream-prefix: msv
-        Environment:
-          -
-            Name: ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION
-            Value: 1
-          -
-            Name: ECS_IMAGE_CLEANUP_INTERVAL
-            Value: 10
-        Ulimits:
-          -
-            Name: nofile
-            HardLimit: 100000
-            SoftLimit: 100000
 
   sshSG:
     Type: AWS::EC2::SecurityGroup

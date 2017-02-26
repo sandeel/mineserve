@@ -14,6 +14,15 @@ case $key in
 
         : ${MSV_GITHUB_TOKEN?"Need to set MSV_GITHUB_TOKEN. Try running with MSV_GITHUB_TOKEN=xyz123 ./spin-up.sh"}
 
+        echo "Creating bucket for CloudFormation templates..."
+        aws s3 mb s3://msv-templates
+
+        echo "Uploading regional template for us-east-1."
+        aws s3 cp modules/ark/cloudformation/cloudformation.yaml s3://msv-templates
+
+        echo "Spinning up regional stack for us-east-1."
+        aws cloudformation create-stack --region us-east-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+
         stack_exists=`aws cloudformation --region $BASE_REGION describe-stacks --stack-name $STACK_NAME` || echo "Stack not found".
 
         if [ -n "$stack_exists" ]; then
@@ -55,10 +64,20 @@ case $key in
             echo "CodePipeline S3 Bucket already deleted"
         fi
 
-        echo "Deleting stack $STACK_NAME"
+        echo "Terminating stack $STACK_NAME"
         aws cloudformation delete-stack \
             --stack-name $STACK_NAME \
             --region $BASE_REGION
+
+        echo "Terminating stack $STACK_NAME-regional in us-east-1"
+        aws cloudformation delete-stack --region us-east-1 --stack-name $STACK_NAME-regional
+
+        echo "Emptying template bucket..."
+        python empty_bucket.py msv-templates
+
+        echo "Terminating template bucket..."
+        aws s3 rb s3://msv-templates
+
         ;;
         esac
 exit 0

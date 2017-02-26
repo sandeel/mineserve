@@ -5,11 +5,15 @@ Parameters:
   KeyName: 
     Description: Amazon EC2 Key Pair
     Type: "AWS::EC2::KeyPair::KeyName"
-  ContainerAgentInstanceProfileName: 
-    Description: Container Agent Instance Profile name
-    Type: "string"
 
 Resources:
+
+  ArkStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/testingnestedstacks/cloudformation.yaml'
+      Parameters:
+        KeyName: !Ref KeyName
 
   Vpc:
     Type: AWS::EC2::VPC
@@ -59,19 +63,6 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref 'InternetGateway'
 
-	ContainerAgentLaunchConfiguration: 
-		Type: "AWS::AutoScaling::LaunchConfiguration"
-		Properties: 
-			ImageId: 
-				Fn::FindInMap: 
-					- "RegionMap"
-					- Ref: "AWS::Region"
-					- "ecsoptimized"
-			InstanceType: 
-				Ref: "InstanceType"
-			IamInstanceProfile: 
-				Ref: ContainerAgentInstanceProfileName
-
 Mappings: 
   RegionMap: 
     us-east-1: 
@@ -81,7 +72,7 @@ Mappings:
     eu-west-1: 
       amazon: "ami-9398d3e0"
       ubuntu: "ami-0d77397e"
-      ecsoptimized: "ami-a1491ad2"
+      ecsoptimized: "ami-a7f2acc1"
     ap-southeast-1: 
       AMI: "ami-66f28c34"
     ap-northeast-1: 
