@@ -957,3 +957,6 @@ Outputs:
   ContainerAgentInstanceProfileName:
     Description: Name of instance profile for container agents
     Value: !Ref ContainerAgentInstanceProfile
+  ApiUrl:
+    Description: API URL
+    Value: !GetAtt ApiEnvironment.EndpointURL

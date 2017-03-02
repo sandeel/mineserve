@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives import serialization
 import requests
 from flask import _request_ctx_stack as stack
 from werkzeug.local import LocalProxy
+from mineserve.models import Server
 
 current_user = LocalProxy(lambda: getattr(stack.top, 'current_user', None))
 
@@ -216,8 +217,7 @@ def servers():
         now = datetime.datetime.now()
         now_plus_1_hours = now + datetime.timedelta(minutes=65)
 
-        new_server = globals()[data['type']](
-                            name=data['server_name'],
+        new_server = Server(name=data['server_name'],
                             size=size,
                             user=user,
                             expiry_date=now_plus_1_hours)
