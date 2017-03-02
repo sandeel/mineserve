@@ -212,7 +212,9 @@ def servers():
 
         size = data['size']
 
-        self.expiry_date = now_plus_1_hours
+        # give 1 hour and 5 minutes free
+        now = datetime.datetime.now()
+        now_plus_1_hours = now + datetime.timedelta(minutes=65)
 
         new_server = globals()[data['type']](
                             name=data['server_name'],
