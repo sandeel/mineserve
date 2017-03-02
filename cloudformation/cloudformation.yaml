@@ -406,6 +406,9 @@ Resources:
         OptionName: ADVSRVS_BETA
         Value: !Ref 'Beta'
       - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: STUB_AWS_RESOURCES
+        Value: 'False'
+      - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: STRIPE_SECRET_KEY
         Value: !Ref 'StripeSecretKey'
       - Namespace: aws:elasticbeanstalk:application:environment
@@ -505,7 +508,8 @@ Resources:
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Action: ec2:*
+        - Action: ['ec2:*',
+                   'ecs:*']
           Effect: Allow
           Resource: '*'
         - Sid: BucketAccess
