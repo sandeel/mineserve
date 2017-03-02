@@ -230,6 +230,9 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
     @property
     def status(self):
+        if application.config('STUB_AWS_RESOURCES'):
+            return 'stub_resource'
+
         client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
         response = client.list_tasks(cluster=self.id)
 
