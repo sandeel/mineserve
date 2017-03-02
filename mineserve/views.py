@@ -1,10 +1,7 @@
-from mineserve import application, db, stripe_keys
-from flask import request, render_template, jsonify, abort, make_response
-from flask_security import login_required, roles_accepted
+from mineserve import application, db
+from flask import request, jsonify, abort, make_response
 from mineserve.models import User
-from flask_security.utils import encrypt_password
 from mineserve.models import Server
-from flask import redirect
 import datetime
 import jwt
 from functools import wraps
@@ -206,7 +203,7 @@ def servers():
 
         data = request.get_json(force=True)
 
-        user = current_user
+        user = str(current_user)
 
         if not user:
             return abort(400)
