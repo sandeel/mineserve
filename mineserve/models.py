@@ -1,5 +1,5 @@
 from mineserve import application
-import datetime
+import datetime, timezone
 import uuid
 import random
 import boto3
@@ -81,8 +81,8 @@ class Server(Model):
 
     id = UnicodeAttribute(hash_key=True, default=str(uuid.uuid4()))
     name = UnicodeAttribute(default='Server')
-    expiry_date = UTCDateTimeAttribute(default=datetime.datetime.now()+datetime.timedelta(minutes=65))
-    creation_date = UTCDateTimeAttribute(default=datetime.datetime.now())
+    expiry_date = UTCDateTimeAttribute(default=datetime.datetime.now(timezone.utc)+datetime.timedelta(minutes=65))
+    creation_date = UTCDateTimeAttribute(default=datetime.datetime.now(timezone.utc))
     type = UnicodeAttribute(default='ark_server')
     user = UnicodeAttribute()
     user_index = ServerUserIndex()
@@ -201,8 +201,8 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         self.create_cluster()
 
     def seconds_to_dhms(self):
-        if self.expiry_date > datetime.datetime.now():
-            time_remaining = self.expiry_date - datetime.datetime.now()
+        if self.expiry_date > datetime.datetime.now(timezone.utc):
+            time_remaining = self.expiry_date - datetime.datetime.now(timezone.utc)
             days = math.floor(time_remaining.seconds / 86400)
             remainder = time_remaining.seconds % 84600
             hours = math.floor(remainder / 3600)
@@ -358,7 +358,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                 Tags=[
                     {
                         'Key': 'Name',
-                        'Value': self.id
+                        'Value': 'msv-container-'+self.id
                     },
                     {
                         'Key': 'msv_role',
@@ -394,7 +394,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         # terminate the instance if it exists
         client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
         try:
-            instance_id = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':[self.id]}])['Reservations'][0]['Instances'][0]['InstanceId']
+            instance_id = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':['msv-container-'+self.id]}])['Reservations'][0]['Instances'][0]['InstanceId']
             if len(client.describe_instances(InstanceIds=[instance_id,])['Reservations']) > 0:
                 client.terminate_instances(
                         InstanceIds=[

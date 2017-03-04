@@ -230,8 +230,8 @@ def servers():
 @application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])
 @jwt_required()
 def server(id):
-    server = Server.query.filter_by(id=id).first()
-    if (server.user != current_user):
+    server = next(Server.query(id))
+    if (server.user != str(current_user)):
         abort(403)
 
     if request.method == "DELETE":
@@ -239,11 +239,9 @@ def server(id):
         if application.config['STUB_AWS_RESOURCES']:
             abort(200)
 
-        db.session.delete(server)
+        server.save()
 
-        db.session.commit()
-
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(current_user))])
 
     elif request.method == "GET":
         return jsonify(server.serialize())
