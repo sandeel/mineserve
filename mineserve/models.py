@@ -1,5 +1,6 @@
 from mineserve import application
-import datetime, timezone
+import datetime
+from datetime import timezone
 import uuid
 import random
 import boto3
