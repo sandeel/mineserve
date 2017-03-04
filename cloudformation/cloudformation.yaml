@@ -6,6 +6,9 @@ Parameters:
     Type: String
     Description: Generate on Github account
     NoEcho: 'true'
+  GitBranch:
+    Type: String
+    Description: Git branch to use
   KeyPair:
     Description: Amazon EC2 Key Pair
     Type: AWS::EC2::KeyPair::KeyName
@@ -34,10 +37,11 @@ Parameters:
 
 Resources:
 
-  msvLogGroup: 
+  FactorioLogGroup: 
     Type: "AWS::Logs::LogGroup"
     Properties: 
       RetentionInDays: 7
+      LogGroupName: 'msv-factorio'
 
   factorioservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
@@ -78,7 +82,7 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref msvLogGroup
+            awslogs-group: !Ref FactorioLogGroup
             awslogs-region: !Ref 'AWS::Region'
             awslogs-stream-prefix: msv
         MountPoints: 
@@ -174,82 +178,6 @@ Resources:
           SourceVolume: "ftp"
           ContainerPath: "/home/msv"
 
-  arkservertaskdefinition: 
-    Type: "AWS::ECS::TaskDefinition"
-    Properties: 
-      Family: "ark_server"
-      Volumes: 
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/users.conf"
-        Name: "sftpconfig"
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/ark"
-        Name: "ark"
-      ContainerDefinitions: 
-      - 
-        Name: "ftp"
-        Image: "atmoz/sftp"
-        PortMappings:
-          - 
-            ContainerPort: 22
-            HostPort: 2222
-            Protocol: tcp
-        Essential: "true"
-        Memory: 128
-        MountPoints: 
-        - 
-          SourceVolume: "sftpconfig"
-          ContainerPath: "/etc/sftp-users.conf"
-        - 
-          SourceVolume: "ark"
-          ContainerPath: "/home/msv"
-      - 
-        Name: "ark"
-        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/ark:latest"
-        PortMappings:
-          - 
-            ContainerPort: 7777
-            HostPort: 7777
-            Protocol: tcp
-          - 
-            ContainerPort: 7777
-            HostPort: 7777
-            Protocol: udp
-          - 
-            ContainerPort: 7778
-            HostPort: 7778
-            Protocol: tcp
-          - 
-            ContainerPort: 7778
-            HostPort: 7778
-            Protocol: udp
-          - 
-            ContainerPort: 32330
-            HostPort: 32330
-            Protocol: tcp
-        MountPoints: 
-        - 
-          SourceVolume: "ark"
-          ContainerPath: "/ark"
-        Essential: "true"
-        Memory: 6144
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group: !Ref msvLogGroup
-            awslogs-region: !Ref 'AWS::Region'
-            awslogs-stream-prefix: msv
-        Environment:
-          -
-            Name: SERVERPORT
-            Value: 7777
-        Ulimits:
-          -
-            Name: nofile
-            HardLimit: 100000
-            SoftLimit: 100000
 
   sshSG:
     Type: AWS::EC2::SecurityGroup
@@ -269,6 +197,7 @@ Resources:
         Fn::GetAtt:
         - sshSG
         - GroupId
+
 
   mcpeserversg:
     Type: AWS::EC2::SecurityGroup
@@ -376,84 +305,6 @@ Resources:
         - FactSG
         - GroupId
 
-  ArkSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: For container agents
-      VpcId:
-        Ref: Vpc
-      Tags:
-        -
-          Key: Name
-          Value: ark_server_sg
-
-  ArkInboundRule27015tcp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '27015'
-      ToPort: '27015'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRule27015udp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: udp
-      FromPort: '27015'
-      ToPort: '27015'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRule7777tcp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '7777'
-      ToPort: '7777'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRule7777udp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: udp
-      FromPort: '7777'
-      ToPort: '7777'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-  ArkInboundRuleRCON:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '32330'
-      ToPort: '32330'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - ArkSG
-        - GroupId
-
-
-  GitRepo:
-    Type: "AWS::CodeCommit::Repository"
-    Properties: 
-      RepositoryDescription: "msv"
-      RepositoryName: "msv"
-
   ResourcesBucket:
     Type: AWS::S3::Bucket
 
@@ -485,7 +336,7 @@ Resources:
       Integration: 
         Type: "HTTP"
         Uri:
-          !Join ['', ['http://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
+          !Join ['', ['http://', !GetAtt [ApiEnvironment, EndpointURL], '/api/0.1/servers']]
         IntegrationHttpMethod: "GET"
         IntegrationResponses:
           -
@@ -506,7 +357,7 @@ Resources:
       Integration: 
         Type: "HTTP"
         Uri:
-          !Join ['', ['http://', !GetAtt [ProdEnvironment, EndpointURL], '/api/0.1/servers']]
+          !Join ['', ['http://', !GetAtt [ApiEnvironment, EndpointURL], '/api/0.1/servers']]
         IntegrationHttpMethod: "GET"
         IntegrationResponses:
           -
@@ -516,95 +367,32 @@ Resources:
           StatusCode: 200
 
 
-  Vpc:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsHostnames: 'true'
-      EnableDnsSupport: 'true'
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-  AttachGateway:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref 'Vpc'
-      InternetGatewayId: !Ref 'InternetGateway'
-  PublicSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.0.0/24
-      Tags:
-      - Key: Name
-        Value: PublicSubnet1
-      MapPublicIpOnLaunch: 'true'
-  PublicRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref 'Vpc'
-      Tags:
-      - Key: Name
-        Value: PublicRouteTable
-  PublicSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref 'PublicSubnet1'
-      RouteTableId: !Ref 'PublicRouteTable'
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: AttachGateway
-    Properties:
-      RouteTableId: !Ref 'PublicRouteTable'
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref 'InternetGateway'
-  PrivateSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.1.0/24
-      Tags:
-      - Key: Name
-        Value: PrivateSubnet
-      AvailabilityZone: !Select ['0', !GetAZs {Ref: 'AWS::Region'}]
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'Vpc'
-      CidrBlock: 10.0.3.0/24
-      Tags:
-      - Key: Name
-        Value: PrivateSubnet
-      AvailabilityZone: !Select ['1', !GetAZs {Ref: 'AWS::Region'}]
   Website:
     Type: AWS::ElasticBeanstalk::Application
-  ProdEnvironment:
+
+
+  ApiEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     DependsOn: Website
     Properties:
       ApplicationName: !Ref 'Website'
-      SolutionStackName: 64bit Amazon Linux 2016.09 v2.2.0 running Python 3.4
+      SolutionStackName: 64bit Amazon Linux 2016.09 v2.3.1 running Python 3.4
       OptionSettings:
-      - Namespace: aws:autoscaling:launchconfiguration
-        OptionName: EC2KeyName
-        Value: !Ref 'KeyPair'
-      - Namespace: aws:autoscaling:launchconfiguration
-        OptionName: InstanceType
-        Value: t2.micro
       - Namespace: aws:ec2:vpc
         OptionName: Subnets
         Value: !Ref 'PublicSubnet1'
       - Namespace: aws:ec2:vpc
         OptionName: ELBSubnets
         Value: !Ref 'PublicSubnet1'
-      - Namespace: aws:ec2:vpc
-        OptionName: AssociatePublicIpAddress
-        Value: 'true'
       - Namespace: aws:elasticbeanstalk:environment
         OptionName: ServiceRole
-        Value: !Ref 'ElasticBeanstalkServiceRole'
+        Value: !Ref ElasticBeanstalkServiceRole
       - Namespace: aws:autoscaling:launchconfiguration
         OptionName: IamInstanceProfile
-        Value: !Ref 'ElasticBeanstalkInstanceProfile'
+        Value: !Ref ElasticBeanstalkInstanceProfile
+      - Namespace:  aws:elasticbeanstalk:healthreporting:system
+        OptionName: SystemType
+        Value: enhanced
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: ADVSRVS_AWS_REGION
         Value: !Ref 'AWS::Region'
@@ -618,20 +406,17 @@ Resources:
         OptionName: ADVSRVS_BETA
         Value: !Ref 'Beta'
       - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: STUB_AWS_RESOURCES
+        Value: 'False'
+      - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: STRIPE_SECRET_KEY
         Value: !Ref 'StripeSecretKey'
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: STRIPE_PUBLISHABLE_KEY
         Value: !Ref 'StripePublishableKey'
       - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: DB_HOST
-        Value: !GetAtt [DB, Endpoint.Address]
-      - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: DB_PASS
-        Value: !Ref 'DatabasePassword'
-      - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: ADVSRVS_SG_ID
-        Value: !Ref 'ContainerAgentSG'
+        OptionName: APP_NAME
+        Value: !Ref AWS::StackName
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: ADVSRVS_CONTAINER_AGENT_SUBNET
         Value: !Ref 'PublicSubnet1'
@@ -656,21 +441,9 @@ Resources:
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: ADVSRVS_RESOURCES_ENDPOINT
         Value: !GetAtt [ResourcesBucket, DomainName]
-      - Namespace: aws:elasticbeanstalk:command
-        OptionName: DeploymentPolicy
-        Value: Rolling
-      - Namespace: aws:elasticbeanstalk:command
-        OptionName: BatchSizeType
-        Value: Fixed
-      - Namespace: aws:elasticbeanstalk:command
-        OptionName: BatchSize
-        Value: '1'
-      - Namespace: aws:autoscaling:asg
-        OptionName: MinSize
-        Value: '1'
-      - Namespace: aws:autoscaling:asg
-        OptionName: MaxSize
-        Value: '4'
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: EC2KeyName
+        Value: !Ref 'KeyPair'
   ContainerAgentSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -686,8 +459,8 @@ Resources:
         ToPort: '33775'
         CidrIp: 0.0.0.0/0
       - IpProtocol: tcp
-        FromPort: '22'
-        ToPort: '22'
+        FromPort: '2222'
+        ToPort: '2222'
         CidrIp: 10.0.0.0/16
   DatabaseSG:
     Type: AWS::EC2::SecurityGroup
@@ -717,11 +490,15 @@ Resources:
         Version: '2012-10-17'
         Statement:
         - Effect: Allow
-          Action: ['elasticloadbalancing:DescribeInstanceHealth', 'ec2:DescribeInstances',
-            'ec2:DescribeInstanceStatus', 'ec2:GetConsoleOutput', 'ec2:AssociateAddress',
-            'ec2:DescribeAddresses', 'ec2:DescribeSecurityGroups', 'sqs:GetQueueAttributes',
-            'sqs:GetQueueUrl', 'autoscaling:DescribeAutoScalingGroups', 'autoscaling:DescribeAutoScalingInstances',
-            'autoscaling:DescribeScalingActivities', 'autoscaling:DescribeNotificationConfigurations']
+          Action:
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:GetLogEvents'
+            - 'logs:PutLogEvents'
+            - 'logs:DescribeLogGroups'
+            - 'logs:DescribeLogStreams'
+            - 'logs:PutRetentionPolicy'
+            - 'logs:PutMetricFilter'
           Resource: ['*']
       Roles: [!Ref 'ElasticBeanstalkServiceRole']
   ElasticBeanstalkInstanceProfilePolicy:
@@ -731,7 +508,8 @@ Resources:
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Action: ec2:*
+        - Action: ['ec2:*',
+                   'ecs:*']
           Effect: Allow
           Resource: '*'
         - Sid: BucketAccess
@@ -741,10 +519,29 @@ Resources:
         - Effect: Allow
           Action: iam:PassRole
           Resource: !Join ['', ['arn:aws:iam::', !Ref 'AWS::AccountId', ':role/*']]
+        - Effect: Allow
+          Action:
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:GetLogEvents'
+            - 'logs:PutLogEvents'
+            - 'logs:DescribeLogGroups'
+            - 'logs:DescribeLogStreams'
+            - 'logs:PutRetentionPolicy'
+          Resource: !Join ['', ['arn:aws:logs:', !Ref 'AWS::Region', ':*']]
+        - Effect: Allow
+          Action:
+            - 'logs:PutLogEvents'
+            - 'logs:CreateLogStream'
+          Resource:
+            'arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk*'
       Roles: [!Ref 'ElasticBeanstalkInstanceProfileRole']
   ElasticBeanstalkServiceRole:
     Type: AWS::IAM::Role
     Properties:
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkService'
+        - 'arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -759,6 +556,8 @@ Resources:
   ElasticBeanstalkInstanceProfileRole:
     Type: AWS::IAM::Role
     Properties:
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -785,34 +584,17 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       AliasTarget:
-        DNSName: !GetAtt [ProdEnvironment, EndpointURL]
+        DNSName: !GetAtt [ApiEnvironment, EndpointURL]
         HostedZoneId: !FindInMap [Beanstalk2Route53HostedZoneId, !Ref 'AWS::Region',
           HostedZoneId]
       HostedZoneId: !Ref 'HostedZone'
       Name: www.adventureservers.com
       Type: A
-  DBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: DB Subnet group
-      SubnetIds: [!Ref 'PrivateSubnet1', !Ref 'PrivateSubnet2']
-  DB:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      AllocatedStorage: '10'
-      DBInstanceClass: db.t2.micro
-      Engine: MySQL
-      EngineVersion: '5.7'
-      MasterUsername: 'mineserve'
-      MasterUserPassword: !Ref 'DatabasePassword'
-      DBName: 'mineserve'
-      VPCSecurityGroups: [!Ref 'DatabaseSG']
-      DBSubnetGroupName: !Ref 'DBSubnetGroup'
   CodePipelineS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
       VersioningConfiguration:
-        Status: Enabled
+        Status: Suspended
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -847,15 +629,30 @@ Resources:
           - Action: ['lambda:InvokeFunction', 'lambda:ListFunctions']
             Resource: '*'
             Effect: Allow
+          - Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 'elasticbeanstalk:*'
+              - 'lambda:InvokeFunction'
+              - 'cloudformation:CreateStack'
+              - 'codebuild:BatchGetBuilds'
+              - 'codebuild:StartBuild'
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutRetentionPolicy'
+              - 'logs:PutMetricFilter'
+              - 'logs:DeleteMetricFilter'
+            Resource: '*'
+            Effect: Allow
   AppPipeline:
     Type: AWS::CodePipeline::Pipeline
-    DependsOn: ProdEnvironment
+    DependsOn: ApiEnvironment
     Properties:
       RoleArn: !GetAtt [CodePipelineServiceRole, Arn]
       Stages:
       - Name: Source
         Actions:
-        - Name: SourceAction
+        - Name: Source
           ActionTypeId:
             Category: Source
             Owner: ThirdParty
@@ -866,11 +663,22 @@ Resources:
           Configuration:
             Owner: sandeel
             Repo: mineserve
-            Branch: master
+            Branch: !Ref GitBranch
             OAuthToken: !Ref 'GithubToken'
           RunOrder: 1
       - Name: Prod
         Actions:
+        - Name: BuildArkImage
+          InputArtifacts:
+          - Name: SourceOutput
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Version: '1'
+            Provider: CodeBuild
+          Configuration:
+            ProjectName: !Ref CodeBuildArkProject
+          RunOrder: 1
         - Name: ProdAction
           InputArtifacts:
           - Name: SourceOutput
@@ -881,28 +689,242 @@ Resources:
             Provider: ElasticBeanstalk
           Configuration:
             ApplicationName: !Ref 'Website'
-            EnvironmentName: !Ref 'ProdEnvironment'
+            EnvironmentName: !Ref 'ApiEnvironment'
           RunOrder: 1
       ArtifactStore:
         Type: S3
         Location: !Ref 'CodePipelineS3Bucket'
-  ResourcesBucket:
-    Type: AWS::S3::Bucket
+
+  ContainerDataFileSystem: 
+    Type: "AWS::EFS::FileSystem"
+    Properties: 
+      FileSystemTags: 
+        - 
+          Key: "Name"
+          Value: "ContainerDataFileSystem"
+  MountTarget: 
+    Type: "AWS::EFS::MountTarget"
+    Properties: 
+      FileSystemId: 
+        Ref: "ContainerDataFileSystem"
+      SubnetId: 
+        Ref: "PublicSubnet1"
+      SecurityGroups: 
+        - 
+          Ref: "MountTargetSecurityGroup"
+  MountTargetSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      AccessControl: PublicRead
-  PublicRead:
-    Type: AWS::S3::BucketPolicy
+      GroupDescription: Port 2049
+      VpcId:
+        Ref: Vpc
+
+  MountTargetSecurityGroupnboundRule:
+    Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Bucket: !Ref 'ResourcesBucket'
+      IpProtocol: tcp
+      FromPort: '2049'
+      ToPort: '2049'
+      CidrIp: 10.0.0.0/16
+      GroupId:
+        Fn::GetAtt:
+        - MountTargetSecurityGroup
+        - GroupId
+
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref 'Vpc'
+      InternetGatewayId: !Ref 'InternetGateway'
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.0.0/19
+      Tags:
+      - Key: Name
+        Value: PublicSubnet1
+      MapPublicIpOnLaunch: 'true'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'Vpc'
+      Tags:
+      - Key: Name
+        Value: PublicRouteTable
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'PublicSubnet1'
+      RouteTableId: !Ref 'PublicRouteTable'
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref 'PublicRouteTable'
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref 'InternetGateway'
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.32.0/24
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet
+      AvailabilityZone: !Select ['0', !GetAZs {Ref: 'AWS::Region'}]
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.33.0/24
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet
+      AvailabilityZone: !Select ['1', !GetAZs {Ref: 'AWS::Region'}]
+
+  CodeBuildArkProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: ark
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:1.12.1
+        EnvironmentVariables:
+        - Name: AWS_ACCOUNT_ID
+          Value: !Ref AWS::AccountId
+        - Name: AWS_DEFAULT_REGION
+          Value: !Ref AWS::Region
+        - Name: IMAGE_REPO_NAME
+          Value: ark
+        - Name: IMAGE_TAG
+          Value: latest
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 60
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+
+  CodeBuildServiceRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodePipelineServiceRolePolicy
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
-        - Sid: AddPerm
-          Effect: Allow
-          Principal: '*'
-          Action: ['s3:GetObject']
-          Resource: !Join ['', ['arn:aws:s3:::', !Ref 'ResourcesBucket', /*]]
+        - Effect: Allow
+          Action:
+            - 'ecr:CreateRepository'
+            - 'ecr:BatchCheckLayerAvailability'
+            - 'ecr:CompleteLayerUpload'
+            - 'ecr:GetAuthorizationToken'
+            - 'ecr:InitiateLayerUpload'
+            - 'ecr:PutImage'
+            - 'ecr:UploadLayerPart'
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:PutLogEvents'
+            - 's3:GetObject'
+            - 's3:GetObjectVersion'
+            - 's3:PutObject'
+          Resource: ['*']
+      Roles: [!Ref 'CodeBuildServiceRole']
 
+
+  PromoCodeDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "code"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "code"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', promocodes ] ]
+
+
+  UserDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', users ] ]
+
+
+  ServersDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+        - 
+          AttributeName: "user"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', servers ] ]
+      GlobalSecondaryIndexes: 
+        - 
+          IndexName: "user-index"
+          KeySchema: 
+            - 
+              AttributeName: "user"
+              KeyType: "HASH"
+          Projection: 
+            ProjectionType: "ALL"
+          ProvisionedThroughput: 
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
 
 Mappings: 
   RegionMap: 
@@ -913,7 +935,7 @@ Mappings:
     eu-west-1: 
       amazon: "ami-9398d3e0"
       ubuntu: "ami-0d77397e"
-      ecsoptimized: "ami-a1491ad2"
+      ecsoptimized: "ami-a7f2acc1"
     ap-southeast-1: 
       AMI: "ami-66f28c34"
     ap-northeast-1: 
@@ -934,3 +956,11 @@ Mappings:
       HostedZoneId: Z1WI8VXHPB1R38
     sa-east-1:
       HostedZoneId: Z2ES78Y61JGQKS
+
+Outputs:
+  ContainerAgentInstanceProfileName:
+    Description: Name of instance profile for container agents
+    Value: !Ref ContainerAgentInstanceProfile
+  ApiUrl:
+    Description: API URL
+    Value: !GetAtt ApiEnvironment.EndpointURL

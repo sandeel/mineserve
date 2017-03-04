@@ -41,8 +41,6 @@ cp /home/steam/crontab /ark/template/crontab
 [ ! -f /ark/crontab ] && cp /ark/template/crontab /ark/crontab
 
 
-arkmanager installmods
-
 
 if [ ! -d /ark/server  ] || [ ! -f /ark/server/arkversion ];then 
 	echo "No game files found. Installing..."

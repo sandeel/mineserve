@@ -1,10 +1,7 @@
-from mineserve import application, db, stripe_keys
-from flask import request, render_template, jsonify, abort, make_response
-from flask_security import login_required, roles_accepted
+from mineserve import application, db
+from flask import request, jsonify, abort, make_response
 from mineserve.models import User
-from flask_security.utils import encrypt_password
 from mineserve.models import Server
-from flask import redirect
 import datetime
 import jwt
 from functools import wraps
@@ -15,19 +12,23 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import requests
-from flask import _request_ctx_stack as stack
 from werkzeug.local import LocalProxy
+from mineserve.models import Server
+from contextlib import contextmanager
+from flask import appcontext_pushed, g
 
-current_user = LocalProxy(lambda: getattr(stack.top, 'current_user', None))
+@contextmanager
+def user_set(application, user):
+    def handler(sender, **kwargs):
+        g.current_user = user
+    with appcontext_pushed.connected_to(handler, application):
+        yield
 
 #factorio
 from factorio.factorioserver import FactorioServer
 
 #mcpe
 from mcpe.mcpeserver import MCPEServer
-
-#ark
-from ark.arkserver import ArkServer
 
 """
 @application.route("/server/<server_id>", methods=["GET","POST"])
@@ -139,10 +140,13 @@ print("JWKs converted to PEMS")
 
 
 def _jwt_required():
+    if g.current_user:
+        return
+
     auth_header = request.headers.get('Authorization', None)
 
     if not auth_header:
-        return
+        abort(403)
 
     allowed_auth_header_prefixes = ['jwt']
 
@@ -161,7 +165,7 @@ def _jwt_required():
 
     try:
         payload = jwt.decode(token,pems[kid],algorithms=['RS256'])
-        stack.top.current_user = payload['username']
+        g.current_user = payload['username']
     except:
         abort(403)
 
@@ -208,34 +212,35 @@ def servers():
 
         data = request.get_json(force=True)
 
-        user = current_user
+        user = str(current_user)
 
         if not user:
             return abort(400)
 
         size = data['size']
-        new_server = globals()[data['type']](
-                            name=data['server_name'],
+
+        # give 1 hour and 5 minutes free
+        now = datetime.datetime.now()
+        now_plus_1_hours = now + datetime.timedelta(minutes=65)
+
+        new_server = Server(name=data['server_name'],
                             size=size,
-                            user=user)
+                            user=user,
+                            expiry_date=now_plus_1_hours)
 
-        new_server.properties.max_players = Server.max_players[new_server.size]
-
-        db.session.add(new_server)
-
-        db.session.commit()
+        new_server.save()
 
         return jsonify(new_server.serialize())
 
-    if current_user:
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
+    if g.current_user:
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(g.current_user))])
 
 
 @application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])
 @jwt_required()
 def server(id):
-    server = Server.query.filter_by(id=id).first()
-    if (server.user != current_user):
+    server = next(Server.query(id))
+    if (server.user != str(g.current_user)):
         abort(403)
 
     if request.method == "DELETE":
@@ -243,11 +248,9 @@ def server(id):
         if application.config['STUB_AWS_RESOURCES']:
             abort(200)
 
-        db.session.delete(server)
+        server.save()
 
-        db.session.commit()
-
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(g.current_user))])
 
     elif request.method == "GET":
         return jsonify(server.serialize())
@@ -256,4 +259,4 @@ def server(id):
 
         server.restart()
 
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
+        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=g.current_user)])

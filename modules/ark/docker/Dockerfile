@@ -57,7 +57,7 @@ COPY arkmanager-user.cfg /home/steam/arkmanager.cfg
 RUN touch /root/.bash_profile
 RUN chmod 777 /home/steam/run.sh
 RUN chmod 777 /home/steam/user.sh
-RUN mkdir  /ark
+RUN mkdir /ark
 
 
 # We use the git method, because api github has a limit ;)
@@ -65,8 +65,6 @@ RUN  git clone https://github.com/FezVrasta/ark-server-tools.git /home/steam/ark
 WORKDIR /home/steam/ark-server-tools/
 # Install 
 WORKDIR /home/steam/ark-server-tools/tools
-RUN chmod +x install.sh 
-RUN ./install.sh steam 
 
 # Allow crontab to call arkmanager
 RUN ln -s /usr/local/bin/arkmanager /usr/bin/arkmanager
@@ -94,8 +92,6 @@ RUN mkdir /home/steam/steamcmd &&\
 EXPOSE ${STEAMPORT} 32330 ${SERVERPORT}
 # Add UDP
 EXPOSE ${STEAMPORT}/udp ${SERVERPORT}/udp
-
-VOLUME  /ark 
 
 # Change the working directory to /arkd
 WORKDIR /ark

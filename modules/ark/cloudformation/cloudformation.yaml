@@ -1,0 +1,205 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters: 
+  KeyName: 
+    Description: Amazon EC2 Key Pair
+    Type: "AWS::EC2::KeyPair::KeyName"
+
+  Vpc: 
+    Description: The VPC
+    Type: AWS::EC2::VPC::Id
+
+Resources:
+
+  ArkSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: For container agents
+      VpcId:
+        Ref: Vpc
+      Tags:
+        -
+          Key: Name
+          Value: ark_server_sg
+
+  ArkInboundRule27015tcp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '27015'
+      ToPort: '27015'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule27015udp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: udp
+      FromPort: '27015'
+      ToPort: '27015'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule7777tcp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '7777'
+      ToPort: '7777'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRule7777udp:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: udp
+      FromPort: '7777'
+      ToPort: '7777'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRuleRCON:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '32330'
+      ToPort: '32330'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRuleSsh:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkInboundRuleSFTP:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '2222'
+      ToPort: '2222'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - ArkSG
+        - GroupId
+
+  ArkLogGroup: 
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      RetentionInDays: 7
+      LogGroupName: 'msv-ark'
+
+  arkservertaskdefinition: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: "ark_server"
+      Volumes: 
+      - 
+        Host: 
+          SourcePath: "/home/ec2-user/users.conf"
+        Name: "sftpconfig"
+      - 
+        Host: 
+          SourcePath: "/mnt/efs/ark"
+        Name: "ark"
+      - 
+        Host: 
+          SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/SavedArks"
+        Name: "SavedArks"
+      - 
+        Host: 
+          SourcePath: "/mnt/efs/ark/arkmanager.cfg"
+        Name: "arkmanager"
+      ContainerDefinitions: 
+      - 
+        Name: "ftp"
+        Image: "atmoz/sftp"
+        PortMappings:
+          - 
+            ContainerPort: 22
+            HostPort: 2222
+            Protocol: tcp
+        Essential: "true"
+        MemoryReservation: 128
+        MountPoints: 
+        - 
+          SourceVolume: "sftpconfig"
+          ContainerPath: "/etc/sftp-users.conf"
+        - 
+          SourceVolume: "ark"
+          ContainerPath: "/home/msv"
+      - 
+        Name: "ark"
+        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/ark:latest"
+        PortMappings:
+          - 
+            ContainerPort: 7777
+            HostPort: 7777
+            Protocol: tcp
+          - 
+            ContainerPort: 7777
+            HostPort: 7777
+            Protocol: udp
+          - 
+            ContainerPort: 7778
+            HostPort: 7778
+            Protocol: tcp
+          - 
+            ContainerPort: 7778
+            HostPort: 7778
+            Protocol: udp
+          - 
+            ContainerPort: 32330
+            HostPort: 32330
+            Protocol: tcp
+        MountPoints: 
+        - 
+          SourceVolume: "SavedArks"
+          ContainerPath: "/ark/server/ShooterGame/Saved/SavedArks"
+        - 
+          SourceVolume: "arkmanager"
+          ContainerPath: "/ark/arkmanager.cfg"
+        Essential: "true"
+        MemoryReservation: 3826
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref ArkLogGroup
+            awslogs-region: !Ref 'AWS::Region'
+            awslogs-stream-prefix: msv
+        Environment:
+          -
+            Name: ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION
+            Value: 1
+          -
+            Name: ECS_IMAGE_CLEANUP_INTERVAL
+            Value: 10
+        Ulimits:
+          -
+            Name: nofile
+            HardLimit: 100000
+            SoftLimit: 100000
