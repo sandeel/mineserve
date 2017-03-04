@@ -83,6 +83,14 @@ case $key in
             echo "CodePipeline S3 Bucket already deleted"
         fi
 
+
+        echo "Terminating container instances..."
+        for instance in `aws ec2 describe-instances --filters "Name=tag:Name,Values=msv-container-*" --region eu-west-1 | jq '.Reservations[].Instances[].InstanceId'`
+        do
+            echo "Terminating $instance..."
+            aws ec2 terminate-instances --region eu-west-1 --instance-ids $instance
+        done
+
         echo "Terminating stack $STACK_NAME"
         aws cloudformation delete-stack \
             --stack-name $STACK_NAME \
