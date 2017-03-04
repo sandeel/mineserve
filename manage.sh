@@ -23,7 +23,7 @@ case $key in
         echo "Uploading ark template..."
         aws s3 cp modules/ark/cloudformation/cloudformation.yaml s3://msv-templates/ark.yaml
 
-        stack_exists=`aws cloudformation --region $BASE_REGION describe-stacks --stack-name $STACK_NAME` 2>/dev/null || echo "Stack not found".
+        stack_exists=`aws cloudformation --region $BASE_REGION describe-stacks --stack-name $STACK_NAME` 1>/dev/null || echo "Stack not found".
 
         if [ -n "$stack_exists" ]; then
 
@@ -51,7 +51,7 @@ case $key in
         fi
 
         # eu-west-1 regional
-        stack_exists=`aws cloudformation --region eu-west-1 describe-stacks --stack-name $STACK_NAME-regional` 2>/dev/null || echo "Stack not found".
+        stack_exists=`aws cloudformation --region eu-west-1 describe-stacks --stack-name $STACK_NAME-regional` 1>/dev/null || echo "Stack not found".
         if [ -n "$stack_exists" ]; then
             echo "Regional stack in eu-west-1 exists. Updating..."
             aws cloudformation update-stack --region eu-west-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
@@ -61,7 +61,7 @@ case $key in
         fi
 
         # us-east-1 regional
-        stack_exists=`aws cloudformation --region us-east-1 describe-stacks --stack-name $STACK_NAME-regional` 2>/dev/null || echo "Stack not found".
+        stack_exists=`aws cloudformation --region us-east-1 describe-stacks --stack-name $STACK_NAME-regional` 1>/dev/null || echo "Stack not found".
         if [ -n "$stack_exists" ]; then
             echo "Regional stack in us-east-1 exists. Updating..."
             aws cloudformation update-stack --region us-east-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
@@ -88,7 +88,7 @@ case $key in
 
 
         echo "Terminating container instances..."
-        for instance in `aws ec2 describe-instances --filters "Name=tag:Name,Values=msv-container-*" --region eu-west-1 | jq '.Reservations[].Instances[].InstanceId'`
+        for instance in `aws ec2 describe-instances --filters "Name=tag:Name,Values=msv-container-*" --region eu-west-1 | jq -r '.Reservations[].Instances[].InstanceId'`
         do
             echo "Terminating $instance..."
             aws ec2 terminate-instances --region eu-west-1 --instance-ids $instance

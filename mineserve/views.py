@@ -226,7 +226,7 @@ def servers():
         now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
         now_plus_1_hours = now + datetime.timedelta(minutes=65)
 
-        new_server = Server(name=data['server_name'],
+        new_server = Server(name=data['name'],
                             size=size,
                             user=user,
                             expiry_date=now_plus_1_hours)
