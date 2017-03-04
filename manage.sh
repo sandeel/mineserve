@@ -1,12 +1,15 @@
 #!/bin/bash
 
 BASE_REGION=eu-west-1
+ALL_REGIONS=(eu-west-1, us-east-1)
 BASE_STACK_NAME=msv
+
+# --- do not change ---
 GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
 STACK_NAME=$BASE_STACK_NAME-$GIT_BRANCH
+#----------------------
 
 key="$1"
-
 case $key in
         spin-up)
 

@@ -13,6 +13,7 @@ from pynamodb.attributes import UnicodeAttribute, BooleanAttribute, UTCDateTimeA
 import string
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 from pynamodb.attributes import NumberAttribute
+import pytz
 
 class User():
     """ User of site site (Cognito)
@@ -202,8 +203,8 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         self.create_cluster()
 
     def seconds_to_dhms(self):
-        if self.expiry_date > datetime.datetime.now(timezone.utc):
-            time_remaining = self.expiry_date - datetime.datetime.now(timezone.utc)
+        if self.expiry_date > datetime.datetime.utcnow().replace(tzinfo=pytz.utc):
+            time_remaining = self.expiry_date - datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
             days = math.floor(time_remaining.seconds / 86400)
             remainder = time_remaining.seconds % 84600
             hours = math.floor(remainder / 3600)

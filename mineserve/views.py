@@ -16,6 +16,7 @@ from werkzeug.local import LocalProxy
 from mineserve.models import Server
 from contextlib import contextmanager
 from flask import appcontext_pushed, g
+import pytz
 
 @contextmanager
 def user_set(application, user):
@@ -140,7 +141,9 @@ print("JWKs converted to PEMS")
 
 
 def _jwt_required():
-    if g.current_user:
+    user = getattr(g, 'current_user', None)
+
+    if user is not None:
         return
 
     auth_header = request.headers.get('Authorization', None)
@@ -212,7 +215,7 @@ def servers():
 
         data = request.get_json(force=True)
 
-        user = str(current_user)
+        user = str(g.current_user)
 
         if not user:
             return abort(400)
@@ -220,7 +223,7 @@ def servers():
         size = data['size']
 
         # give 1 hour and 5 minutes free
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
         now_plus_1_hours = now + datetime.timedelta(minutes=65)
 
         new_server = Server(name=data['server_name'],
