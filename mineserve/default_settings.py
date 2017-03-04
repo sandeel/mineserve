@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 
-APP_NAME = os.getenv('APP_NAME')
+APP_NAME = os.getenv('APP_NAME',default='msv-testing')
 
 # aws settings
 AWS_REGION = "eu-west-1"

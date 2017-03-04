@@ -12,11 +12,17 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import requests
-from flask import _request_ctx_stack as stack
 from werkzeug.local import LocalProxy
 from mineserve.models import Server
+from contextlib import contextmanager
+from flask import appcontext_pushed, g
 
-current_user = LocalProxy(lambda: getattr(stack.top, 'current_user', None))
+@contextmanager
+def user_set(application, user):
+    def handler(sender, **kwargs):
+        g.current_user = user
+    with appcontext_pushed.connected_to(handler, application):
+        yield
 
 #factorio
 from factorio.factorioserver import FactorioServer
@@ -134,6 +140,9 @@ print("JWKs converted to PEMS")
 
 
 def _jwt_required():
+    if g.current_user:
+        return
+
     auth_header = request.headers.get('Authorization', None)
 
     if not auth_header:
@@ -156,7 +165,7 @@ def _jwt_required():
 
     try:
         payload = jwt.decode(token,pems[kid],algorithms=['RS256'])
-        stack.top.current_user = payload['username']
+        g.current_user = payload['username']
     except:
         abort(403)
 
@@ -223,15 +232,15 @@ def servers():
 
         return jsonify(new_server.serialize())
 
-    if current_user:
-        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(current_user))])
+    if g.current_user:
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(g.current_user))])
 
 
 @application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])
 @jwt_required()
 def server(id):
     server = next(Server.query(id))
-    if (server.user != str(current_user)):
+    if (server.user != str(g.current_user)):
         abort(403)
 
     if request.method == "DELETE":
@@ -241,7 +250,7 @@ def server(id):
 
         server.save()
 
-        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(current_user))])
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(g.current_user))])
 
     elif request.method == "GET":
         return jsonify(server.serialize())
@@ -250,4 +259,4 @@ def server(id):
 
         server.restart()
 
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
+        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=g.current_user)])
