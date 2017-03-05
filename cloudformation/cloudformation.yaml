@@ -912,6 +912,11 @@ Resources:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
 
+  FrontendRepo:
+    Type: AWS::ECR::Repository
+    Properties: 
+      RepositoryName: msv-frontend
+
 Mappings: 
   RegionMap: 
     us-east-1: 

@@ -65,6 +65,8 @@ RUN  git clone https://github.com/FezVrasta/ark-server-tools.git /home/steam/ark
 WORKDIR /home/steam/ark-server-tools/
 # Install 
 WORKDIR /home/steam/ark-server-tools/tools
+RUN chmod +x install.sh 
+RUN ./install.sh steam
 
 # Allow crontab to call arkmanager
 RUN ln -s /usr/local/bin/arkmanager /usr/bin/arkmanager
