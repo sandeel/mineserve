@@ -276,6 +276,9 @@ def handle_error(error, status_code):
     return resp
 
 
+# This is the new auth function
+# I am pretty sure it uses the client secret and id to verify the token
+
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -335,8 +338,13 @@ def requires_auth(f):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def secured_ping():
+    print(_app_ctx_stack.top.current_user)
+    # Getting the token from the headers
     auth = request.headers.get('Authorization', None)
+    # Splitting token ['bearer', 'xxxxxxxxxxxxx']
+    # Auth 0 tokens have to start with bearer, so we use the second part
     parts = auth.split()
+    # This url just returns a load of user information with the given token passed
     url = "https://gameserve.eu.auth0.com/tokeninfo"
     print(requests.get(url, params={"id_token": parts[1]}).text)
     return "All good. You only get this message if you're authenticated"

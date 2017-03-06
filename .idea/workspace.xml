@@ -27,8 +27,8 @@
       <file leaf-file-name="views.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/mineserve/views.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="216">
-              <caret line="340" column="63" lean-forward="false" selection-start-line="340" selection-start-column="63" selection-end-line="340" selection-end-column="63" />
+            <state relative-caret-position="105">
+              <caret line="340" column="42" lean-forward="false" selection-start-line="340" selection-start-column="42" selection-end-line="340" selection-end-column="42" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
                 <element signature="e#978#3317#1" expanded="false" />
@@ -567,7 +567,14 @@
       <option name="project" value="LOCAL" />
       <updated>1488842473862</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="Testing Auth 0 view">
+      <created>1488842543081</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1488842543081</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
@@ -772,8 +779,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/mineserve/views.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="340" column="63" lean-forward="false" selection-start-line="340" selection-start-column="63" selection-end-line="340" selection-end-column="63" />
+        <state relative-caret-position="105">
+          <caret line="340" column="42" lean-forward="false" selection-start-line="340" selection-start-column="42" selection-end-line="340" selection-end-column="42" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
             <element signature="e#978#3317#1" expanded="false" />
