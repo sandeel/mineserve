@@ -1,22 +1,27 @@
-from mineserve import application, db
-from flask import request, jsonify, abort, make_response
-from mineserve.models import User
-from mineserve.models import Server
 import datetime
 import jwt
-from functools import wraps
 import base64
 import six
 import struct
+import requests
+import pytz
+import os
+
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-import requests
 from werkzeug.local import LocalProxy
 from mineserve.models import Server
 from contextlib import contextmanager
-from flask import appcontext_pushed, g
-import pytz
+from functools import wraps
+
+from flask import request, jsonify, abort, make_response, _app_ctx_stack, appcontext_pushed, g
+from flask_cors import cross_origin
+
+from mineserve import application, db
+from mineserve.models import User
+from mineserve.models import Server
+
 
 @contextmanager
 def user_set(application, user):
@@ -25,10 +30,9 @@ def user_set(application, user):
     with appcontext_pushed.connected_to(handler, application):
         yield
 
-#factorio
+# factorio
 from factorio.factorioserver import FactorioServer
-
-#mcpe
+# mcpe
 from mcpe.mcpeserver import MCPEServer
 
 """
@@ -104,6 +108,7 @@ def server(server_id):
             error_message=error_message,
             )
 """
+
 
 # set up jwt
 def intarr2long(arr):
@@ -243,7 +248,7 @@ def servers():
 @jwt_required()
 def server(id):
     server = next(Server.query(id))
-    if (server.user != str(g.current_user)):
+    if server.user != str(g.current_user):
         abort(403)
 
     if request.method == "DELETE":
@@ -263,3 +268,71 @@ def server(id):
         server.restart()
 
         return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=g.current_user)])
+
+
+def handle_error(error, status_code):
+    resp = jsonify(error)
+    resp.status_code = status_code
+    return resp
+
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        client_id = "SUSZmFaM2wQcTNLFFw3GmUr7ISafmC1m"
+        client_secret = "Yi-2CofXKdrhRS0daakT5DMkJRpkY4-Yg5EyGXMIbytGf5OkqkhwignX_1tvoVwe"
+        auth = request.headers.get('Authorization', None)
+        if not auth:
+            return handle_error({'code': 'authorization_header_missing',
+                                'description':
+                                    'Authorization header is expected'}, 401)
+
+        parts = auth.split()
+
+        if parts[0].lower() != 'bearer':
+            return handle_error({'code': 'invalid_header',
+                                'description':
+                                    'Authorization header must start with'
+                                    'Bearer'}, 401)
+        elif len(parts) == 1:
+            return handle_error({'code': 'invalid_header',
+                                'description': 'Token not found'}, 401)
+        elif len(parts) > 2:
+            return handle_error({'code': 'invalid_header',
+                                'description': 'Authorization header must be'
+                                 'Bearer + \s + token'}, 401)
+
+        token = parts[1]
+        try:
+            payload = jwt.decode(
+                token,
+                client_secret,
+                audience=client_id
+            )
+        except jwt.ExpiredSignature:
+            return handle_error({'code': 'token_expired',
+                                'description': 'token is expired'}, 401)
+        except jwt.InvalidAudienceError:
+            return handle_error({'code': 'invalid_audience',
+                                'description': 'incorrect audience, expected: '
+                                 + client_id}, 401)
+        except jwt.DecodeError:
+            return handle_error({'code': 'token_invalid_signature',
+                                'description':
+                                    'token signature is invalid'}, 401)
+        except Exception:
+            return handle_error({'code': 'invalid_header',
+                                'description': 'Unable to parse authentication'
+                                 ' token.'}, 400)
+
+        _app_ctx_stack.top.current_user = payload
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+@application.route("/secured/ping")
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def secured_ping():
+    return "All good. You only get this message if you're authenticated"
