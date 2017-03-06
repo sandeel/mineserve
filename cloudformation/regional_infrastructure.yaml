@@ -11,7 +11,7 @@ Resources:
   ArkStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: 'https://s3.amazonaws.com/msv-templates/ark.yaml'
+      TemplateURL: 'https://s3.amazonaws.com/msv-templates/ark/regional.yaml'
       Parameters:
         KeyName: !Ref KeyName
         Vpc: !Ref Vpc

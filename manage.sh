@@ -21,7 +21,7 @@ case $key in
         aws s3 mb s3://msv-templates
 
         echo "Uploading ark template..."
-        aws s3 cp modules/ark/cloudformation/cloudformation.yaml s3://msv-templates/ark.yaml
+        aws s3 cp modules/ark/cloudformation/regional.yaml s3://msv-templates/ark/regional.yaml
 
         stack_exists=`aws cloudformation --region $BASE_REGION describe-stacks --stack-name $STACK_NAME` 1>/dev/null || echo "Stack not found".
 
@@ -94,17 +94,6 @@ case $key in
             aws ec2 terminate-instances --region eu-west-1 --instance-ids $instance
         done
 
-        echo "Terminating stack $STACK_NAME"
-        aws cloudformation delete-stack \
-            --stack-name $STACK_NAME \
-            --region $BASE_REGION
-
-        echo "Terminating regional stack $STACK_NAME-regional in eu-west-1"
-        aws cloudformation delete-stack --region eu-west-1 --stack-name $STACK_NAME-regional
-
-        echo "Terminating regional stack $STACK_NAME-regional in us-east-1"
-        aws cloudformation delete-stack --region us-east-1 --stack-name $STACK_NAME-regional
-
         echo "Emptying template bucket..."
         python empty_bucket.py msv-templates
 
@@ -112,6 +101,20 @@ case $key in
         aws s3 rb s3://msv-templates
 
         echo "All manual resource terminations complete. CloudFormation stacks will now spin down."
+
+        echo "Terminating stack $STACK_NAME"
+        aws cloudformation delete-stack \
+            --stack-name $STACK_NAME \
+            --region $BASE_REGION
+
+        echo "Deleting repos..."
+        aws ecr delete-repository --region $BASE_REGION --repository-name $STACK_NAME-frontend --force
+
+        echo "Terminating regional stack $STACK_NAME-regional in eu-west-1"
+        aws cloudformation delete-stack --region eu-west-1 --stack-name $STACK_NAME-regional
+
+        echo "Terminating regional stack $STACK_NAME-regional in us-east-1"
+        aws cloudformation delete-stack --region us-east-1 --stack-name $STACK_NAME-regional
 
         ;;
         esac
