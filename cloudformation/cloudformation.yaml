@@ -568,7 +568,7 @@ Resources:
         HostedZoneId: !FindInMap [Beanstalk2Route53HostedZoneId, !Ref 'AWS::Region',
           HostedZoneId]
       HostedZoneId: !Ref 'HostedZone'
-      Name: api.adventureservers.com
+      Name: adventureservers.com
       Type: A
   CodePipelineS3Bucket:
     Type: AWS::S3::Bucket
@@ -968,7 +968,7 @@ Resources:
   FrontendRepo:
     Type: AWS::ECR::Repository
     Properties: 
-      RepositoryName: !Join [ '', [ !Ref 'AWS::StackName', '-', frontend ] ]
+      RepositoryName: msv-frontend
 Mappings: 
   RegionMap: 
     us-east-1: 
