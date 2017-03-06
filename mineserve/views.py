@@ -279,8 +279,8 @@ def handle_error(error, status_code):
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        client_id = "SUSZmFaM2wQcTNLFFw3GmUr7ISafmC1m"
-        client_secret = "Yi-2CofXKdrhRS0daakT5DMkJRpkY4-Yg5EyGXMIbytGf5OkqkhwignX_1tvoVwe"
+        client_id = "gJv54phVRi5DcleXXy2ipeCM3J2FmGG5"
+        client_secret = "r-eKjoNIhsf2491X7YYJRYd0_S7uYPIBRlDXfDkZrihJmMeHkOk278UJggwGv91Z"
         auth = request.headers.get('Authorization', None)
         if not auth:
             return handle_error({'code': 'authorization_header_missing',

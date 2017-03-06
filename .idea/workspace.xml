@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="137076ce-bf28-4e4f-b58e-029e8ac16164" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/mineserve.iml" afterPath="$PROJECT_DIR$/.idea/mineserve.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mineserve/views.py" afterPath="$PROJECT_DIR$/mineserve/views.py" />
     </list>
@@ -28,8 +27,8 @@
       <file leaf-file-name="views.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/mineserve/views.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="157">
-              <caret line="332" column="0" lean-forward="true" selection-start-line="332" selection-start-column="0" selection-end-line="332" selection-end-column="0" />
+            <state relative-caret-position="225">
+              <caret line="282" column="89" lean-forward="false" selection-start-line="282" selection-start-column="89" selection-end-line="282" selection-end-column="89" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
                 <element signature="e#978#3317#1" expanded="false" />
@@ -550,7 +549,14 @@
       <option name="project" value="LOCAL" />
       <updated>1488835471189</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="Testing Auth 0 view">
+      <created>1488835624523</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1488835624523</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
@@ -655,7 +661,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/frontend/src/app/servers/servers.component.css" />
     <entry file="file://$PROJECT_DIR$/frontend/src/app/servers/server-detail/server-detail.component.css" />
     <entry file="file://$PROJECT_DIR$/frontend/src/favicon.ico" />
     <entry file="file://$PROJECT_DIR$/frontend/src/index.html" />
@@ -739,10 +744,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/../VirtualEnvs/mineserve/Lib/site-packages/flask_cors/decorator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2244">
+          <caret line="134" column="20" lean-forward="true" selection-start-line="134" selection-start-column="20" selection-end-line="134" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/mineserve/views.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="157">
-          <caret line="332" column="0" lean-forward="true" selection-start-line="332" selection-start-column="0" selection-end-line="332" selection-end-column="0" />
+        <state relative-caret-position="225">
+          <caret line="282" column="89" lean-forward="false" selection-start-line="282" selection-start-column="89" selection-end-line="282" selection-end-column="89" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
             <element signature="e#978#3317#1" expanded="false" />
