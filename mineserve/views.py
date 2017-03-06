@@ -338,5 +338,5 @@ def secured_ping():
     auth = request.headers.get('Authorization', None)
     parts = auth.split()
     url = "https://gameserve.eu.auth0.com/tokeninfo"
-    print(requests.get(url, params={"id_token": parts[1]}))
+    print(requests.get(url, params={"id_token": parts[1]}).text)
     return "All good. You only get this message if you're authenticated"
