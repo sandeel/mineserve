@@ -265,7 +265,6 @@ Resources:
         Fn::GetAtt:
         - mcpeserversg
         - GroupId
-
   FactSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -276,7 +275,6 @@ Resources:
         -
           Key: Name
           Value: factorio_server_sg
-
   FactorioInboundRule34197udp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -288,7 +286,6 @@ Resources:
         Fn::GetAtt:
         - FactSG
         - GroupId
-
   FactorioInboundRuleSftp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -635,7 +632,7 @@ Resources:
       Stages:
       - Name: SourceAPI
         Actions:
-        - Name: Source
+        - Name: SourceAPI
           ActionTypeId:
             Category: Source
             Owner: ThirdParty
@@ -649,16 +646,14 @@ Resources:
             Branch: !Ref GitBranch
             OAuthToken: !Ref 'GithubToken'
           RunOrder: 1
-      - Name: SourceFrontend
-        Actions:
-        - Name: Source
+        - Name: SourceFrontend
           ActionTypeId:
             Category: Source
             Owner: ThirdParty
             Version: '1'
             Provider: GitHub
           OutputArtifacts:
-          - Name: FrontendSource
+          - Name: FrontendOutput
           Configuration:
             Owner: sandeel
             Repo: mineserve-frontend
@@ -703,7 +698,7 @@ Resources:
           RunOrder: 1
         - Name: DeployFrontendToBeanstalk
           InputArtifacts:
-          - Name: FrontendSource
+          - Name: FrontendOutput
           ActionTypeId:
             Category: Deploy
             Owner: AWS
@@ -861,7 +856,7 @@ Resources:
         - Name: AWS_DEFAULT_REGION
           Value: !Ref AWS::Region
         - Name: IMAGE_REPO_NAME
-          Value: msv-frontend
+          Value: !Join [ '', [ !Ref 'AWS::StackName', '-', frontend ] ]
         - Name: IMAGE_TAG
           Value: latest
       Source:
