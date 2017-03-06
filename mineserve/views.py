@@ -217,25 +217,20 @@ def users():
 @jwt_required()
 def servers():
     if request.method == "POST":
-
         data = request.get_json(force=True)
-
         user = str(g.current_user)
 
         if not user:
             return abort(400)
 
         size = data['size']
-
         # give 1 hour and 5 minutes free
         now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
         now_plus_1_hours = now + datetime.timedelta(minutes=65)
-
         new_server = Server(name=data['name'],
                             size=size,
                             user=user,
                             expiry_date=now_plus_1_hours)
-
         new_server.save()
 
         return jsonify(new_server.serialize())
@@ -268,6 +263,11 @@ def server(id):
         server.restart()
 
         return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=g.current_user)])
+
+
+#
+# Next three functions were for testing Auth 0
+#
 
 
 def handle_error(error, status_code):
@@ -335,4 +335,8 @@ def requires_auth(f):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def secured_ping():
+    auth = request.headers.get('Authorization', None)
+    parts = auth.split()
+    url = "https://gameserve.eu.auth0.com/tokeninfo"
+    print(requests.get(url, params={"id_token": parts[1]}))
     return "All good. You only get this message if you're authenticated"
