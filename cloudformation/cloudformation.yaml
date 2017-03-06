@@ -300,15 +300,12 @@ Resources:
         Fn::GetAtt:
         - FactSG
         - GroupId
-
   ResourcesBucket:
     Type: AWS::S3::Bucket
-
   MsvApi:
     Type: "AWS::ApiGateway::RestApi"
     Properties:
       Name: "MsvApi"
-
   Servers: 
     Type: "AWS::ApiGateway::Resource"
     Properties: 
@@ -319,7 +316,6 @@ Resources:
           - "MsvApi"
           - "RootResourceId"
       PathPart: "servers"
-
   ServersGET: 
     Type: "AWS::ApiGateway::Method"
     Properties: 
@@ -340,7 +336,6 @@ Resources:
       MethodResponses:
         -
           StatusCode: 200
-
   ServersPOST: 
     Type: "AWS::ApiGateway::Method"
     Properties: 
@@ -361,12 +356,14 @@ Resources:
       MethodResponses:
         -
           StatusCode: 200
-
-
   Website:
     Type: AWS::ElasticBeanstalk::Application
-
-
+  FrontendEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    DependsOn: Website
+    Properties:
+      ApplicationName: !Ref 'Website'
+      SolutionStackName: 64bit Amazon Linux 2016.09 v2.5.0 running Docker 1.12.6
   ApiEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     DependsOn: Website
@@ -636,7 +633,7 @@ Resources:
     Properties:
       RoleArn: !GetAtt [CodePipelineServiceRole, Arn]
       Stages:
-      - Name: Source
+      - Name: SourceAPI
         Actions:
         - Name: Source
           ActionTypeId:
@@ -652,8 +649,35 @@ Resources:
             Branch: !Ref GitBranch
             OAuthToken: !Ref 'GithubToken'
           RunOrder: 1
+      - Name: SourceFrontend
+        Actions:
+        - Name: Source
+          ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Version: '1'
+            Provider: GitHub
+          OutputArtifacts:
+          - Name: FrontendSource
+          Configuration:
+            Owner: sandeel
+            Repo: mineserve-frontend
+            Branch: !Ref GitBranch
+            OAuthToken: !Ref 'GithubToken'
+          RunOrder: 1
       - Name: Prod
         Actions:
+        - Name: BuildFrontendImage
+          InputArtifacts:
+          - Name: FrontendOutput
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Version: '1'
+            Provider: CodeBuild
+          Configuration:
+            ProjectName: !Ref CodeBuildFrontendProject
+          RunOrder: 1
         - Name: BuildArkImage
           InputArtifacts:
           - Name: SourceOutput
@@ -676,6 +700,18 @@ Resources:
           Configuration:
             ApplicationName: !Ref 'Website'
             EnvironmentName: !Ref 'ApiEnvironment'
+          RunOrder: 1
+        - Name: DeployFrontendToBeanstalk
+          InputArtifacts:
+          - Name: FrontendSource
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Version: '1'
+            Provider: ElasticBeanstalk
+          Configuration:
+            ApplicationName: !Ref 'Website'
+            EnvironmentName: !Ref 'FrontendEnvironment'
           RunOrder: 1
       ArtifactStore:
         Type: S3
@@ -808,6 +844,29 @@ Resources:
       Source:
         Type: CODEPIPELINE
       TimeoutInMinutes: 60
+  CodeBuildFrontendProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: msv-frontend
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:1.12.1
+        EnvironmentVariables:
+        - Name: AWS_ACCOUNT_ID
+          Value: !Ref AWS::AccountId
+        - Name: AWS_DEFAULT_REGION
+          Value: !Ref AWS::Region
+        - Name: IMAGE_REPO_NAME
+          Value: msv-frontend
+        - Name: IMAGE_TAG
+          Value: latest
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 60
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -911,12 +970,10 @@ Resources:
           ProvisionedThroughput: 
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
-
   FrontendRepo:
     Type: AWS::ECR::Repository
     Properties: 
       RepositoryName: !Join [ '', [ !Ref 'AWS::StackName', '-', frontend ] ]
-
 Mappings: 
   RegionMap: 
     us-east-1: 
