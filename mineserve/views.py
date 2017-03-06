@@ -331,7 +331,7 @@ def requires_auth(f):
     return decorated
 
 
-@application.route("/secured/ping")
+@application.route("/secured/ping", methods=["GET"])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def secured_ping():
