@@ -108,7 +108,7 @@ case $key in
             --region $BASE_REGION
 
         echo "Deleting repos..."
-        aws ecr delete-repository --region $BASE_REGION --repository-name $STACK_NAME-frontend --force
+        aws ecr delete-repository --region $BASE_REGION --repository-name $BASE_STACK_NAME-frontend --force
 
         echo "Terminating regional stack $STACK_NAME-regional in eu-west-1"
         aws cloudformation delete-stack --region eu-west-1 --stack-name $STACK_NAME-regional

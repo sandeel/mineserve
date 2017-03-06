@@ -361,6 +361,25 @@ Resources:
     Properties:
       ApplicationName: !Ref 'Website'
       SolutionStackName: 64bit Amazon Linux 2016.09 v2.5.0 running Docker 1.12.6
+      OptionSettings:
+      - Namespace: aws:ec2:vpc
+        OptionName: Subnets
+        Value: !Ref 'PublicSubnet1'
+      - Namespace: aws:ec2:vpc
+        OptionName: ELBSubnets
+        Value: !Ref 'PublicSubnet1'
+      - Namespace: aws:elasticbeanstalk:environment
+        OptionName: ServiceRole
+        Value: !Ref ElasticBeanstalkServiceRole
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: IamInstanceProfile
+        Value: !Ref ElasticBeanstalkInstanceProfile
+      - Namespace:  aws:elasticbeanstalk:healthreporting:system
+        OptionName: SystemType
+        Value: enhanced
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: EC2KeyName
+        Value: !Ref 'KeyPair'
   ApiEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     DependsOn: Website
@@ -707,7 +726,7 @@ Resources:
           Configuration:
             ApplicationName: !Ref 'Website'
             EnvironmentName: !Ref 'FrontendEnvironment'
-          RunOrder: 1
+          RunOrder: 2
       ArtifactStore:
         Type: S3
         Location: !Ref 'CodePipelineS3Bucket'
