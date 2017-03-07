@@ -25,7 +25,7 @@ To get to admin console, log in as the admin user (adventureservers@kolabnow.com
 
 ## Running on AWS
 
-The manage.sh script in the root directory should be able to automatically spin up the needed infrastructure on AWS. You'll need to have th AWS CLI tool [1] installed and have authentication set up, as the script will make use of AWS CLI calls.
+The manage.sh script in the root directory should be able to automatically spin up the needed infrastructure on AWS. You'll need to have the AWS CLI tool [1] installed and have authentication set up, as the script will make use of AWS CLI calls.
 
 ### Usage:
 
@@ -40,3 +40,5 @@ Note you'll need to authenticate the script to Github with Oauth token in enviro
 To terminate all the resources:
 
     ./manage.sh spin-down
+
+[1] AWS CLI https://aws.amazon.com/cli/tool 
