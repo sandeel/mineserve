@@ -1,27 +1,48 @@
 ## How to install and run locally
 
-Recommended to use Python 3
+### Install a local DynamoDB
+
+When running locally you can use a local version of DynamoDB. Set STUB_AWS_RESOURCES setting on the environment to create 'fake' servers in the local databse.
+
+Follow the steps here to download and run DynamoDB locally on port 8000: http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html
+
+Create a table for servers on the local DynamoDB table:
+
+    aws dynamodb create-table --table-name msv-testing-servers --attribute-definitions AttributeName=id,AttributeType=S AttributeName=user,AttributeType=S --endpoint-url http://localhost:8000 --region eu-west-1 --key-schema AttributeName=id,KeyType=HASH --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --global-secondary-indexes IndexName=user-index,KeySchema="{AttributeName='user',KeyType=HASH}",Projection={ProjectionType=ALL},ProvisionedThroughput="{ReadCapacityUnits=1,WriteCapacityUnits=1}"
+
+
+### Setting up the local Flask app
+
+Recommended to use Python 3.
 
 (Optional but recommended) Use a virtualenv:
 
-`mkvirtualenv mineserve`
+    mkvirtualenv mineserve
+
+### Clone the environment
+
+    git clone git@github.com:sandeel/mineserve.git && cd mineserve
+
+### Install the requirements
+
+    pip install -R requirements.txt
+
+### Run the API server
+
+Run the API server locally (eg. on port 8080) with debug on and STUB_AWS_RESOURCES on. The local copy of the app will then automatically the local DynamDB running on port 8000.
+
+    FLASK_DEBUG=True STUB_AWS_RESOURCES=True python application.py runserver -h 0.0.0.0 -p 8080
 
 
-Install the requirements
+### Examples of use:
 
-`pip install -R requirements.txt`
+Get my servers:
 
+    curl localhost:8080/api/0.1/servers -H 'Authorization: JWT my_jwt_token'
 
-Create a local MYSQL database and create an empty database called mineserve. You can set the database name, username and password in mineserve/default_settings.py. Database will be populated automatically when app launches.
+Create a new server:
 
-
-Run the server locally (eg. on port 8000):
-
-`python application.py runserver 0.0.0.0:8000`
-
-debug is set to true by default so launching server will create mock servers.
-To get to admin console, log in as the admin user (adventureservers@kolabnow.com by default) and password which is set in mineserve/default_settings.py, then go to /admin
-
+    curl localhost:8080/api/0.1/servers  -X POST -H 'Authorization: JWT my_jwt_token' -d '{ "name": "Jurassic Ark", "type": "ark_server", "size": "large" }'
 
 ## Running on AWS
 

@@ -73,6 +73,9 @@ class ServerUserIndex(GlobalSecondaryIndex):
     # in the model
     user = UnicodeAttribute(hash_key=True)
 
+if application.config['STUB_AWS_RESOURCES']:
+    ServerUserIndex.Meta.host = 'http://localhost:8000'
+
 class Server(Model):
     """ A game server
     """
@@ -435,6 +438,8 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                 cluster=self.id
         )
 
+if application.config['STUB_AWS_RESOURCES']:
+    Server.Meta.host = 'http://localhost:8000'
 
 def check_if_task_definition_exists(name):
     client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
