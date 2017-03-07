@@ -1,6 +1,7 @@
 migrations/versions/*.py
 
 .idea/
+.idea/*
 
 *.pyc
 
