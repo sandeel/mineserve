@@ -681,17 +681,6 @@ Resources:
           RunOrder: 1
       - Name: Prod
         Actions:
-        - Name: BuildFrontendImage
-          InputArtifacts:
-          - Name: FrontendOutput
-          ActionTypeId:
-            Category: Build
-            Owner: AWS
-            Version: '1'
-            Provider: CodeBuild
-          Configuration:
-            ProjectName: !Ref CodeBuildFrontendProject
-          RunOrder: 1
         - Name: BuildArkImage
           InputArtifacts:
           - Name: SourceOutput
@@ -858,30 +847,6 @@ Resources:
       Source:
         Type: CODEPIPELINE
       TimeoutInMinutes: 60
-  CodeBuildFrontendProject:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: msv-frontend
-      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/docker:1.12.1
-        EnvironmentVariables:
-        - Name: AWS_ACCOUNT_ID
-          Value: !Ref AWS::AccountId
-        - Name: AWS_DEFAULT_REGION
-          Value: !Ref AWS::Region
-        - Name: IMAGE_REPO_NAME
-          Value: !Join [ '', [ !Ref 'AWS::StackName', '-', frontend ] ]
-        - Name: IMAGE_TAG
-          Value: latest
-      Source:
-        Type: CODEPIPELINE
-      TimeoutInMinutes: 60
-
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -893,7 +858,6 @@ Resources:
           Principal:
             Service: codebuild.amazonaws.com
           Action: sts:AssumeRole
-
   CodeBuildServiceRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
