@@ -145,39 +145,6 @@ for jwk in jwks['keys']:
 print("JWKs converted to PEMS")
 
 
-def _jwt_required():
-    user = getattr(g, 'current_user', None)
-
-    if user is not None:
-        return
-
-    auth_header = request.headers.get('Authorization', None)
-
-    if not auth_header:
-        abort(403)
-
-    allowed_auth_header_prefixes = ['jwt']
-
-    parts = auth_header.split()
-
-    if parts[0].lower() not in allowed_auth_header_prefixes:
-        raise JWTError('Invalid JWT header', 'Unsupported authorization type')
-    elif len(parts) == 1:
-        raise JWTError('Invalid JWT header', 'Token missing')
-    elif len(parts) > 2:
-        raise JWTError('Invalid JWT header', 'Token contains spaces')
-
-    token = parts[1]
-
-    kid = jwt.get_unverified_header(token)['kid']
-
-    try:
-        payload = jwt.decode(token,pems[kid],algorithms=['RS256'])
-        g.current_user = payload['username']
-    except:
-        abort(403)
-
-
 class JWTError(Exception):
     def __init__(self, error, description, status_code=401, headers=None):
         self.error = error
@@ -192,20 +159,9 @@ class JWTError(Exception):
         return '%s. %s' % (self.error, self.description)
 
 
-def jwt_required():
-    """View decorator that requires a valid JWT token to be present in the request
-    """
-    def wrapper(fn):
-        @wraps(fn)
-        def decorator(*args, **kwargs):
-            _jwt_required()
-            return fn(*args, **kwargs)
-        return decorator
-    return wrapper
-
-
+@cross_origin(headers=['Content-Type', 'Authorization'])
 @application.route("/api/0.1/users", methods=["GET","POST"])
-@jwt_required()
+@requires_auth
 def users():
 
     if request.args.get('id'):
@@ -213,8 +169,9 @@ def users():
         return jsonify(users = user.serialize())
 
 
+@cross_origin()
 @application.route("/api/0.1/servers", methods=["GET", "POST", "DELETE"])
-@jwt_required()
+@requires_auth
 def servers():
     if request.method == "POST":
         data = request.get_json(force=True)
@@ -240,7 +197,7 @@ def servers():
 
 
 @application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])
-@jwt_required()
+@requires_auth
 def server(id):
     server = next(Server.query(id))
     if server.user != str(g.current_user):

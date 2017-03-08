@@ -362,6 +362,9 @@ Resources:
       ApplicationName: !Ref 'Website'
       SolutionStackName: 64bit Amazon Linux 2016.09 v2.5.0 running Docker 1.12.6
       OptionSettings:
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: InstanceType
+        Value: t2.small # to be safe since instances need to build the Docker image
       - Namespace: aws:ec2:vpc
         OptionName: Subnets
         Value: !Ref 'PublicSubnet1'
@@ -676,7 +679,7 @@ Resources:
           Configuration:
             Owner: sandeel
             Repo: mineserve-frontend
-            Branch: !Ref GitBranch
+            Branch: beanstalk
             OAuthToken: !Ref 'GithubToken'
           RunOrder: 1
       - Name: Prod
