@@ -26,7 +26,7 @@ from mineserve.models import Server
 @contextmanager
 def user_set(application, user):
     def handler(sender, **kwargs):
-        g.current_user = user
+        current_user = user
     with appcontext_pushed.connected_to(handler, application):
         yield
 
@@ -233,7 +233,7 @@ def users():
 def servers():
     if request.method == "POST":
         data = request.get_json(force=True)
-        user = str(g.current_user)
+        user = str(current_user)
 
         if not user:
             return abort(400)
@@ -250,15 +250,15 @@ def servers():
 
         return jsonify(new_server.serialize())
 
-    if g.current_user:
-        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(g.current_user))])
+    if current_user:
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(current_user))])
 
 
 @application.route("/api/0.1/servers/<id>", methods=["GET", "POST", "DELETE"])
 @requires_auth
 def server(id):
     server = next(Server.query(id))
-    if server.user != str(g.current_user):
+    if server.user != str(current_user):
         abort(403)
 
     if request.method == "DELETE":
@@ -268,7 +268,7 @@ def server(id):
 
         server.save()
 
-        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(g.current_user))])
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(current_user))])
 
     elif request.method == "GET":
         return jsonify(server.serialize())
@@ -277,7 +277,7 @@ def server(id):
 
         server.restart()
 
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=g.current_user)])
+        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=current_user)])
 
 
 #
