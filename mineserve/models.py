@@ -6,7 +6,6 @@ import random
 import boto3
 import time
 import math
-from sqlalchemy import event
 from threading import Thread
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, BooleanAttribute, UTCDateTimeAttribute
@@ -277,14 +276,9 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
         return private_ip
 
-    def delete(delete):
-        cluster.delete()
-        super().delete()
-
     def restart(self):
         client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
         taskarn = client.list_tasks(cluster=self.id)['taskArns'][0]
-
         client.stop_task(cluster=self.id,task=taskarn)
 
     def apply_promo_code(self,promo_code):
@@ -390,8 +384,9 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             raise ValueError("Could not create cluster "+self.id+" :"+str(e))
 
     def delete(self):
-        t = Thread(target=self._delete)
-        t.start()
+        if not application.config['STUB_AWS_RESOURCES']:
+            t = Thread(target=self._delete)
+            t.start()
         super().delete()
 
     def _delete(self):

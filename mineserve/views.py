@@ -18,7 +18,7 @@ from functools import wraps
 from flask import request, jsonify, abort, make_response, _app_ctx_stack, appcontext_pushed, g
 from flask_cors import cross_origin
 
-from mineserve import application, db
+from mineserve import application
 from mineserve.models import User
 from mineserve.models import Server
 
@@ -29,11 +29,6 @@ def user_set(application, user):
         _app_ctx_stack.top.current_user = user
     with appcontext_pushed.connected_to(handler, application):
         yield
-
-# factorio
-from factorio.factorioserver import FactorioServer
-# mcpe
-from mcpe.mcpeserver import MCPEServer
 
 """
 @application.route("/server/<server_id>", methods=["GET","POST"])
@@ -115,6 +110,9 @@ def server(server_id):
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        if _app_ctx_stack.top.current_user:
+            return f(*args, **kwargs)
+
         client_id = "gJv54phVRi5DcleXXy2ipeCM3J2FmGG5"
         client_secret = "r-eKjoNIhsf2491X7YYJRYd0_S7uYPIBRlDXfDkZrihJmMeHkOk278UJggwGv91Z"
         auth = request.headers.get('Authorization', None)
@@ -161,7 +159,7 @@ def requires_auth(f):
                                 'description': 'Unable to parse authentication'
                                  ' token.'}, 400)
 
-        _app_ctx_stack.top.current_user = payload
+        _app_ctx_stack.top.current_user = payload['user_id']
         return f(*args, **kwargs)
 
     return decorated
@@ -258,26 +256,26 @@ def servers():
 @requires_auth
 def server(id):
     server = next(Server.query(id))
+
     if server.user != str(_app_ctx_stack.top.current_user):
         abort(403)
 
-    if request.method == "DELETE":
-
-        if application.config['STUB_AWS_RESOURCES']:
-            abort(200)
-
-        server.save()
-
-        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(_app_ctx_stack.top.current_user))])
-
-    elif request.method == "GET":
+    if request.method == "GET":
         return jsonify(server.serialize())
 
     elif request.method == "POST":
+        if application.config['STUB_AWS_RESOURCES']:
+            abort(200)
 
         server.restart()
 
         return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=_app_ctx_stack.top.current_user)])
+
+    elif request.method == "DELETE":
+        server.delete()
+
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(_app_ctx_stack.top.current_user))])
+
 
 
 #

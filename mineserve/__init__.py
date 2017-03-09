@@ -1,6 +1,5 @@
 from flask import Flask
 import flask_login
-from flask_sqlalchemy import SQLAlchemy
 import stripe
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
@@ -16,8 +15,6 @@ application.config.from_object('mineserve.default_settings')
 
 application.debug = (application.config['FLASK_DEBUG'] == 'True')
 
-db = SQLAlchemy(application)
-migrate = Migrate(application, db)
 manager = Manager(application)
 manager.add_command('db', MigrateCommand)
 login_manager = flask_login.LoginManager()
