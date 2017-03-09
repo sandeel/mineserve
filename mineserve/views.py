@@ -110,7 +110,7 @@ def server(server_id):
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if hasattr(_app_ctx_stack.top, 'current_user':
+        if hasattr(_app_ctx_stack.top, 'current_user'):
             return f(*args, **kwargs)
 
         client_id = "gJv54phVRi5DcleXXy2ipeCM3J2FmGG5"
