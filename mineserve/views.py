@@ -159,7 +159,7 @@ def requires_auth(f):
                                 'description': 'Unable to parse authentication'
                                  ' token.'}, 400)
 
-        _app_ctx_stack.top.current_user = payload['user_id']
+        _app_ctx_stack.top.current_user = payload['sub']
         return f(*args, **kwargs)
 
     return decorated
@@ -243,7 +243,8 @@ def servers():
         new_server = Server(name=data['name'],
                             size=size,
                             user=user,
-                            expiry_date=now_plus_1_hours)
+                            expiry_date=now_plus_1_hours,
+                            region=data['region'])
         new_server.save()
 
         return jsonify(new_server.serialize())

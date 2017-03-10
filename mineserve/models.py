@@ -91,6 +91,7 @@ class Server(Model):
     user = UnicodeAttribute()
     user_index = ServerUserIndex()
     size = UnicodeAttribute(default='micro')
+    region = UnicodeAttribute()
 
     userdata = """Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
 MIME-Version: 1.0
@@ -237,7 +238,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         if application.config['STUB_AWS_RESOURCES']:
             return 'stub_resource'
 
-        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        client = boto3.client('ecs', region_name=self.region)
         response = client.list_tasks(cluster=self.id)
 
         instance_status = 'Unknown'
@@ -252,7 +253,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
     @property
     def ip(self):
-        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+        client = boto3.client('ec2', region_name=self.region)
         try:
             instance_status =  client.describe_instances(
                 InstanceIds=[
@@ -265,7 +266,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
     @property
     def private_ip(self):
-        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+        client = boto3.client('ec2', region_name=self.region)
         try:
             private_ip =  client.describe_instances(
                 InstanceIds=[
@@ -277,7 +278,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         return private_ip
 
     def restart(self):
-        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        client = boto3.client('ecs', region_name=self.region)
         taskarn = client.list_tasks(cluster=self.id)['taskArns'][0]
         client.stop_task(cluster=self.id,task=taskarn)
 
@@ -304,7 +305,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                 return
 
             # create the ECS cluster
-            client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+            client = boto3.client('ecs', region_name=self.region)
             if 'MISSING' in str(client.describe_clusters(clusters=[self.id,])):
                 try:
                     response = client.create_cluster(
@@ -316,7 +317,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             else:
                 return
 
-            client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+            client = boto3.client('ec2', region_name=self.region)
 
             # get the security group
             try:
@@ -333,7 +334,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
             # create the instance
             response = client.run_instances(
-                    ImageId=application.config['CONTAINER_AGENT_AMI'],
+                    ImageId=application.config['CONTAINER_AGENT_AMI'][self.region],
                     InstanceType='t2.'+str(self.size),
                     MinCount = 1,
                     MaxCount = 1,
@@ -346,7 +347,6 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                     SubnetId=str(subnet_id)
             )
             instance_id = response['Instances'][0]['InstanceId']
-
             time.sleep(1)
 
             # tag the instance
@@ -367,7 +367,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             )
 
             # create the service
-            client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+            client = boto3.client('ecs', region_name=self.region)
             client.create_service(
                 cluster=self.id,
                 serviceName=str(self.type),
@@ -392,7 +392,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
     def _delete(self):
 
         # terminate the instance if it exists
-        client = boto3.client('ec2', region_name=application.config['AWS_REGION'])
+        client = boto3.client('ec2', region_name=self.region)
         try:
             instance_id = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':['msv-container-'+self.id]}])['Reservations'][0]['Instances'][0]['InstanceId']
             if len(client.describe_instances(InstanceIds=[instance_id,])['Reservations']) > 0:
@@ -414,7 +414,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             print("Instance not found, moving on")
 
         # delete the service if it exists
-        client = boto3.client('ecs', region_name=application.config['AWS_REGION'])
+        client = boto3.client('ecs', region_name=self.region)
         services = client.describe_services( cluster=self.id, services=[ self.type ] )['services']
         if len(services) > 0 and services[0]['status'] == 'ACTIVE':
             client.update_service(
