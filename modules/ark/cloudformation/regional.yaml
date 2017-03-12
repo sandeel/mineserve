@@ -1,17 +1,14 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 
-Parameters: 
-  KeyName: 
+Parameters:
+  KeyName:
     Description: Amazon EC2 Key Pair
     Type: "AWS::EC2::KeyPair::KeyName"
-
-  Vpc: 
+  Vpc:
     Description: The VPC
     Type: AWS::EC2::VPC::Id
-
 Resources:
-
   ArkSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -22,7 +19,6 @@ Resources:
         -
           Key: Name
           Value: ark_server_sg
-
   ArkInboundRule27015tcp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -34,7 +30,6 @@ Resources:
         Fn::GetAtt:
         - ArkSG
         - GroupId
-
   ArkInboundRule27015udp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -46,7 +41,6 @@ Resources:
         Fn::GetAtt:
         - ArkSG
         - GroupId
-
   ArkInboundRule7777tcp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -58,7 +52,6 @@ Resources:
         Fn::GetAtt:
         - ArkSG
         - GroupId
-
   ArkInboundRule7777udp:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -70,7 +63,6 @@ Resources:
         Fn::GetAtt:
         - ArkSG
         - GroupId
-
   ArkInboundRuleRCON:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -82,7 +74,6 @@ Resources:
         Fn::GetAtt:
         - ArkSG
         - GroupId
-
   ArkInboundRuleSsh:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -94,7 +85,6 @@ Resources:
         Fn::GetAtt:
         - ArkSG
         - GroupId
-
   ArkInboundRuleSFTP:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -106,13 +96,11 @@ Resources:
         Fn::GetAtt:
         - ArkSG
         - GroupId
-
   ArkLogGroup: 
     Type: "AWS::Logs::LogGroup"
     Properties: 
       RetentionInDays: 7
       LogGroupName: 'msv-ark'
-
   arkservertaskdefinition: 
     Type: "AWS::ECS::TaskDefinition"
     Properties: 
@@ -203,3 +191,17 @@ Resources:
             Name: nofile
             HardLimit: 100000
             SoftLimit: 100000
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: "ami-6411e20d"
+    us-west-1:
+      AMI: "ami-9398d3e0"
+    eu-west-1:
+      amazon: "ami-9398d3e0"
+      ubuntu: "ami-0d77397e"
+      ecsoptimized: "ami-a7f2acc1"
+    ap-southeast-1:
+      AMI: "ami-66f28c34"
+    ap-northeast-1:
+      AMI: "ami-9c03a89d"

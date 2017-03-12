@@ -121,7 +121,7 @@ if ! rpm -qa | grep -qw nfs-utils; then
     yum -y install nfs-utils
 fi
 if ! rpm -qa | grep -qw python27; then
-	yum -y install python27
+    yum -y install python27
 fi
 #Install pip
 yum -y install python27-pip
@@ -145,8 +145,8 @@ mkdir /mnt/efs
 EFS_FILE_SYSTEM_ID=`/usr/local/bin/aws efs describe-file-systems --region $EC2_REGION | jq '.FileSystems[]' | jq 'select(.Name=="ContainerDataFileSystem")' | jq -r '.FileSystemId'`
 #Check to see if the variable is set. If not, then exit.
 if [-z "$EFS_FILE_SYSTEM_ID"]; then
-	echo "ERROR: variable not set" 1> /etc/efssetup.log
-	exit
+    echo "ERROR: variable not set" 1> /etc/efssetup.log
+    exit
 fi
 #Instance needs to be a member of security group that allows 2049 inbound/outbound
 #The security group that the instance belongs to has to be added to EFS file system configuration
@@ -332,6 +332,8 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             except IndexError:
                 print("Error getting the subnet for server. Has it been created?")
 
+            client = boto3.client('ec2', region_name=self.region)
+
             # create the instance
             response = client.run_instances(
                     ImageId=application.config['CONTAINER_AGENT_AMI'][self.region],
@@ -347,7 +349,9 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                     SubnetId=str(subnet_id)
             )
             instance_id = response['Instances'][0]['InstanceId']
-            time.sleep(1)
+
+            waiter = client.get_waiter('instance_running')
+            waiter.wait(InstanceIds=[instance_id,])
 
             # tag the instance
             response = client.create_tags(
@@ -364,6 +368,30 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                         'Value': 'container_agent'
                     },
                 ]
+            )
+
+            client = boto3.client('autoscaling', region_name=self.region)
+
+            response = client.create_auto_scaling_group(
+                AutoScalingGroupName=self.id,
+                InstanceId=instance_id,
+                MinSize=0,
+                MaxSize=1,
+                DesiredCapacity=0
+            )
+
+            response = client.attach_instances(
+                InstanceIds=[
+                    instance_id
+                ],
+                AutoScalingGroupName=self.id
+            )
+
+            response = client.update_auto_scaling_group(
+                AutoScalingGroupName=self.id,
+                MinSize=1,
+                MaxSize=1,
+                DesiredCapacity=1,
             )
 
             # create the service

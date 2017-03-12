@@ -1,13 +1,11 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 
-Parameters: 
-  KeyName: 
+Parameters:
+  KeyName:
     Description: Amazon EC2 Key Pair
     Type: "AWS::EC2::KeyPair::KeyName"
-
 Resources:
-
   ArkStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -15,23 +13,19 @@ Resources:
       Parameters:
         KeyName: !Ref KeyName
         Vpc: !Ref Vpc
-
   Vpc:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.0.0.0/16
       EnableDnsHostnames: 'true'
       EnableDnsSupport: 'true'
-
   InternetGateway:
     Type: AWS::EC2::InternetGateway
-
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref 'Vpc'
       InternetGatewayId: !Ref 'InternetGateway'
-
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -41,7 +35,6 @@ Resources:
       - Key: Name
         Value: msv-container-agent-subnet
       MapPublicIpOnLaunch: 'true'
-
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -49,13 +42,11 @@ Resources:
       Tags:
       - Key: Name
         Value: PublicRouteTable
-
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref 'PublicSubnet1'
       RouteTableId: !Ref 'PublicRouteTable'
-
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -63,22 +54,20 @@ Resources:
       RouteTableId: !Ref 'PublicRouteTable'
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref 'InternetGateway'
-
-Mappings: 
-  RegionMap: 
-    us-east-1: 
+Mappings:
+  RegionMap:
+    us-east-1:
       AMI: "ami-6411e20d"
-    us-west-1: 
+    us-west-1:
       AMI: "ami-9398d3e0"
-    eu-west-1: 
+    eu-west-1:
       amazon: "ami-9398d3e0"
       ubuntu: "ami-0d77397e"
       ecsoptimized: "ami-a7f2acc1"
-    ap-southeast-1: 
+    ap-southeast-1:
       AMI: "ami-66f28c34"
-    ap-northeast-1: 
+    ap-northeast-1:
       AMI: "ami-9c03a89d"
-
   Beanstalk2Route53HostedZoneId:
     us-east-1:
       HostedZoneId: Z3DZXE0Q79N41H
