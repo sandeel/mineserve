@@ -360,6 +360,7 @@ Resources:
     DependsOn: Website
     Properties:
       ApplicationName: !Ref 'Website'
+      EnvironmentName: !Join [ '', [ !Ref 'AWS::StackName', '-frontend' ] ]
       SolutionStackName: 64bit Amazon Linux 2016.09 v2.5.0 running Docker 1.12.6
       OptionSettings:
       - Namespace: aws:autoscaling:launchconfiguration
@@ -388,6 +389,7 @@ Resources:
     DependsOn: Website
     Properties:
       ApplicationName: !Ref 'Website'
+      EnvironmentName: !Join [ '', [ !Ref 'AWS::StackName', '-api' ] ]
       SolutionStackName: 64bit Amazon Linux 2016.09 v2.3.1 running Python 3.4
       OptionSettings:
       - Namespace: aws:ec2:vpc
