@@ -319,7 +319,9 @@ def test_servers():
             "name": "Jurassic Ark",
             "status": "stub_resource",
             "time_remaining": "0 days, 1 hours, 0 minutes",
-            "user": "auth0|58bf293e61d8c359422f7154"
+            "user": "auth0|58bf293e61d8c359422f7154",
+            "type": "ark_server",
+            "size": "large"
         },
         {
             "creation_date": "2017-03-12 16:17:58.001031+00:00",
@@ -329,7 +331,9 @@ def test_servers():
             "name": "Jurassic Ark 2",
             "status": "stub_resource",
             "time_remaining": "0 days, 1 hours, 0 minutes",
-            "user": "auth0|58bf293e61d8c359422f7154"
+            "user": "auth0|58bf293e61d8c359422f7154",
+            "type": "ark_server",
+            "size": "large"
         }
       ]
     }
