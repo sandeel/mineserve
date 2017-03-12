@@ -1,8 +1,11 @@
 #!/bin/bash
 
 BASE_REGION=eu-west-1
-ALL_REGIONS=(eu-west-1, us-east-1)
+ALL_REGIONS=( eu-west-1 us-east-1 )
 BASE_STACK_NAME=msv
+
+
+echo ${ALL_REGIONS[1]}
 
 # --- do not change ---
 GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
@@ -87,11 +90,19 @@ case $key in
         fi
 
 
-        echo "Terminating container instances..."
-        for instance in `aws ec2 describe-instances --filters "Name=tag:Name,Values=msv-container-*" --region eu-west-1 | jq -r '.Reservations[].Instances[].InstanceId'`
+        echo "Terminating regional resources..."
+        for REGION in "${ALL_REGIONS[@]}"
         do
-            echo "Terminating $instance..."
-            aws ec2 terminate-instances --region eu-west-1 --instance-ids $instance
+            echo "Checking for container instances to terminate in $REGION"
+            for instance in `aws ec2 describe-instances --filters "Name=tag:Name,Values=msv-container-*" --region $REGION | jq -r '.Reservations[].Instances[].InstanceId'`
+            do
+                echo "Terminating $instance..."
+                aws ec2 terminate-instances --region $REGION --instance-ids $instance
+            done
+
+            echo "Terminating regional stack $STACK_NAME-regional in $REGION"
+            aws cloudformation delete-stack --region $REGION --stack-name $STACK_NAME-regional
+
         done
 
         echo "Emptying template bucket..."
@@ -109,12 +120,6 @@ case $key in
 
         echo "Deleting repos..."
         aws ecr delete-repository --region $BASE_REGION --repository-name $BASE_STACK_NAME-frontend --force
-
-        echo "Terminating regional stack $STACK_NAME-regional in eu-west-1"
-        aws cloudformation delete-stack --region eu-west-1 --stack-name $STACK_NAME-regional
-
-        echo "Terminating regional stack $STACK_NAME-regional in us-east-1"
-        aws cloudformation delete-stack --region us-east-1 --stack-name $STACK_NAME-regional
 
         ;;
         esac
