@@ -137,6 +137,8 @@ EC2_INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
 EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
 SERVER_ID="`aws ec2 describe-tags --output text --region $EC2_REGION --filters Name=resource-type,Values="instance" Name=key,Values=Name Name=resource-id,Values=\"$EC2_INSTANCE_ID\"  | cut -f5`"
 echo ECS_CLUSTER=$SERVER_ID >> /etc/ecs/ecs.config
+echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=30 >> /etc/ecs/ecs.config
+echo ECS_IMAGE_CLEANUP_INTERVAL=30 >> /etc/ecs/ecs.config
 
 #Create mount point
 mkdir /mnt/efs
@@ -176,6 +178,7 @@ cd /mnt/efs/ark/
 yum -y install wget
 wget https://raw.githubusercontent.com/TuRz4m/Ark-docker/master/arkmanager-user.cfg
 mv arkmanager-user.cfg arkmanager.cfg
+sed -i 's/${SESSIONNAME}/Adventure Servers/g' arkmanager.cfg
 
 #Backup fstab
 cp -p /etc/fstab /etc/fstab.back-$(date +%F)
@@ -336,17 +339,27 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
             # create the instance
             response = client.run_instances(
-                    ImageId=application.config['CONTAINER_AGENT_AMI'][self.region],
-                    InstanceType='t2.'+str(self.size),
-                    MinCount = 1,
-                    MaxCount = 1,
-                    UserData = str(Server.userdata),
-                    KeyName = application.config['EC2_KEYPAIR'],
-                    IamInstanceProfile={
-                        'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
-                        },
-                    SecurityGroupIds=[security_group_id],
-                    SubnetId=str(subnet_id)
+				ImageId=application.config['CONTAINER_AGENT_AMI'][self.region],
+				InstanceType='t2.'+str(self.size),
+				MinCount = 1,
+				MaxCount = 1,
+				UserData = str(Server.userdata),
+				KeyName = application.config['EC2_KEYPAIR'],
+				IamInstanceProfile={
+					'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
+					},
+				SecurityGroupIds=[security_group_id],
+				SubnetId=str(subnet_id),
+				BlockDeviceMappings=[
+						{
+							'DeviceName': '/dev/xvdcz',
+							'Ebs': {
+								'VolumeSize': 80,
+								'DeleteOnTermination': True,
+								'VolumeType': 'gp2',
+							},
+						},
+				]
             )
             instance_id = response['Instances'][0]['InstanceId']
 
@@ -361,7 +374,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                 Tags=[
                     {
                         'Key': 'Name',
-                        'Value': 'msv-container-'+self.id
+                        'Value': self.id
                     },
                     {
                         'Key': 'msv_role',
@@ -422,7 +435,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         # terminate the instance if it exists
         client = boto3.client('ec2', region_name=self.region)
         try:
-            instance_id = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':['msv-container-'+self.id]}])['Reservations'][0]['Instances'][0]['InstanceId']
+            instance_id = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':[+self.id]}])['Reservations'][0]['Instances'][0]['InstanceId']
             if len(client.describe_instances(InstanceIds=[instance_id,])['Reservations']) > 0:
                 client.terminate_instances(
                         InstanceIds=[

@@ -687,43 +687,6 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref 'CodePipelineS3Bucket'
-
-  ContainerDataFileSystem: 
-    Type: "AWS::EFS::FileSystem"
-    Properties: 
-      FileSystemTags: 
-        - 
-          Key: "Name"
-          Value: "ContainerDataFileSystem"
-  MountTarget: 
-    Type: "AWS::EFS::MountTarget"
-    Properties: 
-      FileSystemId: 
-        Ref: "ContainerDataFileSystem"
-      SubnetId: 
-        Ref: "PublicSubnet1"
-      SecurityGroups: 
-        - 
-          Ref: "MountTargetSecurityGroup"
-  MountTargetSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Port 2049
-      VpcId:
-        Ref: Vpc
-
-  MountTargetSecurityGroupnboundRule:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '2049'
-      ToPort: '2049'
-      CidrIp: 10.0.0.0/16
-      GroupId:
-        Fn::GetAtt:
-        - MountTargetSecurityGroup
-        - GroupId
-
   Vpc:
     Type: AWS::EC2::VPC
     Properties:
@@ -954,9 +917,9 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
      BucketName: msv-frontend
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: error.html
+     WebsiteConfiguration:
+       IndexDocument: index.html
+       ErrorDocument: error.html
   FrontendBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties: 

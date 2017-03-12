@@ -164,6 +164,14 @@ Resources:
             ContainerPort: 32330
             HostPort: 32330
             Protocol: tcp
+          - 
+            ContainerPort: 27015
+            HostPort: 27015
+            Protocol: tcp
+          - 
+            ContainerPort: 27015
+            HostPort: 27015
+            Protocol: udp
         MountPoints: 
         - 
           SourceVolume: "SavedArks"
@@ -179,13 +187,6 @@ Resources:
             awslogs-group: !Ref ArkLogGroup
             awslogs-region: !Ref 'AWS::Region'
             awslogs-stream-prefix: msv
-        Environment:
-          -
-            Name: ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION
-            Value: 1
-          -
-            Name: ECS_IMAGE_CLEANUP_INTERVAL
-            Value: 10
         Ulimits:
           -
             Name: nofile
