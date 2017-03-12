@@ -91,7 +91,28 @@ class Server(Model):
     size = UnicodeAttribute(default='micro')
     region = UnicodeAttribute()
 
-    userdata = """Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
+    prices = {
+                'micro': 800,
+                'large': 1600
+                }
+
+    max_players = {
+                    'micro': 20,
+                    'large': 80
+                    }
+
+    __mapper_args__ = {
+                'polymorphic_identity':'server',
+                'polymorphic_on':type
+            }
+
+    def __init__(self, hash_key=None, range_key=None, **attrs):
+        super().__init__(hash_key, range_key, **attrs)
+        self.create_cluster()
+
+    @property
+    def userdata(self):
+        userdata="""Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
 MIME-Version: 1.0
 
 --===============BOUNDARY==
@@ -113,7 +134,7 @@ Content-Type: text/cloud-boothook; charset="us-ascii"
 #cloud-boothook
 PATH=$PATH:/usr/local/bin
 #Instance should be added to an security group that allows HTTP outbound
-yum update
+yum -y update
 #Install jq, a JSON parser
 yum -y install jq
 #Install NFS client
@@ -135,7 +156,7 @@ aws configure set preview.efs true
 EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
 EC2_INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
 EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
-SERVER_ID="`aws ec2 describe-tags --output text --region $EC2_REGION --filters Name=resource-type,Values="instance" Name=key,Values=Name Name=resource-id,Values=\"$EC2_INSTANCE_ID\"  | cut -f5`"
+SERVER_ID="""+self.id+"""
 echo ECS_CLUSTER=$SERVER_ID >> /etc/ecs/ecs.config
 echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=30 >> /etc/ecs/ecs.config
 echo ECS_IMAGE_CLEANUP_INTERVAL=30 >> /etc/ecs/ecs.config
@@ -186,25 +207,7 @@ cp -p /etc/fstab /etc/fstab.back-$(date +%F)
 echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /etc/fstab
 --===============BOUNDARY==--
 """
-
-    prices = {
-                'micro': 800,
-                'large': 1600
-                }
-
-    max_players = {
-                    'micro': 20,
-                    'large': 80
-                    }
-
-    __mapper_args__ = {
-                'polymorphic_identity':'server',
-                'polymorphic_on':type
-            }
-
-    def __init__(self, hash_key=None, range_key=None, **attrs):
-        super().__init__(hash_key, range_key, **attrs)
-        self.create_cluster()
+        return userdata
 
     def seconds_to_dhms(self):
         if self.expiry_date > datetime.datetime.utcnow().replace(tzinfo=pytz.utc):
@@ -343,7 +346,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 				InstanceType='t2.'+str(self.size),
 				MinCount = 1,
 				MaxCount = 1,
-				UserData = str(Server.userdata),
+				UserData = str(self.userdata),
 				KeyName = application.config['EC2_KEYPAIR'],
 				IamInstanceProfile={
 					'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
