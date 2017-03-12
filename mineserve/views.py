@@ -215,7 +215,6 @@ class JWTError(Exception):
         return '%s. %s' % (self.error, self.description)
 
 
-@cross_origin(headers=['Content-Type', 'Authorization'])
 @application.route("/api/0.1/users", methods=["GET","POST"])
 @requires_auth
 def users():
@@ -225,7 +224,6 @@ def users():
         return jsonify(users = user.serialize())
 
 
-@cross_origin()
 @application.route("/api/0.1/servers", methods=["GET", "POST", "DELETE"])
 @requires_auth
 def servers():
@@ -291,7 +289,6 @@ def handle_error(error, status_code):
 
 
 @application.route("/secured/ping", methods=["GET"])
-@cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def secured_ping():
     print(_app_ctx_stack.top.current_user)

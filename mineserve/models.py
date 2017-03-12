@@ -31,12 +31,10 @@ class User():
         except:
             raise ValueError("User doesn't exist in cognito")
 
-
     def serialize(self):
         return {
             "username": self.id
         }
-
 
     def __str__(self):
         return self.username

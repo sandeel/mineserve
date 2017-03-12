@@ -45,7 +45,8 @@ class FlaskrTestCase(unittest.TestCase):
                 resp = c.post('/api/0.1/servers', data=json.dumps(dict(
                     name='Testing Server',
                     type='ark_server',
-                    size='large'
+                    size='large',
+                    region='us-east-1'
                 )),
                 content_type='application/json')
                 assert b'\"name\": \"Testing Server\"' in resp.data

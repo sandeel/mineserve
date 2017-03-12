@@ -970,13 +970,13 @@ Resources:
         WriteCapacityUnits: 1
       TableName: 'msv-testing-servers'
       GlobalSecondaryIndexes: 
-        - 
+        -
           IndexName: "user-index"
-          KeySchema: 
-            - 
+          KeySchema:
+            -
               AttributeName: "user"
               KeyType: "HASH"
-          Projection: 
+          Projection:
             ProjectionType: "ALL"
           ProvisionedThroughput: 
             ReadCapacityUnits: 1
