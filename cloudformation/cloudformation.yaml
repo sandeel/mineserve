@@ -297,8 +297,6 @@ Resources:
         Fn::GetAtt:
         - FactSG
         - GroupId
-  ResourcesBucket:
-    Type: AWS::S3::Bucket
   MsvApi:
     Type: "AWS::ApiGateway::RestApi"
     Properties:
@@ -355,35 +353,6 @@ Resources:
           StatusCode: 200
   Website:
     Type: AWS::ElasticBeanstalk::Application
-  FrontendEnvironment:
-    Type: AWS::ElasticBeanstalk::Environment
-    DependsOn: Website
-    Properties:
-      ApplicationName: !Ref 'Website'
-      EnvironmentName: !Join [ '', [ !Ref 'AWS::StackName', '-frontend' ] ]
-      SolutionStackName: 64bit Amazon Linux 2016.09 v2.5.0 running Docker 1.12.6
-      OptionSettings:
-      - Namespace: aws:autoscaling:launchconfiguration
-        OptionName: InstanceType
-        Value: t2.small # to be safe since instances need to build the Docker image
-      - Namespace: aws:ec2:vpc
-        OptionName: Subnets
-        Value: !Ref 'PublicSubnet1'
-      - Namespace: aws:ec2:vpc
-        OptionName: ELBSubnets
-        Value: !Ref 'PublicSubnet1'
-      - Namespace: aws:elasticbeanstalk:environment
-        OptionName: ServiceRole
-        Value: !Ref ElasticBeanstalkServiceRole
-      - Namespace: aws:autoscaling:launchconfiguration
-        OptionName: IamInstanceProfile
-        Value: !Ref ElasticBeanstalkInstanceProfile
-      - Namespace:  aws:elasticbeanstalk:healthreporting:system
-        OptionName: SystemType
-        Value: enhanced
-      - Namespace: aws:autoscaling:launchconfiguration
-        OptionName: EC2KeyName
-        Value: !Ref 'KeyPair'
   ApiEnvironment:
     Type: AWS::ElasticBeanstalk::Environment
     DependsOn: Website
@@ -452,9 +421,6 @@ Resources:
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: ADVSRVS_PHONE_HOME_ENDPOINT
         Value: !Join ['', [advsrvs., !Ref 'AWS::Region', .elasticbeanstalk.com]]
-      - Namespace: aws:elasticbeanstalk:application:environment
-        OptionName: ADVSRVS_RESOURCES_ENDPOINT
-        Value: !GetAtt [ResourcesBucket, DomainName]
       - Namespace: aws:autoscaling:launchconfiguration
         OptionName: EC2KeyName
         Value: !Ref 'KeyPair'
@@ -594,6 +560,15 @@ Resources:
       HostedZoneId: !Ref 'HostedZone'
       Name: adventureservers.com
       Type: A
+  FrontendRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt [FrontendBucket, WebsiteURL]
+        HostedZoneId: Z1BKCTXD74EZPE
+      HostedZoneId: !Ref 'HostedZone'
+      Name: adventureservers.com
+      Type: A
   CodePipelineS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -709,18 +684,6 @@ Resources:
             ApplicationName: !Ref 'Website'
             EnvironmentName: !Ref 'ApiEnvironment'
           RunOrder: 1
-        - Name: DeployFrontendToBeanstalk
-          InputArtifacts:
-          - Name: FrontendOutput
-          ActionTypeId:
-            Category: Deploy
-            Owner: AWS
-            Version: '1'
-            Provider: ElasticBeanstalk
-          Configuration:
-            ApplicationName: !Ref 'Website'
-            EnvironmentName: !Ref 'FrontendEnvironment'
-          RunOrder: 2
       ArtifactStore:
         Type: S3
         Location: !Ref 'CodePipelineS3Bucket'
@@ -985,8 +948,35 @@ Resources:
             WriteCapacityUnits: 1
   FrontendRepo:
     Type: AWS::ECR::Repository
-    Properties: 
+    Properties:
       RepositoryName: msv-frontend
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+     BucketName: msv-frontend
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+  FrontendBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties: 
+      Bucket: 
+        Ref: "FrontendBucket"
+      PolicyDocument: 
+        Statement: 
+          - 
+            Action: 
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource: 
+              Fn::Join: 
+                - ""
+                - 
+                  - "arn:aws:s3:::"
+                  - 
+                    Ref: "FrontendBucket"
+                  - "/*"
+            Principal: "*"
 Mappings: 
   RegionMap: 
     us-east-1: 

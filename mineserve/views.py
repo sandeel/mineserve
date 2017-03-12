@@ -301,3 +301,39 @@ def secured_ping():
     url = "https://gameserve.eu.auth0.com/tokeninfo"
     print(requests.get(url, params={"id_token": parts[1]}).text)
     return "All good. You only get this message if you're authenticated"
+
+
+
+
+
+@application.route("/api/0.1/testing/servers", methods=["GET", "POST", "DELETE"])
+def test_servers():
+
+    test_return_json="""{
+      "servers": [
+        {
+            "creation_date": "2017-03-12 16:17:58.001031+00:00",
+            "expiry_date": "2017-03-12 17:36:07.623360+00:00",
+            "id": "8f2ea3e7-9ba6-4040-91b0-1fb06d69e681",
+            "ip": "Unknown",
+            "name": "Jurassic Ark",
+            "status": "stub_resource",
+            "time_remaining": "0 days, 1 hours, 0 minutes",
+            "user": "auth0|58bf293e61d8c359422f7154"
+        },
+        {
+            "creation_date": "2017-03-12 16:17:58.001031+00:00",
+            "expiry_date": "2017-03-12 17:36:07.623360+00:00",
+            "id": "8f2ea3e7-9ba6-4040-91b0-1fb06d69e681",
+            "ip": "Unknown",
+            "name": "Jurassic Ark 2",
+            "status": "stub_resource",
+            "time_remaining": "0 days, 1 hours, 0 minutes",
+            "user": "auth0|58bf293e61d8c359422f7154"
+        }
+      ]
+    }
+    """
+
+    return test_return_json
+
