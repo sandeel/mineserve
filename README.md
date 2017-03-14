@@ -38,11 +38,11 @@ Run the API server locally (eg. on port 8080) with debug on and STUB_AWS_RESOURC
 
 Get my servers:
 
-    curl localhost:8080/api/0.1/servers -H 'Authorization: JWT my_jwt_token'
+    curl localhost:8080/api/0.1/servers -H 'Authorization: Bearer my_jwt_token'
 
 Create a new server:
 
-    curl localhost:8080/api/0.1/servers  -X POST -H 'Authorization: JWT my_jwt_token' -d '{ "name": "Jurassic Ark", "type": "ark_server", "size": "large" }'
+    curl localhost:8080/api/0.1/servers  -X POST -H 'Authorization: Bearer my_jwt_token' -d '{ "name": "Jurassic Ark", "type": "ark_server", "size": "large", "region": "us-east-1" }'
 
 ## Running on AWS
 

@@ -161,6 +161,8 @@ echo ECS_CLUSTER=$SERVER_ID >> /etc/ecs/ecs.config
 echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=30 >> /etc/ecs/ecs.config
 echo ECS_IMAGE_CLEANUP_INTERVAL=30 >> /etc/ecs/ecs.config
 
+aws ec2 create-tags --region $EC2_REGION --resources $EC2_INSTANCE_ID --tags Key=Name,Value=msv-container-$SERVER_ID
+
 #Create mount point
 mkdir /mnt/efs
 #Get EFS FileSystemID attribute
@@ -199,7 +201,7 @@ cd /mnt/efs/ark/
 yum -y install wget
 wget https://raw.githubusercontent.com/TuRz4m/Ark-docker/master/arkmanager-user.cfg
 mv arkmanager-user.cfg arkmanager.cfg
-sed -i 's/${SESSIONNAME}/Adventure Servers/g' arkmanager.cfg
+sed -i 's/${SESSIONNAME}//"Adventure Servers/"/g' arkmanager.cfg
 
 #Backup fstab
 cp -p /etc/fstab /etc/fstab.back-$(date +%F)
@@ -261,14 +263,14 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
     def ip(self):
         client = boto3.client('ec2', region_name=self.region)
         try:
-            instance_status =  client.describe_instances(
+            ip =  client.describe_instances(
                 InstanceIds=[
                     self.instance_id
                 ])['Reservations'][0]['Instances'][0]['PublicIpAddress']
         except:
-            instance_status = 'Unknown'
+            ip = 'Unknown'
 
-        return instance_status
+        return ip
 
     @property
     def private_ip(self):
@@ -342,49 +344,32 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
             # create the instance
             response = client.run_instances(
-				ImageId=application.config['CONTAINER_AGENT_AMI'][self.region],
-				InstanceType='t2.'+str(self.size),
-				MinCount = 1,
-				MaxCount = 1,
-				UserData = str(self.userdata),
-				KeyName = application.config['EC2_KEYPAIR'],
-				IamInstanceProfile={
-					'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
-					},
-				SecurityGroupIds=[security_group_id],
-				SubnetId=str(subnet_id),
-				BlockDeviceMappings=[
-						{
-							'DeviceName': '/dev/xvdcz',
-							'Ebs': {
-								'VolumeSize': 80,
-								'DeleteOnTermination': True,
-								'VolumeType': 'gp2',
-							},
-						},
-				]
+                ImageId=application.config['CONTAINER_AGENT_AMI'][self.region],
+                InstanceType='t2.'+str(self.size),
+                MinCount = 1,
+                MaxCount = 1,
+                UserData = str(self.userdata),
+                KeyName = application.config['EC2_KEYPAIR'],
+                IamInstanceProfile={
+                    'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
+                    },
+                SecurityGroupIds=[security_group_id],
+                SubnetId=str(subnet_id),
+                BlockDeviceMappings=[
+                        {
+                            'DeviceName': '/dev/xvdcz',
+                            'Ebs': {
+                                'VolumeSize': 80,
+                                'DeleteOnTermination': True,
+                                'VolumeType': 'gp2',
+                            },
+                        },
+                ]
             )
             instance_id = response['Instances'][0]['InstanceId']
 
             waiter = client.get_waiter('instance_running')
             waiter.wait(InstanceIds=[instance_id,])
-
-            # tag the instance
-            response = client.create_tags(
-                Resources=[
-                    instance_id,
-                ],
-                Tags=[
-                    {
-                        'Key': 'Name',
-                        'Value': self.id
-                    },
-                    {
-                        'Key': 'msv_role',
-                        'Value': 'container_agent'
-                    },
-                ]
-            )
 
             client = boto3.client('autoscaling', region_name=self.region)
 
@@ -433,29 +418,24 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             t.start()
         super().delete()
 
+    @property
+    def instance_id(self):
+        instance_id = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':[+self.id]}])['Reservations'][0]['Instances'][0]['InstanceId']
+        return instance_id
+
     def _delete(self):
 
-        # terminate the instance if it exists
-        client = boto3.client('ec2', region_name=self.region)
+        client = boto3.client('autoscaling', region_name=self.region)
+
         try:
-            instance_id = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':[+self.id]}])['Reservations'][0]['Instances'][0]['InstanceId']
-            if len(client.describe_instances(InstanceIds=[instance_id,])['Reservations']) > 0:
-                client.terminate_instances(
-                        InstanceIds=[
-                                    instance_id
-                                ]
-                )
-
-            # wait to ensure instance terminated
-            waiter = client.get_waiter('instance_terminated')
-            waiter.wait(
-                InstanceIds=[
-                            instance_id
-                        ],
+            response = client.delete_auto_scaling_group(
+                AutoScalingGroupName=self.id,
+                ForceDelete=True
             )
-
         except:
-            print("Instance not found, moving on")
+            print("ASG not found, moving on")
+
+        time.sleep(10)
 
         # delete the service if it exists
         client = boto3.client('ecs', region_name=self.region)

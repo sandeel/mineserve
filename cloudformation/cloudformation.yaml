@@ -546,29 +546,6 @@ Resources:
           Principal:
             Service: [ec2.amazonaws.com]
           Action: ['sts:AssumeRole']
-  HostedZone:
-    Type: AWS::Route53::HostedZone
-    Properties:
-      Name: adventureservers.com
-  RecordSet:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      AliasTarget:
-        DNSName: !GetAtt [ApiEnvironment, EndpointURL]
-        HostedZoneId: !FindInMap [Beanstalk2Route53HostedZoneId, !Ref 'AWS::Region',
-          HostedZoneId]
-      HostedZoneId: !Ref 'HostedZone'
-      Name: adventureservers.com
-      Type: A
-  FrontendRecordSet:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      AliasTarget:
-        DNSName: !GetAtt [FrontendBucket, WebsiteURL]
-        HostedZoneId: Z1BKCTXD74EZPE
-      HostedZoneId: !Ref 'HostedZone'
-      Name: adventureservers.com
-      Type: A
   CodePipelineS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -906,7 +883,7 @@ Resources:
               KeyType: "HASH"
           Projection:
             ProjectionType: "ALL"
-          ProvisionedThroughput: 
+          ProvisionedThroughput:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
   FrontendRepo:
@@ -922,37 +899,37 @@ Resources:
        ErrorDocument: error.html
   FrontendBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
-    Properties: 
-      Bucket: 
+    Properties:
+      Bucket:
         Ref: "FrontendBucket"
-      PolicyDocument: 
-        Statement: 
-          - 
-            Action: 
+      PolicyDocument:
+        Statement:
+          -
+            Action:
               - "s3:GetObject"
             Effect: "Allow"
-            Resource: 
-              Fn::Join: 
+            Resource:
+              Fn::Join:
                 - ""
-                - 
+                -
                   - "arn:aws:s3:::"
-                  - 
+                  -
                     Ref: "FrontendBucket"
                   - "/*"
             Principal: "*"
-Mappings: 
-  RegionMap: 
-    us-east-1: 
+Mappings:
+  RegionMap:
+    us-east-1:
       AMI: "ami-6411e20d"
-    us-west-1: 
+    us-west-1:
       AMI: "ami-9398d3e0"
-    eu-west-1: 
+    eu-west-1:
       amazon: "ami-9398d3e0"
       ubuntu: "ami-0d77397e"
       ecsoptimized: "ami-a7f2acc1"
-    ap-southeast-1: 
+    ap-southeast-1:
       AMI: "ami-66f28c34"
-    ap-northeast-1: 
+    ap-northeast-1:
       AMI: "ami-9c03a89d"
 
   Beanstalk2Route53HostedZoneId:

@@ -268,7 +268,7 @@ def server(id):
 
         server.restart()
 
-        return jsonify(servers=[s.serialize() for s in Server.query.filter_by(user=_app_ctx_stack.top.current_user)])
+        return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(_app_ctx_stack.top.current_user))])
 
     elif request.method == "DELETE":
         server.delete()
