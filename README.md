@@ -44,6 +44,10 @@ Create a new server:
 
     curl localhost:8080/api/0.1/servers  -X POST -H 'Authorization: Bearer my_jwt_token' -d '{ "name": "Jurassic Ark", "type": "ark_server", "size": "large", "region": "us-east-1" }'
 
+Top up a server:
+
+    curl -H "Authorization: Bearer my_jwt_token" localhost:8000/api/0.1/servers/the_server_id/topup -X POST -d '{"stripeToken": "tok_19xNbgFS8gnfcxztAca3WWe8"}'
+
 ## Running on AWS
 
 The manage.sh script in the root directory should be able to automatically spin up the needed infrastructure on AWS. You'll need to have the AWS CLI tool [1] installed and have authentication set up, as the script will make use of AWS CLI calls.

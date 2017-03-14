@@ -5,8 +5,7 @@ import six
 import struct
 import requests
 import pytz
-import os
-
+import stripe
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -18,7 +17,7 @@ from functools import wraps
 from flask import request, jsonify, abort, make_response, _app_ctx_stack, appcontext_pushed, g
 from flask_cors import cross_origin
 
-from mineserve import application
+from mineserve import application, stripe_keys
 from mineserve.models import User
 from mineserve.models import Server
 
@@ -29,80 +28,6 @@ def user_set(application, user):
         _app_ctx_stack.top.current_user = user
     with appcontext_pushed.connected_to(handler, application):
         yield
-
-"""
-@application.route("/server/<server_id>", methods=["GET","POST"])
-def server(server_id):
-
-    topped_up_message = None
-    promo_code_applied=False
-    invalid_promo_code=False
-    error_message=None
-
-    if request.method == 'POST':
-
-        if request.form.get('stripeToken', None):
-
-            server = Server.query.filter_by(id=server_id).first()
-
-            amount = Server.prices[server.size]
-
-            customer = stripe.Customer.create(
-                card=request.form['stripeToken'],
-                metadata={ "server_id": server_id }
-            )
-
-            charge = stripe.Charge.create(
-                customer=customer.id,
-                amount=amount,
-                currency='usd',
-                description='Flask Charge',
-                metadata={"server_id": server.id}
-            )
-
-            if charge['status'] == "succeeded":
-
-                server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
-
-                db.session.commit()
-
-                topped_up_message = "Topped up by 30 days."
-
-            else:
-                error_message = "Payment failed"
-
-        elif request.form['promo-code']:
-            server = Server.query.filter_by(id=server_id).first()
-            if server.apply_promo_code(request.form['promo-code']):
-                promo_code_applied=True
-            else:
-                invalid_promo_code=True
-
-    server = Server.query.filter_by(id=server_id).first()
-
-    if (datetime.datetime.now() - server.creation_date).seconds < 3600:
-        new_server = True
-    else:
-        new_server = False
-
-    td = server.expiry_date - datetime.datetime.now()
-    days, hours, minutes = td.days, td.seconds // 3600, td.seconds // 60 % 60
-
-    return render_template('server.html',
-            time_remaining=str(days)+' days, '+str(hours)+' hours, '+str(minutes)+' minutes',
-            id=server.id,
-            ip=server.ip,
-            key=stripe_keys['publishable_key'],
-            status=server.status,
-            new_server=True,
-            topped_up_message=topped_up_message,
-            beta=application.config['BETA'],
-            invalid_promo_code=invalid_promo_code,
-            size=server.size,
-            price='{0:.02f}'.format(float(Server.prices[server.size]) / 100.0),
-            error_message=error_message,
-            )
-"""
 
 # This is the new auth function
 # I am pretty sure it uses the client secret and id to verify the token
@@ -165,6 +90,77 @@ def requires_auth(f):
     return decorated
 
 
+@application.route("/api/0.1/servers/<id>/topup", methods=["POST"])
+@requires_auth
+def topup(id):
+    data = request.get_json(force=True)
+    user = str(_app_ctx_stack.top.current_user)
+
+    topped_up_message = None
+    promo_code_applied=False
+    invalid_promo_code=False
+    error_message=None
+
+    server = next(Server.query(id))
+
+    if request.method == 'POST':
+
+        if data['stripeToken']:
+
+            amount = Server.prices[server.size]
+
+            customer = stripe.Customer.create(
+                card=data['stripeToken'],
+                metadata={ "server_id": id }
+            )
+
+            charge = stripe.Charge.create(
+                customer=customer.id,
+                amount=amount,
+                currency='usd',
+                description='Flask Charge',
+                metadata={"server_id": server.id}
+            )
+
+            if charge['status'] == "succeeded":
+
+                server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
+
+                server.save()
+
+                topped_up_message = "Topped up by 30 days."
+
+            else:
+                error_message = "Payment failed"
+
+        elif request.form['promo-code']:
+            server = Server.query.filter_by(id=server_id).first()
+            if server.apply_promo_code(request.form['promo-code']):
+                promo_code_applied=True
+            else:
+                invalid_promo_code=True
+
+    if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - server.creation_date).seconds < 3600:
+        new_server = True
+    else:
+        new_server = False
+
+    td = server.expiry_date - datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+    days, hours, minutes = td.days, td.seconds // 3600, td.seconds // 60 % 60
+
+    return jsonify(time_remaining=str(days)+' days, '+str(hours)+' hours, '+str(minutes)+' minutes',
+            id=id,
+            ip=server.ip,
+            key=stripe_keys['publishable_key'],
+            status=server.status,
+            new_server=True,
+            topped_up_message=topped_up_message,
+            beta=application.config['BETA'],
+            invalid_promo_code=invalid_promo_code,
+            size=server.size,
+            price='{0:.02f}'.format(float(Server.prices[server.size]) / 100.0),
+            error_message=error_message,
+            )
 
 # set up jwt
 def intarr2long(arr):
