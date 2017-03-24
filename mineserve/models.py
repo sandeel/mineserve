@@ -199,8 +199,9 @@ mkdir -p /mnt/efs/ark/server/ShooterGame/Saved/SavedArks
 cd /mnt/efs/ark/
 yum -y install wget
 wget https://raw.githubusercontent.com/TuRz4m/Ark-docker/master/arkmanager-user.cfg
-mv arkmanager-user.cfg arkmanager.cfg
-sed -i 's/${SESSIONNAME}//"Adventure Servers/"/g' arkmanager.cfg
+[ ! -f arkmanager.cfg ] && mv arkmanager-user.cfg arkmanager.cfg
+
+sed -i 's/${SESSIONNAME}/"""+self.id+"""/g' arkmanager.cfg
 
 #Backup fstab
 cp -p /etc/fstab /etc/fstab.back-$(date +%F)
