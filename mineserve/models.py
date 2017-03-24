@@ -11,11 +11,10 @@ from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, BooleanAttribute, UTCDateTimeAttribute
 import string
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
-from pynamodb.attributes import NumberAttribute
 import pytz
 
 class User():
-    """ User of site site (Cognito)
+    """ User of site (Cognito)
     """
 
     def __init__(self, username):
@@ -457,8 +456,10 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                 cluster=self.id
         )
 
+
 if application.config['STUB_AWS_RESOURCES']:
     Server.Meta.host = 'http://localhost:8000'
+
 
 def check_if_task_definition_exists(name):
     client = boto3.client('ecs', region_name=application.config['AWS_REGION'])

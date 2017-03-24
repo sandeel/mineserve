@@ -8,9 +8,9 @@ AWS_REGION = "eu-west-1"
 EC2_KEYPAIR = "id_rsa"
 CONTAINER_AGENT_INSTANCE_PROFILE = "mineserve-agent"
 CONTAINER_AGENT_AMI = {}
+CONTAINER_AGENT_AMI['eu-west-1'] = "ami-95f8d2f3"
 CONTAINER_AGENT_AMI['us-east-1'] = "ami-b2df2ca4"
 STUB_AWS_RESOURCES = (os.getenv('STUB_AWS_RESOURCES', 'True') == 'True')
-POOL_ID = "eu-west-1_HMLKJ8toC"
 
 # app settings
 BETA = True

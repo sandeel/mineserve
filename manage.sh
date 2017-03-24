@@ -78,15 +78,26 @@ case $key in
 
         spin-down)
 
+        pip install boto3 > /dev/null
+
         echo "Getting the name of the CodePipeline S3 Bucket"
         codepipeline_bucket_physical_name=$(aws cloudformation --region eu-west-1 list-stack-resources --stack-name $STACK_NAME --query 'StackResourceSummaries[?LogicalResourceId==`CodePipelineS3Bucket`].[PhysicalResourceId]' --output=text)
 
         if [ -n "$codepipeline_bucket_physical_name" ]; then
             echo "Emptying the CodePipeline S3 bucket"
-            pip install boto3 > /dev/null
             python empty_bucket.py $codepipeline_bucket_physical_name
         else
             echo "CodePipeline S3 Bucket already deleted"
+        fi
+
+        echo "Getting the name of the Frontend S3 Bucket"
+        codepipeline_bucket_physical_name=$(aws cloudformation --region eu-west-1 list-stack-resources --stack-name $STACK_NAME --query 'StackResourceSummaries[?LogicalResourceId==`FrontendBucket`].[PhysicalResourceId]' --output=text)
+
+        if [ -n "$codepipeline_bucket_physical_name" ]; then
+            echo "Emptying theFrontend S3 bucket"
+            python empty_bucket.py $codepipeline_bucket_physical_name
+        else
+            echo "Frontend S3 Bucket already deleted"
         fi
 
 

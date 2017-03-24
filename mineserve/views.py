@@ -140,12 +140,13 @@ def topup(id):
             else:
                 invalid_promo_code=True
 
-    if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - server.creation_date).seconds < 3600:
+    now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+    if (now - server.creation_date).seconds < 3600:
         new_server = True
     else:
         new_server = False
 
-    td = server.expiry_date - datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+    td = server.expiry_date - now
     days, hours, minutes = td.days, td.seconds // 3600, td.seconds // 60 % 60
 
     return jsonify(time_remaining=str(days)+' days, '+str(hours)+' hours, '+str(minutes)+' minutes',
@@ -242,6 +243,9 @@ def servers():
         new_server.save()
 
         return jsonify(new_server.serialize())
+
+    if _app_ctx_stack.top.current_user == 'unauthenticated_user':
+        return jsonify("")
 
     if _app_ctx_stack.top.current_user:
         return jsonify(servers=[s.serialize() for s in Server.user_index.query(str(_app_ctx_stack.top.current_user))])
