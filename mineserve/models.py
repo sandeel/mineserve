@@ -132,9 +132,8 @@ Content-Type: text/cloud-boothook; charset="us-ascii"
 
 #cloud-boothook
 PATH=$PATH:/usr/local/bin
-#Instance should be added to an security group that allows HTTP outbound
+cloud-init-per once docker_options echo 'OPTIONS="${OPTIONS} --storage-opt dm.basesize=80G"' >> /etc/sysconfig/docker
 yum -y update
-#Install jq, a JSON parser
 yum -y install jq
 #Install NFS client
 if ! rpm -qa | grep -qw nfs-utils; then

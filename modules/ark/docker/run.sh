@@ -48,7 +48,7 @@ if [ ! -d /ark/server  ] || [ ! -f /ark/server/arkversion ];then
 	mkdir -p /ark/server/ShooterGame/Content/Mods
 	mkdir -p /ark/server/ShooterGame/Binaries/Linux/
 	touch /ark/server/ShooterGame/Binaries/Linux/ShooterGameServer
-	arkmanager install
+	arkmanager install --verbose
 	# Create mod dir
 else
 
@@ -58,7 +58,7 @@ else
 	fi
 fi
 
-arkmanager installmods
+arkmanager installmods --verbose
 
 # If there is uncommented line in the file
 CRONNUMBER=`grep -v "^#" /ark/crontab | wc -l`
