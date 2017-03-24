@@ -262,10 +262,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
     def ip(self):
         client = boto3.client('ec2', region_name=self.region)
         try:
-            ip =  client.describe_instances(
-                InstanceIds=[
-                    self.instance_id
-                ])['Reservations'][0]['Instances'][0]['PublicIpAddress']
+            ip = client.describe_instances(Filters=[{'Name':'tag:Name', 'Values':['msv-container-'+self.id]}])['Reservations'][0]['Instances'][0]['PublicIpAddress']
         except:
             ip = 'Unknown'
 
