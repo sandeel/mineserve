@@ -98,5 +98,27 @@ EXPOSE ${STEAMPORT}/udp ${SERVERPORT}/udp
 # Change the working directory to /arkd
 WORKDIR /ark
 
+# Add a template directory to store the last version of config file
+RUN [ ! -d /ark/template ] && mkdir /ark/template
+# We overwrite the template file each time
+RUN cp /home/steam/arkmanager.cfg /ark/template/arkmanager.cfg
+RUN cp /home/steam/crontab /ark/template/crontab
+# Creating directory tree && symbolic link
+RUN [ ! -f /ark/arkmanager.cfg ] && cp /home/steam/arkmanager.cfg /ark/arkmanager.cfg
+RUN [ ! -d /ark/log ] && mkdir /ark/log
+RUN [ ! -d /ark/backup ] && mkdir /ark/backup
+RUN [ ! -d /ark/staging ] && mkdir /ark/staging
+RUN [ ! -L /ark/Game.ini ] && ln -s server/ShooterGame/Saved/Config/LinuxServer/Game.ini Game.ini
+RUN [ ! -L /ark/GameUserSettings.ini ] && ln -s server/ShooterGame/Saved/Config/LinuxServer/GameUserSettings.ini GameUserSettings.ini
+RUN [ ! -f /ark/crontab ] && cp /ark/template/crontab /ark/crontab
+
+
+RUN mkdir -p /ark/server/ShooterGame/Saved/SavedArks
+RUN mkdir -p /ark/server/ShooterGame/Content/Mods
+RUN mkdir -p /ark/server/ShooterGame/Binaries/Linux/
+RUN touch /ark/server/ShooterGame/Binaries/Linux/ShooterGameServer
+RUN chown -R steam:steam /ark /home/steam
+RUN arkmanager install --verbose || :
+
 # Update game launch the game.
 ENTRYPOINT ["/home/steam/user.sh"]

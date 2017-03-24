@@ -336,21 +336,17 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             except IndexError:
                 print("Error getting the subnet for server. Has it been created?")
 
-            client = boto3.client('ec2', region_name=self.region)
 
-            # create the instance
-            response = client.run_instances(
+            # create the launch config
+            client = boto3.client('autoscaling', region_name=self.region)
+            response = client.create_launch_configuration(
                 ImageId=application.config['CONTAINER_AGENT_AMI'][self.region],
+                LaunchConfigurationName=str(self.id),
                 InstanceType='t2.'+str(self.size),
-                MinCount = 1,
-                MaxCount = 1,
                 UserData = str(self.userdata),
                 KeyName = application.config['EC2_KEYPAIR'],
-                IamInstanceProfile={
-                    'Name': application.config['CONTAINER_AGENT_INSTANCE_PROFILE']
-                    },
-                SecurityGroupIds=[security_group_id],
-                SubnetId=str(subnet_id),
+                IamInstanceProfile=application.config['CONTAINER_AGENT_INSTANCE_PROFILE'],
+                SecurityGroups=[security_group_id],
                 BlockDeviceMappings=[
                         {
                             'DeviceName': '/dev/xvdcz',
@@ -362,33 +358,16 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                         },
                 ]
             )
-            instance_id = response['Instances'][0]['InstanceId']
-
-            waiter = client.get_waiter('instance_running')
-            waiter.wait(InstanceIds=[instance_id,])
 
             client = boto3.client('autoscaling', region_name=self.region)
 
             response = client.create_auto_scaling_group(
-                AutoScalingGroupName=self.id,
-                InstanceId=instance_id,
-                MinSize=0,
-                MaxSize=1,
-                DesiredCapacity=0
-            )
-
-            response = client.attach_instances(
-                InstanceIds=[
-                    instance_id
-                ],
-                AutoScalingGroupName=self.id
-            )
-
-            response = client.update_auto_scaling_group(
-                AutoScalingGroupName=self.id,
+                AutoScalingGroupName=str(self.id),
+                LaunchConfigurationName=str(self.id),
                 MinSize=1,
                 MaxSize=1,
                 DesiredCapacity=1,
+                VPCZoneIdentifier=str(subnet_id)
             )
 
             # create the service
