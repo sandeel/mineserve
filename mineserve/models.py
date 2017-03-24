@@ -233,8 +233,8 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             "status": str(self.status),
             "ip": str(self.ip),
             "size": str(self.size),
-            "type": str(self.type)
-            #"port": str(self.port)
+            "type": str(self.type),
+            "port": "27015"
         }
 
     def __str__(self):
