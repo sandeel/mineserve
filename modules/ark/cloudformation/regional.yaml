@@ -101,33 +101,37 @@ Resources:
     Properties: 
       RetentionInDays: 7
       LogGroupName: 'msv-ark'
-  arkservertaskdefinition: 
+  arkservertaskdefinition:
     Type: "AWS::ECS::TaskDefinition"
-    Properties: 
+    Properties:
       Family: "ark_server"
-      Volumes: 
-      - 
-        Host: 
+      Volumes:
+      -
+        Host:
           SourcePath: "/home/ec2-user/users.conf"
         Name: "sftpconfig"
-      - 
-        Host: 
+      -
+        Host:
           SourcePath: "/mnt/efs/ark"
         Name: "ark"
-      - 
-        Host: 
+      -
+        Host:
           SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/SavedArks"
         Name: "SavedArks"
-      - 
-        Host: 
+      -
+        Host:
           SourcePath: "/mnt/efs/ark/arkmanager.cfg"
         Name: "arkmanager"
-      ContainerDefinitions: 
-      - 
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark/GameUserSettings.ini"
+        Name: "gameusersettings"
+      ContainerDefinitions:
+      -
         Name: "ftp"
         Image: "atmoz/sftp"
         PortMappings:
-          - 
+          -
             ContainerPort: 22
             HostPort: 2222
             Protocol: tcp
@@ -176,9 +180,12 @@ Resources:
         - 
           SourceVolume: "SavedArks"
           ContainerPath: "/ark/server/ShooterGame/Saved/SavedArks"
-        - 
+        -
           SourceVolume: "arkmanager"
           ContainerPath: "/ark/arkmanager.cfg"
+        -
+          SourceVolume: "gameusersettings"
+          ContainerPath: "/ark/GameUserSettings.ini"
         Essential: "true"
         MemoryReservation: 3826
         LogConfiguration:

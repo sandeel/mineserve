@@ -200,6 +200,120 @@ yum -y install wget
 wget https://raw.githubusercontent.com/TuRz4m/Ark-docker/master/arkmanager-user.cfg
 [ ! -f arkmanager.cfg ] && mv arkmanager-user.cfg arkmanager.cfg
 
+cat > GameUserSettings_new.ini << EOF
+MasterAudioVolume=1.000000
+MusicAudioVolume=1.000000
+SFXAudioVolume=1.000000
+VoiceAudioVolume=1.000000
+CameraShakeScale=1.000000
+bFirstPersonRiding=False
+bThirdPersonPlayer=False
+bShowStatusNotificationMessages=True
+TrueSkyQuality=0.000000
+FOVMultiplier=1.000000
+GroundClutterDensity=0.000000
+bFilmGrain=False
+bMotionBlur=False
+bUseDFAO=False
+bUseSSAO=False
+bShowChatBox=True
+bCameraViewBob=True
+bInvertLookY=False
+bFloatingNames=True
+bChatBubbles=True
+bHideServerInfo=False
+bJoinNotifications=False
+bCraftablesShowAllItems=True
+bLocalInventoryShowAllItems=False
+bRemoteInventoryShowAllItems=False
+LookLeftRightSensitivity=1.000000
+LookUpDownSensitivity=1.000000
+GraphicsQuality=1
+ActiveLingeringWorldTiles=1
+ClientNetQuality=3
+LastServerSearchType=0
+LastDLCTypeSearchType=-1
+LastServerSearchHideFull=False
+LastServerSearchProtected=False
+HideItemTextOverlay=False
+bDistanceFieldShadowing=False
+LODScalar=0.780000
+bToggleToTalk=False
+HighQualityMaterials=True
+HighQualitySurfaces=True
+bTemperatureF=False
+bDisableTorporEffect=False
+bChatShowSteamName=False
+bChatShowTribeName=True
+EmoteKeyBind1=0
+EmoteKeyBind2=0
+bNoBloodEffects=False
+bLowQualityVFX=False
+bSpectatorManualFloatingNames=False
+bSuppressAdminIcon=False
+bUseSimpleDistanceMovement=False
+bDisableMeleeCameraSwingAnims=False
+bHighQualityAnisotropicFiltering=False
+bUseLowQualityLevelStreaming=True
+bPreventInventoryOpeningSounds=False
+bPreventItemCraftingSounds=False
+bPreventHitMarkers=False
+bPreventCrosshair=False
+bPreventColorizedItemNames=False
+bHighQualityLODs=False
+bExtraLevelStreamingDistance=False
+bEnableColorGrading=True
+DOFSettingInterpTime=0.000000
+bDisableBloom=False
+bDisableLightShafts=False
+bDisableMenuTransitions=False
+LastPVESearchType=-1
+VersionMetaTag=1
+bUseVSync=False
+MacroCtrl0=
+MacroCtrl1=
+MacroCtrl2=
+MacroCtrl3=
+MacroCtrl4=
+MacroCtrl5=
+MacroCtrl6=
+MacroCtrl7=
+MacroCtrl8=
+MacroCtrl9=
+ResolutionSizeX=1280
+ResolutionSizeY=720
+LastUserConfirmedResolutionSizeX=1280
+LastUserConfirmedResolutionSizeY=720
+WindowPosX=-1
+WindowPosY=-1
+bUseDesktopResolutionForFullscreen=False
+FullscreenMode=2
+LastConfirmedFullscreenMode=2
+Version=5
+
+[ScalabilityGroups]
+sg.ResolutionQuality=100
+sg.ViewDistanceQuality=3
+sg.AntiAliasingQuality=3
+sg.ShadowQuality=3
+sg.PostProcessQuality=3
+sg.TextureQuality=3
+sg.EffectsQuality=3
+sg.TrueSkyQuality=3
+sg.GroundClutterQuality=3
+sg.IBLQuality=1
+sg.HeightFieldShadowQuality=3
+sg.GroundClutterRadius=10000
+
+[SessionSettings]
+SessionName=f09a9ffc-5a5b-427a-a3e3-e4d48c7d062e
+
+[/Script/Engine.GameSession]
+MaxPlayers=70
+EOF
+
+[ ! -f GameUserSettings.ini ] && mv GameUserSettings_new.ini GameUserSettings.ini
+
 sed -i 's/${SESSIONNAME}/"""+self.id+"""/g' arkmanager.cfg
 
 #Backup fstab
@@ -410,7 +524,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         except:
             print("ASG not found, moving on")
 
-        time.sleep(10)
+        time.sleep(60)
 
         # delete the service if it exists
         client = boto3.client('ecs', region_name=self.region)
