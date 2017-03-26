@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BASE_REGION=eu-west-1
-ALL_REGIONS=( eu-west-1 us-east-1 )
+ALL_REGIONS=( eu-west-1 us-east-1 us-east-2 us-west-2 ap-southeast-2 )
 BASE_STACK_NAME=msv
 
 
@@ -26,54 +26,28 @@ case $key in
         echo "Uploading ark template..."
         aws s3 cp modules/ark/cloudformation/regional.yaml s3://msv-templates/ark/regional.yaml
 
-        stack_exists=`aws cloudformation --region $BASE_REGION describe-stacks --stack-name $STACK_NAME` 1>/dev/null || echo "Stack not found".
+        aws cloudformation \
+            --region $BASE_REGION \
+            deploy \
+            --stack-name $STACK_NAME \
+            --template-file cloudformation/cloudformation.yaml \
+            --parameter-overrides GitBranch=$GIT_BRANCH \
+                                  KeyPair=id_rsa \
+                                  FlaskDebug=False \
+                                  GithubToken=$MSV_GITHUB_TOKEN \
+                                  StripePublishableKey=$MSV_STRIPE_PK \
+                                  StripeSecretKey=$MSV_STRIPE_SK \
+                                  AdminPassword=$MSV_ADMIN_PASS \
+                                  Beta=True \
+            --capabilities CAPABILITY_IAM
 
-        if [ -n "$stack_exists" ]; then
-
-            echo "Stack exists. Updating."
-
-            aws cloudformation \
-                --region $BASE_REGION \
-                update-stack \
-                --stack-name $STACK_NAME \
-                --template-body file://cloudformation/cloudformation.yaml \
-                --parameters ParameterKey=GitBranch,ParameterValue=$GIT_BRANCH \
-                ParameterKey=KeyPair,ParameterValue=id_rsa ParameterKey=FlaskDebug,ParameterValue=True ParameterKey=GithubToken,ParameterValue=$MSV_GITHUB_TOKEN ParameterKey=StripePublishableKey,ParameterValue=$MSV_STRIPE_PK ParameterKey=StripeSecretKey,ParameterValue=$MSV_STRIPE_SK ParameterKey=AdminPassword,ParameterValue=$MSV_ADMIN_PASS ParameterKey=Beta,ParameterValue=True --capabilities CAPABILITY_IAM
-
-        else
-
-            echo "Launching stack $STACK_NAME."
-
-            aws cloudformation \
-                --region $BASE_REGION \
-                create-stack \
-                --stack-name $STACK_NAME \
-                --template-body file://cloudformation/cloudformation.yaml \
-                --parameters ParameterKey=GitBranch,ParameterValue=$GIT_BRANCH \
-                ParameterKey=KeyPair,ParameterValue=id_rsa ParameterKey=FlaskDebug,ParameterValue=True ParameterKey=GithubToken,ParameterValue=$MSV_GITHUB_TOKEN ParameterKey=StripePublishableKey,ParameterValue=$MSV_STRIPE_PK ParameterKey=StripeSecretKey,ParameterValue=$MSV_STRIPE_SK ParameterKey=AdminPassword,ParameterValue=$MSV_ADMIN_PASS ParameterKey=Beta,ParameterValue=True --capabilities CAPABILITY_IAM
-        fi
-
-        # eu-west-1 regional
-        stack_exists=`aws cloudformation --region eu-west-1 describe-stacks --stack-name $STACK_NAME-regional` 1>/dev/null || echo "Stack not found".
-        if [ -n "$stack_exists" ]; then
-            echo "Regional stack in eu-west-1 exists. Updating..."
-            aws cloudformation update-stack --region eu-west-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
-        else
-            echo "Spinning up regional stack for eu-west-1"
-            aws cloudformation create-stack --region eu-west-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
-        fi
-
-        # us-east-1 regional
-        stack_exists=`aws cloudformation --region us-east-1 describe-stacks --stack-name $STACK_NAME-regional` 1>/dev/null || echo "Stack not found".
-        if [ -n "$stack_exists" ]; then
-            echo "Regional stack in us-east-1 exists. Updating..."
-            aws cloudformation update-stack --region us-east-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
-        else
-            echo "Spinning up regional stack for us-east-1"
-            aws cloudformation create-stack --region us-east-1 --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
-        fi
-
-
+        for REGION in "${ALL_REGIONS[@]}"
+        do
+            aws cloudformation deploy \
+                --region $REGION \
+                --stack-name $STACK_NAME-regional
+                --template-file cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+        done
         ;;
 
         spin-down)

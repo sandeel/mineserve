@@ -323,7 +323,7 @@ Resources:
       Integration: 
         Type: "HTTP"
         Uri:
-          !Join ['', ['http://', !GetAtt [ApiEnvironment, EndpointURL], '/api/0.1/servers']]
+          !Join ['', ['http://', !GetAtt ApiEnvironment.EndpointURL, '/api/0.1/servers']]
         IntegrationHttpMethod: "GET"
         IntegrationResponses:
           -
@@ -343,7 +343,7 @@ Resources:
       Integration: 
         Type: "HTTP"
         Uri:
-          !Join ['', ['http://', !GetAtt [ApiEnvironment, EndpointURL], '/api/0.1/servers']]
+          !Join ['', ['http://', !GetAtt ApiEnvironment.EndpointURL, '/api/0.1/servers']]
         IntegrationHttpMethod: "GET"
         IntegrationResponses:
           -
@@ -604,7 +604,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     DependsOn: ApiEnvironment
     Properties:
-      RoleArn: !GetAtt [CodePipelineServiceRole, Arn]
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
       Stages:
       - Name: SourceAPI
         Actions:

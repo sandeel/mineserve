@@ -13,9 +13,9 @@ CONTAINER_AGENT_INSTANCE_PROFILE = "mineserve-agent"
 
 # AMIs for container agents
 CONTAINER_AGENT_AMI = {}
+CONTAINER_AGENT_AMI['eu-west-1'] = "ami-95f8d2f3" # ireland
 CONTAINER_AGENT_AMI['us-east-1'] = "ami-b2df2ca4" # n. virginia
 CONTAINER_AGENT_AMI['us-east-2'] = "ami-62745007" # ohio
-CONTAINER_AGENT_AMI['eu-west-1'] = "ami-95f8d2f3" # ireland
 CONTAINER_AGENT_AMI['us-west-2'] = "ami-62d35c02" # oregon
 CONTAINER_AGENT_AMI['ap-southeast-2'] = "ami-fbe9eb98" # sydney
 
