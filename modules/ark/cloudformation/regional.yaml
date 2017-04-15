@@ -126,6 +126,10 @@ Resources:
         Host:
           SourcePath: "/mnt/efs/ark/GameUserSettings.ini"
         Name: "gameusersettings"
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark/Game.ini"
+        Name: "gameini"
       ContainerDefinitions:
       -
         Name: "ftp"
@@ -186,6 +190,9 @@ Resources:
         -
           SourceVolume: "gameusersettings"
           ContainerPath: "/ark/GameUserSettings.ini"
+        -
+          SourceVolume: "gameini"
+          ContainerPath: "/ark/Game.ini"
         Essential: "true"
         MemoryReservation: 3826
         LogConfiguration:
