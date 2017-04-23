@@ -132,7 +132,7 @@ Resources:
         Name: "gameini"
       -
         Host:
-          SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/AllowedCheaterSteamIDs.txt"
+          SourcePath: "/mnt/efs/ark/AllowedCheaterSteamIDs.txt"
         Name: "allowedcheaters"
       ContainerDefinitions:
       -
