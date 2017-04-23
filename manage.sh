@@ -26,11 +26,7 @@ case $key in
         echo "Uploading ark template..."
         aws s3 cp modules/ark/cloudformation/regional.yaml s3://msv-templates/ark/regional.yaml
 
-        aws cloudformation \
-            --region $BASE_REGION \
-            deploy \
-            --stack-name $STACK_NAME \
-            --template-file cloudformation/cloudformation.yaml \
+        aws cloudformation deploy --region $BASE_REGION --stack-name $STACK_NAME --template-file cloudformation/cloudformation.yaml \
             --parameter-overrides GitBranch=$GIT_BRANCH \
                                   KeyPair=id_rsa \
                                   FlaskDebug=False \
@@ -43,10 +39,7 @@ case $key in
 
         for REGION in "${ALL_REGIONS[@]}"
         do
-            aws cloudformation deploy \
-                --region $REGION \
-                --stack-name $STACK_NAME-regional
-                --template-file cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+            aws cloudformation update-stack --region $REGION --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
         done
         ;;
 

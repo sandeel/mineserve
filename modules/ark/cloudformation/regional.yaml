@@ -130,6 +130,10 @@ Resources:
         Host:
           SourcePath: "/mnt/efs/ark/Game.ini"
         Name: "gameini"
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/AllowedCheaterSteamIDs.txt"
+        Name: "allowedcheaters"
       ContainerDefinitions:
       -
         Name: "ftp"
@@ -193,6 +197,9 @@ Resources:
         -
           SourceVolume: "gameini"
           ContainerPath: "/ark/Game.ini"
+        -
+          SourceVolume: "allowedcheaters"
+          ContainerPath: "/ark/server/ShooterGame/Saved/AllowedCheaterSteamIDs.txt"
         Essential: "true"
         MemoryReservation: 3826
         LogConfiguration:

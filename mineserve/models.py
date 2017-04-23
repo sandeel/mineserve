@@ -364,6 +364,8 @@ MaxPlayers=70
 EOF
 
 [ ! -f GameUserSettings.ini ] && mv GameUserSettings_new.ini GameUserSettings.ini
+[ ! -f Game.ini ] && touch Game.ini
+[ ! -f AllowedCheaterSteamIDs.txt ] && touch AllowedCheaterSteamIDs.txt
 
 sed -i 's/${SESSIONNAME}/"""+self.id+"""/g' arkmanager.cfg
 
