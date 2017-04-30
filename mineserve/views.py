@@ -9,18 +9,14 @@ import stripe
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from werkzeug.local import LocalProxy
 from mineserve.models import Server
 from contextlib import contextmanager
 from functools import wraps
 
-from flask import request, jsonify, abort, make_response, _app_ctx_stack, appcontext_pushed, g
-from flask_cors import cross_origin
+from flask import request, jsonify, abort, _app_ctx_stack, appcontext_pushed
 
 from mineserve import application, stripe_keys
 from mineserve.models import User
-from mineserve.models import Server
-
 
 @contextmanager
 def user_set(application, user):

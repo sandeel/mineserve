@@ -12,6 +12,8 @@ GIT_BRANCH=$(git symbolic-ref --short -q HEAD)
 STACK_NAME=$BASE_STACK_NAME-$GIT_BRANCH
 #----------------------
 
+echo $(aws --version)
+
 key="$1"
 case $key in
         spin-up)
@@ -39,7 +41,7 @@ case $key in
 
         for REGION in "${ALL_REGIONS[@]}"
         do
-            aws cloudformation deploy --region $REGION --stack-name $STACK_NAME-regional --template-file cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+            aws cloudformation deploy --region $REGION --stack-name $STACK_NAME-regional --template-file cloudformation/regional_infrastructure.yaml --parameter-overrides ParameterKey=KeyName,ParameterValue='id_rsa'
         done
         ;;
 

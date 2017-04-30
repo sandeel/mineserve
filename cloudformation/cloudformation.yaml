@@ -33,148 +33,6 @@ Parameters:
 
 Resources:
 
-  FactorioLogGroup: 
-    Type: "AWS::Logs::LogGroup"
-    Properties: 
-      RetentionInDays: 7
-      LogGroupName: 'msv-factorio'
-
-  factorioservertaskdefinition: 
-    Type: "AWS::ECS::TaskDefinition"
-    Properties: 
-      Family: "factorio_server"
-      Volumes: 
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/factorio/saves"
-        Name: "saves"
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/factorio/mods"
-        Name: "mods"
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/factorio/data/server-settings.json"
-        Name: "server-settings"
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/users.conf"
-        Name: "sftpconfig"
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/factorio"
-        Name: "factorio"
-      ContainerDefinitions: 
-      - 
-        Name: "factorio"
-        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/fact:latest"
-        PortMappings:
-          - 
-            ContainerPort: 34197
-            HostPort: 34197
-            Protocol: udp
-        Essential: "true"
-        Memory: 6144
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            awslogs-group: !Ref FactorioLogGroup
-            awslogs-region: !Ref 'AWS::Region'
-            awslogs-stream-prefix: msv
-        MountPoints: 
-        - 
-          SourceVolume: "saves"
-          ContainerPath: "/opt/factorio/saves"
-        - 
-          SourceVolume: "mods"
-          ContainerPath: "/opt/factorio/mods"
-        - 
-          SourceVolume: "server-settings"
-          ContainerPath: "/opt/factorio/data/server-settings.json"
-      - 
-        Name: "ftp"
-        Image: "atmoz/sftp"
-        PortMappings:
-          - 
-            ContainerPort: 22
-            HostPort: 2222
-            Protocol: tcp
-        Essential: "true"
-        Memory: 128
-        MountPoints: 
-        - 
-          SourceVolume: "sftpconfig"
-          ContainerPath: "/etc/sftp-users.conf"
-        - 
-          SourceVolume: "factorio"
-          ContainerPath: "/home/msv"
-
-  mcpeservertaskdefinition: 
-    Type: "AWS::ECS::TaskDefinition"
-    Properties: 
-      Family: "mcpe_server"
-      Volumes: 
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/users.conf"
-        Name: "sftpconfig"
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/ftp/server.properties"
-        Name: "server-properties"
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/ftp/ops.txt"
-        Name: "ops"
-      - 
-        Host: 
-          SourcePath: "/home/ec2-user/ftp"
-        Name: "ftp"
-      ContainerDefinitions: 
-      - 
-        Name: "pmmp"
-        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/pmmp:latest"
-        PortMappings:
-          - 
-            ContainerPort: 19132
-            HostPort: 19132
-            Protocol: tcp
-          -
-            ContainerPort: 19132
-            HostPort: 19132
-            Protocol: udp
-          - 
-            ContainerPort: 9090
-            HostPort: 9090
-            Protocol: tcp
-        Essential: "true"
-        Memory: 6144
-        MountPoints: 
-        - 
-          SourceVolume: "server-properties"
-          ContainerPath: "/pocketmine/server.properties"
-        - 
-          SourceVolume: "ops"
-          ContainerPath: "/pocketmine/ops.txt"
-      - 
-        Name: "ftp"
-        Image: "atmoz/sftp"
-        PortMappings:
-          - 
-            ContainerPort: 22
-            HostPort: 2222
-            Protocol: tcp
-        Essential: "true"
-        Memory: 128
-        MountPoints: 
-        - 
-          SourceVolume: "sftpconfig"
-          ContainerPath: "/etc/sftp-users.conf"
-        - 
-          SourceVolume: "ftp"
-          ContainerPath: "/home/msv"
-
-
   sshSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -194,109 +52,6 @@ Resources:
         - sshSG
         - GroupId
 
-
-  mcpeserversg:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: For mcpe
-      VpcId:
-        Ref: Vpc
-      Tags:
-        -
-          Key: Name
-          Value: mcpe_server_sg
-
-  mcpeserverInboundRulePmmpTcp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '19132'
-      ToPort: '19132'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - mcpeserversg
-        - GroupId
-
-  mcpeserverInboundRulePmmpUdp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: udp
-      FromPort: '19132'
-      ToPort: '19132'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - mcpeserversg
-        - GroupId
-
-  mcpeserverOutboundRulePmmpUdp:
-    Type: AWS::EC2::SecurityGroupEgress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '0'
-      ToPort: '65535'
-      CidrIp: 127.0.0.1/32
-      GroupId:
-        Fn::GetAtt:
-        - mcpeserversg
-        - GroupId
-
-  mcpeserverInboundRulePocketDockConsole:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '9090'
-      ToPort: '9090'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - mcpeserversg
-        - GroupId
-
-  mcpeserverInboundRuleSftp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '2222'
-      ToPort: '2222'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - mcpeserversg
-        - GroupId
-  FactSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: For container agents
-      VpcId:
-        Ref: Vpc
-      Tags:
-        -
-          Key: Name
-          Value: factorio_server_sg
-  FactorioInboundRule34197udp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: udp
-      FromPort: '34197'
-      ToPort: '34197'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - FactSG
-        - GroupId
-  FactorioInboundRuleSftp:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      IpProtocol: tcp
-      FromPort: '2222'
-      ToPort: '2222'
-      CidrIp: 0.0.0.0/0
-      GroupId:
-        Fn::GetAtt:
-        - FactSG
-        - GroupId
   MsvApi:
     Type: "AWS::ApiGateway::RestApi"
     Properties:
@@ -873,7 +628,7 @@ Resources:
       ProvisionedThroughput: 
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
-      TableName: 'msv-testing-servers'
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-servers' ] ]
       GlobalSecondaryIndexes: 
         -
           IndexName: "user-index"
@@ -886,14 +641,10 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
-  FrontendRepo:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: msv-frontend
   FrontendBucket:
     Type: AWS::S3::Bucket
     Properties:
-     BucketName: msv-frontend
+     BucketName:  !Join [ '', [ !Ref 'AWS::StackName', '-frontend' ] ]
      WebsiteConfiguration:
        IndexDocument: index.html
        ErrorDocument: error.html
