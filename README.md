@@ -44,7 +44,9 @@ Create a new server:
 
     curl localhost:8080/api/0.1/servers  -X POST -H 'Authorization: Bearer my_jwt_token' -d '{ "name": "Jurassic Ark", "type": "ark_server", "size": "large", "region": "us-east-1" }'
 
-Top up a server:
+Top up a server by 30 days:
+
+    Use generate_stripe_token.py to get a Stripe token.
 
     curl -H "Authorization: Bearer my_jwt_token" localhost:8000/api/0.1/servers/the_server_id/topup -X POST -d '{"stripeToken": "tok_19xNbgFS8gnfcxztAca3WWe8"}'
 

@@ -163,6 +163,7 @@ aws ec2 create-tags --region $EC2_REGION --resources $EC2_INSTANCE_ID --tags Key
 
 #Create mount point
 mkdir /mnt/efs
+mkdir /mnt/clusters
 #Get EFS FileSystemID attribute
 #Instance needs to be added to a EC2 role that give the instance at least read access to EFS
 EFS_FILE_SYSTEM_ID=`/usr/local/bin/aws efs describe-file-systems --region $EC2_REGION | jq '.FileSystems[]' | jq 'select(.Name=="ContainerDataFileSystem")' | jq -r '.FileSystemId'`
@@ -182,16 +183,23 @@ mount -t nfs4 $DIR_SRC $DIR_TGT
 
 #make dir for data
 mkdir -p /mnt/efs/container_data/$SERVER_ID
+mkdir -p /mnt/efs/clusters
 
 umount /mnt/efs
 
+# saved data
 DIR_SRC=$EC2_AVAIL_ZONE.$EFS_FILE_SYSTEM_ID.efs.$EC2_REGION.amazonaws.com:/container_data/$SERVER_ID
 DIR_TGT=/mnt/efs
+mount -t nfs4 $DIR_SRC $DIR_TGT
 
-#Mount EFS file system
+
+# clusters
+DIR_SRC=$EC2_AVAIL_ZONE.$EFS_FILE_SYSTEM_ID.efs.$EC2_REGION.amazonaws.com:/clusters
+DIR_TGT=/mnt/clusters
 mount -t nfs4 $DIR_SRC $DIR_TGT
 
 chmod 777 -R /mnt/efs
+chmod 777 -R /mnt/clusters
 
 # set up ark dirs
 mkdir -p /mnt/efs/ark/server/ShooterGame/Saved/SavedArks
@@ -225,6 +233,12 @@ mod_branch=Windows
 # ARK server flags - use arkflag_<optionname>=true
 #arkflag_OnlyAdminRejoinAsSpectator=true                            # Uncomment to only allow admins to rejoin as spectator
 #arkflag_DisableDeathSpectator=true                                 # Uncomment to disable players from becoming spectators when they die
+
+
+# ark cluster settings
+arkflag_NoTransferFromFiltering=""
+arkopt_clusterid=$SERVER_ID
+arkopt_ClusterDirOverride=/ark/clusters
 
 # ARK server options - i.e. for -optname=val, use arkopt_optname=val
 #arkopt_StructureDestructionTag=DestroySwampSnowStructures

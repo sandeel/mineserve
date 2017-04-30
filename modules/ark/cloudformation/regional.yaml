@@ -116,6 +116,10 @@ Resources:
         Name: "ark"
       -
         Host:
+          SourcePath: "/mnt/clusters"
+        Name: "clusters"
+      -
+        Host:
           SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/SavedArks"
         Name: "SavedArks"
       -
@@ -188,6 +192,9 @@ Resources:
         -
           SourceVolume: "SavedArks"
           ContainerPath: "/ark/server/ShooterGame/Saved/SavedArks"
+        -
+          SourceVolume: "clusters"
+          ContainerPath: "/ark/clusters"
         -
           SourceVolume: "arkmanager"
           ContainerPath: "/ark/arkmanager.cfg"

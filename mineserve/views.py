@@ -94,6 +94,7 @@ def requires_auth(f):
 @requires_auth
 def topup(id):
     data = request.get_json(force=True)
+
     user = str(_app_ctx_stack.top.current_user)
 
     topped_up_message = None
@@ -104,6 +105,8 @@ def topup(id):
     server = next(Server.query(id))
 
     if request.method == 'POST':
+
+        days_to_top_up=int(data['days'])
 
         if data['stripeToken']:
 
@@ -124,7 +127,7 @@ def topup(id):
 
             if charge['status'] == "succeeded":
 
-                server.expiry_date = server.expiry_date + datetime.timedelta(days=30)
+                server.expiry_date = server.expiry_date + datetime.timedelta(days=days_to_top_up)
 
                 server.save()
 
