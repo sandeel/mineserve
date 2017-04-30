@@ -89,6 +89,7 @@ class Server(Model):
     user_index = ServerUserIndex()
     size = UnicodeAttribute(default='micro')
     region = UnicodeAttribute()
+    password = UnicodeAttribute(hash_key=True,default=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6)))
 
     prices = {
                 'micro': 800,
@@ -123,7 +124,7 @@ ip link set dev eth0 mtu 1460
 echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
 echo "fs.file-max=100000" >> /etc/sysctl.conf
 echo "session required pam_limits.so" > /etc/pam.d/common-session
-echo "msv:password" > /home/ec2-user/users.conf
+echo "msv:"""+self.password+"""" > /home/ec2-user/users.conf
 mkdir -p /mnt/efs/ark/server/ShooterGame/Saved/SavedArks
 
 --===============BOUNDARY==
@@ -216,8 +217,8 @@ serverMap="TheIsland"                                          # server map (def
 #ark_TotalConversionMod="496735411"                                 # Uncomment this to specify a total-conversion mod
 ark_SessionName="$SERVER_ID"                                  # if your session name needs special characters please use the .ini instead
 ark_ServerPassword=                            # ARK server password, empty: no password required to login
-ark_ServerAdminPassword="password"                        # ARK server admin password, KEEP IT SAFE!
-ark_MaxPlayers=70                                      # Number MAX of player
+ark_ServerAdminPassword="""+self.password+"""                        # ARK server admin password, KEEP IT SAFE!
+ark_MaxPlayers=100                                      # Number MAX of player
 # ark_bRawSockets=""                                            # Uncomment if you want to use ark raw socket (instead of steam p2p) [Not recommended]
 arkflag_log=""
 
@@ -266,57 +267,32 @@ EOF
 [ ! -f arkmanager.cfg ] && mv arkmanager_new.cfg arkmanager.cfg
 
 cat > GameUserSettings_new.ini << EOF
-[ScalabilityGroups]
-sg.ResolutionQuality=100
-sg.ViewDistanceQuality=3
-sg.AntiAliasingQuality=3
-sg.ShadowQuality=3
-sg.PostProcessQuality=3
-sg.TextureQuality=3
-sg.EffectsQuality=3
-sg.TrueSkyQuality=3
-sg.GroundClutterQuality=3
-sg.IBLQuality=1
-sg.HeightFieldShadowQuality=3
-sg.GroundClutterRadius=10000
-
-[SessionSettings]
-SessionName=f09a9ffc-5a5b-427a-a3e3-e4d48c7d062e
-
-[/Script/Engine.GameSession]
-MaxPlayers=100
-
 [ServerSettings]
 ServerCrosshair=True
 ServerPassword=
-ServerAdminPassword=donotuse6458452524vd
+ServerAdminPassword="""+self.password+"""
 RCONEnabled=True
 RCONPort=32330
 TheMaxStructuresInRange=10500.000000
+OxygenSwimSpeedStatMultiplier=1.000000
 StructurePreventResourceRadiusMultiplier=1.000000
 RaidDinoCharacterFoodDrainMultiplier=1.000000
 PvEDinoDecayPeriodMultiplier=1.000000
 KickIdlePlayersPeriod=3600.000000
 PerPlatformMaxStructuresMultiplier=1.000000
-PerPlatformMaxStructuresMultiplier=5.000000
-AutoSavePeriodMinutes=10.000000
+AutoSavePeriodMinutes=30.000000
 ListenServerTetherDistanceMultiplier=1.000000
 MaxTamedDinos=5000.000000
 RCONServerGameLogBuffer=600.000000
 AllowHitMarkers=True
-HarvestAmountMultiplier=2.00000
-TamingSpeedMultiplier=3.000000
-XPMultiplier=1.500000
-OxygenSwimSpeedStatMultiplier=1.000000
-AllowThirdPersonPlayer=True
-ServerPVP=True
-DifficultyOffset=5.0
 
 [/Script/ShooterGame.ShooterGameUserSettings]
 MasterAudioVolume=1.000000
 MusicAudioVolume=1.000000
 SFXAudioVolume=1.000000
 VoiceAudioVolume=1.000000
+UIScaling=1.000000
+UIQuickbarScaling=1.000000
 CameraShakeScale=1.000000
 bFirstPersonRiding=False
 bThirdPersonPlayer=False
@@ -335,9 +311,12 @@ bFloatingNames=True
 bChatBubbles=True
 bHideServerInfo=False
 bJoinNotifications=False
-bCraftablesShowAllItems=True
-bLocalInventoryShowAllItems=False
-bRemoteInventoryShowAllItems=False
+bCraftablesShowAllItems=False
+bLocalInventoryItemsShowAllItems=False
+bLocalInventoryCraftingShowAllItems=False
+bRemoteInventoryItemsShowAllItems=False
+bRemoteInventoryCraftingShowAllItems=False
+bRemoteInventoryShowEngrams=True
 LookLeftRightSensitivity=1.000000
 LookUpDownSensitivity=1.000000
 GraphicsQuality=1
@@ -347,7 +326,7 @@ LastServerSearchType=0
 LastDLCTypeSearchType=-1
 LastServerSearchHideFull=False
 LastServerSearchProtected=False
-HideItemTextOverlay=False
+HideItemTextOverlay=True
 bDistanceFieldShadowing=False
 LODScalar=0.780000
 bToggleToTalk=False
@@ -379,6 +358,12 @@ DOFSettingInterpTime=0.000000
 bDisableBloom=False
 bDisableLightShafts=False
 bDisableMenuTransitions=False
+bEnableInventoryItemTooltips=True
+bRemoteInventoryShowCraftables=False
+LocalItemSortType=0
+LocalCraftingSortType=0
+RemoteItemSortType=0
+RemoteCraftingSortType=0
 LastPVESearchType=-1
 VersionMetaTag=1
 bUseVSync=False
@@ -402,6 +387,26 @@ bUseDesktopResolutionForFullscreen=False
 FullscreenMode=2
 LastConfirmedFullscreenMode=2
 Version=5
+
+[ScalabilityGroups]
+sg.ResolutionQuality=100
+sg.ViewDistanceQuality=3
+sg.AntiAliasingQuality=3
+sg.ShadowQuality=3
+sg.PostProcessQuality=3
+sg.TextureQuality=3
+sg.EffectsQuality=3
+sg.TrueSkyQuality=3
+sg.GroundClutterQuality=3
+sg.IBLQuality=1
+sg.HeightFieldShadowQuality=3
+sg.GroundClutterRadius=10000
+
+[SessionSettings]
+SessionName=$SERVER_ID
+
+[/Script/Engine.GameSession]
+MaxPlayers=70
 EOF
 
 [ ! -f GameUserSettings.ini ] && mv GameUserSettings_new.ini GameUserSettings.ini
@@ -442,7 +447,8 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             "ip": str(self.ip),
             "size": str(self.size),
             "type": str(self.type),
-            "port": "27015"
+            "port": "27015",
+			"password": str(self.password)
         }
 
     def __str__(self):
