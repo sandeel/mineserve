@@ -44,6 +44,10 @@ Create a new server:
 
     curl localhost:8080/api/0.1/servers  -X POST -H 'Authorization: Bearer my_jwt_token' -d '{ "name": "Jurassic Ark", "type": "ark_server", "size": "large", "region": "us-east-1" }'
 
+Delete a server:
+
+    curl -H "Authorization: Bearer my_jwt_token" localhost:8000/api/0.1/servers/131c868e-40e5-4af0-94f9-b968adaa8990 -X DELETE
+
 Top up a server by 30 days:
 
     Use generate_stripe_token.py to get a Stripe token.
