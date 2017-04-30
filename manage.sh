@@ -39,7 +39,7 @@ case $key in
 
         for REGION in "${ALL_REGIONS[@]}"
         do
-            aws cloudformation update-stack --region $REGION --stack-name $STACK_NAME-regional --template-body file://cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
+            aws cloudformation deploy --region $REGION --stack-name $STACK_NAME-regional --template-file cloudformation/regional_infrastructure.yaml --parameters ParameterKey=KeyName,ParameterValue='id_rsa'
         done
         ;;
 
@@ -71,12 +71,12 @@ case $key in
         echo "Terminating regional resources..."
         for REGION in "${ALL_REGIONS[@]}"
         do
-            echo "Checking for container instances to terminate in $REGION"
-            for instance in `aws ec2 describe-instances --filters "Name=tag:Name,Values=msv-container-*" --region $REGION | jq -r '.Reservations[].Instances[].InstanceId'`
-            do
-                echo "Terminating $instance..."
-                aws ec2 terminate-instances --region $REGION --instance-ids $instance
-            done
+            #echo "Checking for container instances to terminate in $REGION"
+            #for instance in `aws ec2 describe-instances --filters "Name=tag:Name,Values=$STACK_NAME-container-*" --region $REGION | jq -r '.Reservations[].Instances[].InstanceId'`
+            #do
+                #echo "Terminating $instance..."
+                #aws ec2 terminate-instances --region $REGION --instance-ids $instance
+            #done
 
             echo "Terminating regional stack $STACK_NAME-regional in $REGION"
             aws cloudformation delete-stack --region $REGION --stack-name $STACK_NAME-regional
