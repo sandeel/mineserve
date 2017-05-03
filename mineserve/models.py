@@ -89,7 +89,7 @@ class Server(Model):
     user_index = ServerUserIndex()
     size = UnicodeAttribute(default='micro')
     region = UnicodeAttribute()
-    password = UnicodeAttribute(hash_key=True,default=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6)))
+    password = UnicodeAttribute(default=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6)))
 
     prices = {
                 'micro': 800,

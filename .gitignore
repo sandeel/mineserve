@@ -11,6 +11,7 @@ migrations/versions/*.py
 !.elasticbeanstalk/*.global.yml
 *.db
 .ropeproject
+*.ropeproject*
 
 
 # from github 
