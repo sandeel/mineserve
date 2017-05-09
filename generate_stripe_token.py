@@ -1,5 +1,5 @@
 import stripe
-stripe.api_key = "sk_test_T86oR2vE8opYYtbfbYRV6Oz9"
+stripe.api_key = os.getenv('STRIPE_TEST_SECRET_KEY')
 
 token = stripe.Token.create(
         card={

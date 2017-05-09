@@ -1,6 +1,6 @@
 from mineserve import application
-import datetime
 from datetime import timezone
+from datetime import datetime
 import uuid
 import random
 import boto3
@@ -8,17 +8,20 @@ import time
 import math
 from threading import Thread
 from pynamodb.models import Model
-from pynamodb.attributes import UnicodeAttribute, BooleanAttribute, UTCDateTimeAttribute
+from pynamodb.attributes import UnicodeAttribute, BooleanAttribute, \
+    UTCDateTimeAttribute
 import string
 from pynamodb.indexes import GlobalSecondaryIndex, AllProjection
 import pytz
+
 
 class User():
     """ User of site (Cognito)
     """
 
     def __init__(self, username):
-        client = boto3.client('cognito-idp', region_name=application.config['AWS_REGION'])
+        client = boto3.client('cognito-idp',
+                              region_name=application.config['AWS_REGION'])
 
         try:
             response = client.admin_get_user(
@@ -48,7 +51,14 @@ class PromoCode(Model):
         region = application.config['AWS_REGION']
         table_name = str(application.config['APP_NAME'])+'-promocodes'
 
-    code = UnicodeAttribute(hash_key=True,default=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6)))
+    def generate_code(self):
+        code = ''.join(random.SystemRandom()
+                       .choice(string.ascii_uppercase + string.digits)
+                       for _ in range(6))
+        return code
+
+    code = UnicodeAttribute(hash_key=True,
+                            default=generate_code())
     activated = BooleanAttribute(default=False)
     reward_code = UnicodeAttribute(default='BetaTest')
 
@@ -69,8 +79,10 @@ class ServerUserIndex(GlobalSecondaryIndex):
     # in the model
     user = UnicodeAttribute(hash_key=True)
 
+
 if application.config['STUB_AWS_RESOURCES']:
     ServerUserIndex.Meta.host = 'http://localhost:8000'
+
 
 class Server(Model):
     """ A game server
@@ -82,8 +94,9 @@ class Server(Model):
 
     id = UnicodeAttribute(hash_key=True, default=str(uuid.uuid4()))
     name = UnicodeAttribute(default='Server')
-    expiry_date = UTCDateTimeAttribute(default=datetime.datetime.now(timezone.utc)+datetime.timedelta(minutes=65))
-    creation_date = UTCDateTimeAttribute(default=datetime.datetime.now(timezone.utc))
+    expiry_date = UTCDateTimeAttribute(default=datetime.now(timezone.utc)
+                                     +datetime.timedelta(minutes=65))
+    creation_date = UTCDateTimeAttribute(default=datetime.now(timezone.utc))
     type = UnicodeAttribute(default='ark_server')
     user = UnicodeAttribute()
     user_index = ServerUserIndex()
@@ -100,11 +113,6 @@ class Server(Model):
                     'micro': 20,
                     'large': 80
                     }
-
-    __mapper_args__ = {
-                'polymorphic_identity':'server',
-                'polymorphic_on':type
-            }
 
     def __init__(self, hash_key=None, range_key=None, **attrs):
         super().__init__(hash_key, range_key, **attrs)
@@ -424,8 +432,8 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         return userdata
 
     def seconds_to_dhms(self):
-        if self.expiry_date > datetime.datetime.utcnow().replace(tzinfo=pytz.utc):
-            time_remaining = self.expiry_date - datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+        if self.expiry_date > datetime.utcnow().replace(tzinfo=pytz.utc):
+            time_remaining = self.expiry_date - datetime.utcnow().replace(tzinfo=pytz.utc)
             days = math.floor(time_remaining.seconds / 86400)
             remainder = time_remaining.seconds % 84600
             hours = math.floor(remainder / 3600)

@@ -17,15 +17,12 @@ def process_server(server_id):
     if server.expiry_date < datetime.datetime.now():
 
         try:
-            db.session.delete(server)
-            db.session.commit()
+            server.delete()
         except Exception as e:
             print(e)
 
     else:
         print("Server "+server.id+" has "+str(hours_left)+" hours, "+str(seconds_left)+ "seconds left.")
-
-    db.session.commit()
 
     return
 
