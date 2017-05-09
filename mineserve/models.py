@@ -1,6 +1,7 @@
 from mineserve import application
 from datetime import timezone
 from datetime import datetime
+from datetime import timedelta
 import uuid
 import random
 import boto3
@@ -51,21 +52,20 @@ class PromoCode(Model):
         region = application.config['AWS_REGION']
         table_name = str(application.config['APP_NAME'])+'-promocodes'
 
-    def generate_code(self):
+    code = UnicodeAttribute(hash_key=True)
+    activated = BooleanAttribute(default=False)
+    reward_code = UnicodeAttribute(default='BetaTest')
+
+    def __init__(self):
         code = ''.join(random.SystemRandom()
                        .choice(string.ascii_uppercase + string.digits)
                        for _ in range(6))
-        return code
-
-    code = UnicodeAttribute(hash_key=True,
-                            default=generate_code())
-    activated = BooleanAttribute(default=False)
-    reward_code = UnicodeAttribute(default='BetaTest')
+        self.code = code
 
 
 class ServerUserIndex(GlobalSecondaryIndex):
     """
-    This class represents a global secondary index
+    This class represents a global secondary index for DynamodDB
     """
     class Meta:
         read_capacity_units = 1
@@ -94,15 +94,15 @@ class Server(Model):
 
     id = UnicodeAttribute(hash_key=True, default=str(uuid.uuid4()))
     name = UnicodeAttribute(default='Server')
-    expiry_date = UTCDateTimeAttribute(default=datetime.now(timezone.utc)
-                                     +datetime.timedelta(minutes=65))
+    expiry_date = UTCDateTimeAttribute(default=datetime.now(timezone.utc) +
+                                       timedelta(minutes=65))
     creation_date = UTCDateTimeAttribute(default=datetime.now(timezone.utc))
     type = UnicodeAttribute(default='ark_server')
     user = UnicodeAttribute()
     user_index = ServerUserIndex()
     size = UnicodeAttribute(default='micro')
     region = UnicodeAttribute()
-    password = UnicodeAttribute(default=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6)))
+    password = UnicodeAttribute()
 
     prices = {
                 'micro': 800,
@@ -116,6 +116,7 @@ class Server(Model):
 
     def __init__(self, hash_key=None, range_key=None, **attrs):
         super().__init__(hash_key, range_key, **attrs)
+        self.password=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
         self.create_cluster()
 
     @property
@@ -467,14 +468,15 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         if application.config['STUB_AWS_RESOURCES']:
             return 'stub_resource'
 
-        client = boto3.client('ecs', region_name=self.region)
-        response = client.list_tasks(cluster=self.id)
-
         instance_status = 'Unknown'
 
-        if (len(response['taskArns']) > 0):
-            instance_status = 'Available'
+        client = boto3.client('ecs', region_name=self.region)
 
+        response = client.describe_services(cluster=self.id,
+                                                 services=[self.type,])
+
+        if (str(response['services'][0]['status']) == str('ACTIVE')):
+            instance_status = 'Available'
         else:
             instance_status = 'Preparing'
 
@@ -518,7 +520,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         promo_code = PromoCode.query.filter_by(code=promo_code).first()
 
         if promo_code and not promo_code.activated:
-            self.expiry_date = self.expiry_date + datetime.timedelta(days=promo_code_days[promo_code.reward_code])
+            self.expiry_date = self.expiry_date + timedelta(days=promo_code_days[promo_code.reward_code])
 
             promo_code.activated=True
 
