@@ -38,3 +38,8 @@ ADMIN_PASSWORD = "password"
 SECRET_KEY = 'super-secret'
 JWT_SECRET_KEY = 'super-secret'
 JWT_EXPIRATION_DELTA = timedelta(seconds=600)
+
+
+# auth0
+AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID')
+AUTH0_CLIENT_SECRET = os.getenv('AUTH0_CLIENT_SECRET')

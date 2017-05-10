@@ -50,9 +50,13 @@ Delete a server:
 
 Top up a server by 30 days:
 
-    Use generate_stripe_token.py to get a Stripe token.
+    Use generate_stripe_token.py to get a Stripe token:
+        
+        STRIPE_TEST_SECRET_KEY=sk_test_12345 python generate_stripe_token.py
 
-    curl -H "Authorization: Bearer my_jwt_token" localhost:8000/api/0.1/servers/the_server_id/topup -X POST -d '{"stripeToken": "tok_19xNbgFS8gnfcxztAca3WWe8"}'
+    Pass the Stripe Token and chosen Topup Plan (here it is the basic 30 days topup):
+
+        curl -H "Authorization: Bearer my_jwt_token" localhost:8000/api/0.1/servers/the_server_id/topup -X POST -d '{"stripeToken": "tok_12345", topup_package":"normal30days"}'
 
 ## Running on AWS
 

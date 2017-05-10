@@ -43,18 +43,25 @@ class User():
         return self.username
 
 
+topup_packages = {
+    "normal30days": {
+        "days": 30,
+        "charge": 3000
+    }
+}
+
+
 class PromoCode(Model):
     """ Promo Code for the site
     Can have various uses including free top-up time
     """
-
     class Meta:
         region = application.config['AWS_REGION']
         table_name = str(application.config['APP_NAME'])+'-promocodes'
 
     code = UnicodeAttribute(hash_key=True)
     activated = BooleanAttribute(default=False)
-    reward_code = UnicodeAttribute(default='BetaTest')
+    topup_package = UnicodeAttribute(default='normal30days')
 
     def __init__(self):
         code = ''.join(random.SystemRandom()
@@ -104,20 +111,16 @@ class Server(Model):
     region = UnicodeAttribute()
     password = UnicodeAttribute()
 
-    prices = {
-                'micro': 800,
-                'large': 1600
-                }
-
-    max_players = {
-                    'micro': 20,
-                    'large': 80
-                    }
-
     def __init__(self, hash_key=None, range_key=None, **attrs):
         super().__init__(hash_key, range_key, **attrs)
-        self.password=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
+        self.password = self.generate_random_password()
         self.create_cluster()
+
+    def generate_random_password(self):
+        password = ''.join(random.SystemRandom().
+                           choice(string.ascii_uppercase + string.digits)
+                           for _ in range(6))
+        return password
 
     @property
     def userdata(self):
@@ -520,7 +523,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
         promo_code = PromoCode.query.filter_by(code=promo_code).first()
 
         if promo_code and not promo_code.activated:
-            self.expiry_date = self.expiry_date + timedelta(days=promo_code_days[promo_code.reward_code])
+            self.expiry_date = self.expiry_date + timedelta(days=topup_packages[str(promo_code.topup_package)]['days'])
 
             promo_code.activated=True
 

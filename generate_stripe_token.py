@@ -1,4 +1,6 @@
 import stripe
+import os
+
 stripe.api_key = os.getenv('STRIPE_TEST_SECRET_KEY')
 
 token = stripe.Token.create(
