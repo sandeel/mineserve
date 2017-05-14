@@ -437,13 +437,16 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
     def seconds_to_dhms(self):
         if self.expiry_date > datetime.utcnow().replace(tzinfo=pytz.utc):
-            time_remaining = self.expiry_date - datetime.utcnow().replace(tzinfo=pytz.utc)
+            time_remaining = (self.expiry_date -
+                              datetime.utcnow().replace(tzinfo=pytz.utc))
             days = math.floor(time_remaining.seconds / 86400)
             remainder = time_remaining.seconds % 84600
             hours = math.floor(remainder / 3600)
             remainder %= 60
             minutes = math.floor(remainder / 60)
-            return str(days) + " days, " + str(hours) + " hours, " + str(minutes) + " minutes"
+            return (str(days) + " days, " +
+                    str(hours) + " hours, " +
+                    str(minutes) + " minutes")
         else:
             return "Server expired"
 
@@ -475,13 +478,17 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
 
         client = boto3.client('ecs', region_name=self.region)
 
-        response = client.describe_services(cluster=self.id,
-                                                 services=[self.type,])
+        response = client.list_tasks(cluster=self.id)
 
-        if (str(response['services'][0]['status']) == str('ACTIVE')):
-            instance_status = 'Available'
-        else:
-            instance_status = 'Preparing'
+        if (len(response['taskArns']) > 0):
+            taskarn = response['taskArns'][0]
+
+            response = client.describe_tasks(cluster=self.id, tasks=[taskarn,])
+
+            if (str(response['tasks'][0]['lastStatus']) == 'RUNNING'):
+                instance_status = 'Available'
+            else:
+                instance_status = 'Preparing'
 
         return instance_status
 
