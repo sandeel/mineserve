@@ -1,0 +1,13 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  KeyName:
+    Description: Amazon EC2 Key Pair
+    Type: AWS::EC2::KeyPair::KeyName
+  ServerID:
+    Description: The server ID
+    Type: String
+Resources:
+  MyCluster:
+    Type: "AWS::ECS::Cluster"
+    ClusterName: !Ref ServerID

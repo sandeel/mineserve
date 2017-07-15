@@ -1,0 +1,708 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters: 
+  GithubToken:
+    Type: String
+    Description: Generate on Github account
+    NoEcho: 'true'
+  GitBranch:
+    Type: String
+    Description: Git branch to use
+  KeyPair:
+    Description: Amazon EC2 Key Pair
+    Type: AWS::EC2::KeyPair::KeyName
+  Beta:
+    Type: String
+    Description: Whether application is live or beta
+    AllowedValues: ['True', 'False']
+  StripeSecretKey:
+    Type: String
+    Description: Stripe secret key
+    NoEcho: 'true'
+  StripePublishableKey:
+    Type: String
+    Description: Stripe publishable key
+  AdminPassword:
+    Type: String
+    Description: Admin password for the website
+    NoEcho: 'true'
+  FlaskDebug:
+    Type: String
+    Description: Enable Flask debug mode
+
+Resources:
+
+  sshSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH
+      VpcId:
+        Ref: Vpc
+
+  sshSGInboundRuleSSH:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
+      GroupId:
+        Fn::GetAtt:
+        - sshSG
+        - GroupId
+
+  MsvApi:
+    Type: "AWS::ApiGateway::RestApi"
+    Properties:
+      Name: "MsvApi"
+  Servers: 
+    Type: "AWS::ApiGateway::Resource"
+    Properties: 
+      RestApiId: 
+        Ref: "MsvApi"
+      ParentId: 
+        Fn::GetAtt: 
+          - "MsvApi"
+          - "RootResourceId"
+      PathPart: "servers"
+  ServersGET: 
+    Type: "AWS::ApiGateway::Method"
+    Properties: 
+      RestApiId: 
+        Ref: "MsvApi"
+      ResourceId: 
+        !Ref Servers
+      HttpMethod: "GET"
+      AuthorizationType: "NONE"
+      Integration: 
+        Type: "HTTP"
+        Uri:
+          !Join ['', ['http://', !GetAtt ApiEnvironment.EndpointURL, '/api/0.1/servers']]
+        IntegrationHttpMethod: "GET"
+        IntegrationResponses:
+          -
+            StatusCode: 200
+      MethodResponses:
+        -
+          StatusCode: 200
+  ServersPOST: 
+    Type: "AWS::ApiGateway::Method"
+    Properties: 
+      RestApiId: 
+        Ref: "MsvApi"
+      ResourceId: 
+        !Ref Servers
+      HttpMethod: "POST"
+      AuthorizationType: "NONE"
+      Integration: 
+        Type: "HTTP"
+        Uri:
+          !Join ['', ['http://', !GetAtt ApiEnvironment.EndpointURL, '/api/0.1/servers']]
+        IntegrationHttpMethod: "GET"
+        IntegrationResponses:
+          -
+            StatusCode: 200
+      MethodResponses:
+        -
+          StatusCode: 200
+  Website:
+    Type: AWS::ElasticBeanstalk::Application
+  ApiEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    DependsOn: Website
+    Properties:
+      ApplicationName: !Ref 'Website'
+      EnvironmentName: !Join [ '', [ !Ref 'AWS::StackName', '-api' ] ]
+      SolutionStackName: 64bit Amazon Linux 2016.09 v2.3.1 running Python 3.4
+      OptionSettings:
+      - Namespace: aws:ec2:vpc
+        OptionName: Subnets
+        Value: !Ref 'PublicSubnet1'
+      - Namespace: aws:ec2:vpc
+        OptionName: ELBSubnets
+        Value: !Ref 'PublicSubnet1'
+      - Namespace: aws:elasticbeanstalk:environment
+        OptionName: ServiceRole
+        Value: !Ref ElasticBeanstalkServiceRole
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: IamInstanceProfile
+        Value: !Ref ElasticBeanstalkInstanceProfile
+      - Namespace:  aws:elasticbeanstalk:healthreporting:system
+        OptionName: SystemType
+        Value: enhanced
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_AWS_REGION
+        Value: !Ref 'AWS::Region'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_SG_ID
+        Value: !Ref 'ContainerAgentSG'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_CONTAINER_AGENT_SUBNET
+        Value: !Ref 'PublicSubnet1'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_BETA
+        Value: !Ref 'Beta'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: STUB_AWS_RESOURCES
+        Value: 'False'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: STRIPE_SECRET_KEY
+        Value: !Ref 'StripeSecretKey'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: STRIPE_PUBLISHABLE_KEY
+        Value: !Ref 'StripePublishableKey'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: APP_NAME
+        Value: !Ref AWS::StackName
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_CONTAINER_AGENT_SUBNET
+        Value: !Ref 'PublicSubnet1'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_ADMIN_PASSWORD
+        Value: !Ref 'AdminPassword'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: FLASK_DEBUG
+        Value: !Ref 'FlaskDebug'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_CONTAINER_AGENT_AMI
+        Value: !FindInMap [RegionMap, !Ref 'AWS::Region', ubuntu]
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_CONTAINER_AGENT_INSTANCE_PROFILE
+        Value: !Ref 'ContainerAgentInstanceProfile'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_EC2_KEYPAIR
+        Value: !Ref 'KeyPair'
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: ADVSRVS_PHONE_HOME_ENDPOINT
+        Value: !Join ['', [advsrvs., !Ref 'AWS::Region', .elasticbeanstalk.com]]
+      - Namespace: aws:autoscaling:launchconfiguration
+        OptionName: EC2KeyName
+        Value: !Ref 'KeyPair'
+  ContainerAgentSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow mcrcon and ssh internally and mc from externally
+      VpcId: !Ref 'Vpc'
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '33775'
+        ToPort: '33775'
+        CidrIp: 10.0.0.0/16
+      - IpProtocol: udp
+        FromPort: '33775'
+        ToPort: '33775'
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: '2222'
+        ToPort: '2222'
+        CidrIp: 10.0.0.0/16
+  ElasticBeanstalkInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles: [!Ref 'ElasticBeanstalkInstanceProfileRole']
+  ContainerAgentInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles: [!Ref 'ContainerAgentInstanceProfileRole']
+  ElasticBeanstalkServiceRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ElasticBeanstalkServiceRolePolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:GetLogEvents'
+            - 'logs:PutLogEvents'
+            - 'logs:DescribeLogGroups'
+            - 'logs:DescribeLogStreams'
+            - 'logs:PutRetentionPolicy'
+            - 'logs:PutMetricFilter'
+          Resource: ['*']
+      Roles: [!Ref 'ElasticBeanstalkServiceRole']
+  ElasticBeanstalkInstanceProfilePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ElasticBeanstalkInstanceProfilePolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action: ['ec2:*',
+                   'ecs:*']
+          Effect: Allow
+          Resource: '*'
+        - Sid: BucketAccess
+          Action: ['s3:Get*', 's3:List*', 's3:PutObject']
+          Effect: Allow
+          Resource: ['arn:aws:s3:::elasticbeanstalk-*', 'arn:aws:s3:::elasticbeanstalk-*/*']
+        - Effect: Allow
+          Action: iam:PassRole
+          Resource: !Join ['', ['arn:aws:iam::', !Ref 'AWS::AccountId', ':role/*']]
+        - Effect: Allow
+          Action:
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:GetLogEvents'
+            - 'logs:PutLogEvents'
+            - 'logs:DescribeLogGroups'
+            - 'logs:DescribeLogStreams'
+            - 'logs:PutRetentionPolicy'
+          Resource: !Join ['', ['arn:aws:logs:', !Ref 'AWS::Region', ':*']]
+        - Effect: Allow
+          Action:
+            - 'logs:PutLogEvents'
+            - 'logs:CreateLogStream'
+          Resource:
+            'arn:aws:logs:*:*:log-group:/aws/elasticbeanstalk*'
+      Roles: [!Ref 'ElasticBeanstalkInstanceProfileRole']
+  ElasticBeanstalkServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkService'
+        - 'arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: elasticbeanstalk.amazonaws.com
+          Action: sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId: elasticbeanstalk
+  ElasticBeanstalkInstanceProfileRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ec2.amazonaws.com]
+          Action: ['sts:AssumeRole']
+  ContainerAgentInstanceProfileRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns: ['arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role']
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ec2.amazonaws.com]
+          Action: ['sts:AssumeRole']
+  CodePipelineS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Suspended
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [codepipeline.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+      - PolicyName: xgpCodePipelineServiceRole
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action: ['s3:GetObject', 's3:GetObjectVersion', 's3:GetBucketVersioning']
+            Resource: '*'
+            Effect: Allow
+          - Action: ['s3:PutObject']
+            Resource: ['arn:aws:s3:::codepipeline*', 'arn:aws:s3:::elasticbeanstalk*']
+            Effect: Allow
+          - Action: ['codedeploy:CreateDeployment', 'codedeploy:GetApplicationRevision',
+              'codedeploy:GetDeployment', 'codedeploy:GetDeploymentConfig', 'codedeploy:RegisterApplicationRevision']
+            Resource: '*'
+            Effect: Allow
+          - Action: ['elasticbeanstalk:*', 'ec2:*', 'elasticloadbalancing:*', 'autoscaling:*',
+              'cloudwatch:*', 's3:*', 'sns:*', 'cloudformation:*', 'rds:*', 'sqs:*',
+              'ecs:*', 'iam:PassRole']
+            Resource: '*'
+            Effect: Allow
+          - Action: ['lambda:InvokeFunction', 'lambda:ListFunctions']
+            Resource: '*'
+            Effect: Allow
+          - Action:
+              - 's3:GetObject'
+              - 's3:PutObject'
+              - 'elasticbeanstalk:*'
+              - 'lambda:InvokeFunction'
+              - 'cloudformation:CreateStack'
+              - 'codebuild:BatchGetBuilds'
+              - 'codebuild:StartBuild'
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutRetentionPolicy'
+              - 'logs:PutMetricFilter'
+              - 'logs:DeleteMetricFilter'
+            Resource: '*'
+            Effect: Allow
+  AppPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    DependsOn: ApiEnvironment
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      Stages:
+      - Name: SourceAPI
+        Actions:
+        - Name: SourceAPI
+          ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Version: '1'
+            Provider: GitHub
+          OutputArtifacts:
+          - Name: SourceOutput
+          Configuration:
+            Owner: sandeel
+            Repo: mineserve
+            Branch: !Ref GitBranch
+            OAuthToken: !Ref 'GithubToken'
+          RunOrder: 1
+        - Name: SourceFrontend
+          ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Version: '1'
+            Provider: GitHub
+          OutputArtifacts:
+          - Name: FrontendOutput
+          Configuration:
+            Owner: sandeel
+            Repo: mineserve-frontend
+            Branch: beanstalk
+            OAuthToken: !Ref 'GithubToken'
+          RunOrder: 1
+      - Name: Prod
+        Actions:
+        - Name: BuildArkImage
+          InputArtifacts:
+          - Name: SourceOutput
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Version: '1'
+            Provider: CodeBuild
+          Configuration:
+            ProjectName: !Ref CodeBuildArkProject
+          RunOrder: 1
+        - Name: ProdAction
+          InputArtifacts:
+          - Name: SourceOutput
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Version: '1'
+            Provider: ElasticBeanstalk
+          Configuration:
+            ApplicationName: !Ref 'Website'
+            EnvironmentName: !Ref 'ApiEnvironment'
+          RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref 'CodePipelineS3Bucket'
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref 'Vpc'
+      InternetGatewayId: !Ref 'InternetGateway'
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.0.0/19
+      Tags:
+      - Key: Name
+        Value: PublicSubnet1
+      MapPublicIpOnLaunch: 'true'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'Vpc'
+      Tags:
+      - Key: Name
+        Value: PublicRouteTable
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'PublicSubnet1'
+      RouteTableId: !Ref 'PublicRouteTable'
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref 'PublicRouteTable'
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref 'InternetGateway'
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.32.0/24
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet
+      AvailabilityZone: !Select ['0', !GetAZs {Ref: 'AWS::Region'}]
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.33.0/24
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet
+      AvailabilityZone: !Select ['1', !GetAZs {Ref: 'AWS::Region'}]
+
+  CodeBuildArkProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: ark
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:1.12.1
+        EnvironmentVariables:
+        - Name: AWS_ACCOUNT_ID
+          Value: !Ref AWS::AccountId
+        - Name: AWS_DEFAULT_REGION
+          Value: !Ref AWS::Region
+        - Name: IMAGE_REPO_NAME
+          Value: ark
+        - Name: IMAGE_TAG
+          Value: latest
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 60
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+  CodeBuildServiceRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodePipelineServiceRolePolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+            - 'ecr:CreateRepository'
+            - 'ecr:BatchCheckLayerAvailability'
+            - 'ecr:CompleteLayerUpload'
+            - 'ecr:GetAuthorizationToken'
+            - 'ecr:InitiateLayerUpload'
+            - 'ecr:PutImage'
+            - 'ecr:UploadLayerPart'
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:PutLogEvents'
+            - 's3:GetObject'
+            - 's3:GetObjectVersion'
+            - 's3:PutObject'
+          Resource: ['*']
+      Roles: [!Ref 'CodeBuildServiceRole']
+
+
+  PromoCodeDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "code"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "code"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', promocodes ] ]
+
+
+  UserDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', users ] ]
+
+
+  ServersDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+        - 
+          AttributeName: "user"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-', servers ] ]
+      GlobalSecondaryIndexes: 
+        - 
+          IndexName: "user-index"
+          KeySchema: 
+            - 
+              AttributeName: "user"
+              KeyType: "HASH"
+          Projection: 
+            ProjectionType: "ALL"
+          ProvisionedThroughput: 
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+  TestingServersDynamoDBTable: 
+    Type: "AWS::DynamoDB::Table"
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+        - 
+          AttributeName: "user"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: !Join [ '', [ !Ref 'AWS::StackName', '-servers' ] ]
+      GlobalSecondaryIndexes: 
+        -
+          IndexName: "user-index"
+          KeySchema:
+            -
+              AttributeName: "user"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+     BucketName:  !Join [ '', [ !Ref 'AWS::StackName', '-frontend' ] ]
+     WebsiteConfiguration:
+       IndexDocument: index.html
+       ErrorDocument: error.html
+  FrontendBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket:
+        Ref: "FrontendBucket"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  -
+                    Ref: "FrontendBucket"
+                  - "/*"
+            Principal: "*"
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: "ami-6411e20d"
+    us-west-1:
+      AMI: "ami-9398d3e0"
+    eu-west-1:
+      amazon: "ami-9398d3e0"
+      ubuntu: "ami-0d77397e"
+      ecsoptimized: "ami-a7f2acc1"
+    ap-southeast-1:
+      AMI: "ami-66f28c34"
+    ap-northeast-1:
+      AMI: "ami-9c03a89d"
+
+  Beanstalk2Route53HostedZoneId:
+    us-east-1:
+      HostedZoneId: Z3DZXE0Q79N41H
+    us-west-1:
+      HostedZoneId: Z1M58G0W56PQJA
+    us-west-2:
+      HostedZoneId: Z33MTJ483KN6FU
+    eu-west-1:
+      HostedZoneId: Z3NF1Z3NOM5OY2
+    ap-northeast-1:
+      HostedZoneId: Z2YN17T5R711GT
+    ap-southeast-1:
+      HostedZoneId: Z1WI8VXHPB1R38
+    sa-east-1:
+      HostedZoneId: Z2ES78Y61JGQKS
+
+Outputs:
+  ContainerAgentInstanceProfileName:
+    Description: Name of instance profile for container agents
+    Value: !Ref ContainerAgentInstanceProfile
+  ApiUrl:
+    Description: API URL
+    Value: !GetAtt ApiEnvironment.EndpointURL

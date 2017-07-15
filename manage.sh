@@ -54,7 +54,7 @@ case $key in
 
         if [ -n "$codepipeline_bucket_physical_name" ]; then
             echo "Emptying the CodePipeline S3 bucket"
-            python empty_bucket.py $codepipeline_bucket_physical_name
+            python helper_scripts/empty_bucket.py $codepipeline_bucket_physical_name
         else
             echo "CodePipeline S3 Bucket already deleted"
         fi
@@ -64,7 +64,7 @@ case $key in
 
         if [ -n "$codepipeline_bucket_physical_name" ]; then
             echo "Emptying theFrontend S3 bucket"
-            python empty_bucket.py $codepipeline_bucket_physical_name
+            python helper_scripts/empty_bucket.py $codepipeline_bucket_physical_name
         else
             echo "Frontend S3 Bucket already deleted"
         fi
@@ -86,7 +86,7 @@ case $key in
         done
 
         echo "Emptying template bucket..."
-        python empty_bucket.py msv-templates
+        python helper_scripts/empty_bucket.py msv-templates
 
         echo "Terminating template bucket..."
         aws s3 rb s3://msv-templates

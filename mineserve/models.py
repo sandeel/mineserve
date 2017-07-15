@@ -114,7 +114,7 @@ class Server(Model):
     def __init__(self, hash_key=None, range_key=None, **attrs):
         super().__init__(hash_key, range_key, **attrs)
         self.password = self.generate_random_password()
-        self.create_cluster()
+        self.create_stack()
 
     def generate_random_password(self):
         password = ''.join(random.SystemRandom().
@@ -463,7 +463,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             "size": str(self.size),
             "type": str(self.type),
             "port": "27015",
-			"password": str(self.password)
+            "password": str(self.password)
         }
 
     def __str__(self):
@@ -537,16 +537,27 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
             promo_code.save()
             self.save()
 
-    def create_cluster(self):
+    def create_stack(self):
         try:
-            if application.config['STUB_AWS_RESOURCES']:
-                return
+            client = boto3.client('cloudformation')
 
+            client.create_stack(
+                StackName=self.id,
+                TemplateBody= open('cloudformation/server.yaml', 'r').read(),
+				Parameters=[
+					{
+						'KeyName': 'id_rsa',
+						'ServerID': self.id,
+					},
+				],
+            )
+
+            """
             # create the ECS cluster
             client = boto3.client('ecs', region_name=self.region)
             if 'MISSING' in str(client.describe_clusters(clusters=[self.id,])):
                 try:
-                    response = client.create_cluster(
+                    response = client.create_stack(
                         clusterName=str(self.id)
                     )
                 except IndexError:
@@ -616,6 +627,7 @@ echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /
                             'minimumHealthyPercent': 0
                         }
             )
+        """
 
         except Exception as e:
             self.delete()
