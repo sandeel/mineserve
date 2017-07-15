@@ -1,5 +1,7 @@
 from django.contrib import admin
-
 from .models import Server
 
-admin.site.register(Server)
+class ServerAdmin(admin.ModelAdmin):
+    exclude = ('id',)
+
+admin.site.register(Server,ServerAdmin)

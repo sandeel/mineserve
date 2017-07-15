@@ -1,7 +1,7 @@
 {% if server_list %}
     <ul>
     {% for server in server_list %}
-        <li>{{ server.id }}</li>
+    <li>{{ server.id }} {{ server.status }} {{ server.ip }}</li>
     {% endfor %}
     </ul>
 {% else %}

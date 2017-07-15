@@ -5,11 +5,552 @@ Parameters:
     Description: Amazon EC2 Key Pair
     Type: AWS::EC2::KeyPair::KeyName
   ServerID:
-    Description: The server ID
+    Description: The Server ID
     Type: String
-
 Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref 'Vpc'
+      InternetGatewayId: !Ref 'InternetGateway'
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: 10.0.0.0/18
+      Tags:
+      - Key: Name
+        Value: wsv-container-subnet
+      MapPublicIpOnLaunch: 'true'
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'Vpc'
+      Tags:
+      - Key: Name
+        Value: PublicRouteTable
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'PublicSubnet1'
+      RouteTableId: !Ref 'PublicRouteTable'
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref 'PublicRouteTable'
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref 'InternetGateway'
   Cluster:
     Type: "AWS::ECS::Cluster"
     Properties:
       ClusterName: !Ref ServerID
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn: AutoScalingGroup
+    Properties:
+      ServiceName: server
+      TaskDefinition: !Ref TaskDefinition
+      Cluster: !Ref Cluster
+      DesiredCount: 1
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+  AutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties: 
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MaxSize: 1
+      MinSize: 1
+      DesiredCapacity: 1
+      VPCZoneIdentifier: 
+        - !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: !Ref ServerID
+          PropagateAtLaunch: true
+  LaunchConfiguration: 
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties: 
+      IamInstanceProfile: 'mineserve-agent'
+      KeyName: 'id_rsa'
+      ImageId: !FindInMap [ RegionMap, eu-west-1, ecsoptimized ]
+      InstanceType: "t2.large"
+      BlockDeviceMappings:
+        -
+          DeviceName: '/dev/xvdcz'
+          Ebs:
+            VolumeSize: 80
+            DeleteOnTermination: True
+            VolumeType: 'gp2'
+      UserData:
+        Fn::Base64: !Sub |
+          Content-Type: multipart/mixed; boundary="===============BOUNDARY=="
+          MIME-Version: 1.0
+          
+          --===============BOUNDARY==
+          MIME-Version: 1.0
+          Content-Type: text/x-shellscript; charset="us-ascii"
+          
+          #! /bin/bash
+          ip link set dev eth0 mtu 1460
+          echo "interface \\"eth0\\" { supersede interface-mtu 1460; }" >> /etc/dhcp/dhclient.conf
+          echo "fs.file-max=100000" >> /etc/sysctl.conf
+          echo "session required pam_limits.so" > /etc/pam.d/common-session
+          echo "msv:password" > /home/ec2-user/users.conf
+          mkdir -p /mnt/efs/ark/server/ShooterGame/Saved/SavedArks
+          
+          --===============BOUNDARY==
+          MIME-Version: 1.0
+          Content-Type: text/cloud-boothook; charset="us-ascii"
+          
+          #cloud-boothook
+          PATH=$PATH:/usr/local/bin
+          cloud-init-per once docker_options echo 'OPTIONS="${!OPTIONS} --storage-opt dm.basesize=80G"' >> /etc/sysconfig/docker
+          yum -y update
+          yum -y install jq
+          #Install NFS client
+          if ! rpm -qa | grep -qw nfs-utils; then
+              yum -y install nfs-utils
+          fi
+          if ! rpm -qa | grep -qw python27; then
+              yum -y install python27
+          fi
+          #Install pip
+          yum -y install python27-pip
+          #Install awscli
+          pip install awscli
+          #Upgrade to the latest version of the awscli
+          #pip install --upgrade awscli
+          #Add support for EFS to the CLI configuration
+          aws configure set preview.efs true
+          #Join the ECS cluster
+          EC2_AVAIL_ZONE=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+          EC2_INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+          EC2_REGION="`echo \"$EC2_AVAIL_ZONE\" | sed -e 's:\([0-9][0-9]*\)[a-z]*\$:\\1:'`"
+          SERVER_ID=${ServerID}
+          echo ECS_CLUSTER=$SERVER_ID >> /etc/ecs/ecs.config
+          echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=30 >> /etc/ecs/ecs.config
+          echo ECS_IMAGE_CLEANUP_INTERVAL=30 >> /etc/ecs/ecs.config
+          
+          aws ec2 create-tags --region $EC2_REGION --resources $EC2_INSTANCE_ID --tags Key=Name,Value=wsv-container-$SERVER_ID
+          
+          #Create mount point
+          mkdir /mnt/efs
+          mkdir /mnt/clusters
+          #Get EFS FileSystemID attribute
+          #Instance needs to be added to a EC2 role that give the instance at least read access to EFS
+          EFS_FILE_SYSTEM_ID=`/usr/local/bin/aws efs describe-file-systems --region $EC2_REGION | jq '.FileSystems[]' | jq 'select(.Name=="ContainerDataFileSystem")' | jq -r '.FileSystemId'`
+          #Check to see if the variable is set. If not, then exit.
+          if [-z "$EFS_FILE_SYSTEM_ID"]; then
+              echo "ERROR: variable not set" 1> /etc/efssetup.log
+              exit
+          fi
+          #Instance needs to be a member of security group that allows 2049 inbound/outbound
+          #The security group that the instance belongs to has to be added to EFS file system configuration
+          #Create variables for source and target
+          DIR_SRC=$EC2_AVAIL_ZONE.$EFS_FILE_SYSTEM_ID.efs.$EC2_REGION.amazonaws.com:/
+          DIR_TGT=/mnt/efs
+          
+          #Mount EFS file system
+          mount -t nfs4 $DIR_SRC $DIR_TGT
+          
+          #make dir for data
+          mkdir -p /mnt/efs/container_data/$SERVER_ID
+          mkdir -p /mnt/efs/clusters
+          
+          umount /mnt/efs
+          
+          # saved data
+          DIR_SRC=$EC2_AVAIL_ZONE.$EFS_FILE_SYSTEM_ID.efs.$EC2_REGION.amazonaws.com:/container_data/$SERVER_ID
+          DIR_TGT=/mnt/efs
+          mount -t nfs4 $DIR_SRC $DIR_TGT
+          
+          
+          # clusters
+          DIR_SRC=$EC2_AVAIL_ZONE.$EFS_FILE_SYSTEM_ID.efs.$EC2_REGION.amazonaws.com:/clusters
+          DIR_TGT=/mnt/clusters
+          mount -t nfs4 $DIR_SRC $DIR_TGT
+          
+          chmod 777 -R /mnt/efs
+          chmod 777 -R /mnt/clusters
+          
+          # set up ark dirs
+          mkdir -p /mnt/efs/ark/server/ShooterGame/Saved/SavedArks
+          cd /mnt/efs/ark/
+          yum -y install wget
+          wget https://raw.githubusercontent.com/TuRz4m/Ark-docker/master/arkmanager-user.cfg
+          cat > arkmanager_new.cfg << EOF
+          # --- USER CONFIG --- #
+          # ARK server options - use ark_<optionname>=<value>
+          # comment out these values if you want to define them
+          # inside your GameUserSettings.ini file
+          serverMap="TheIsland"                                          # server map (default TheIsland)
+          #serverMapModId="469987622"                                         # Uncomment this to specify the Map Mod Id (<fileid> in http://steamcommunity.com/sharedfiles/filedetails/?id=<fileid>)
+          #ark_TotalConversionMod="496735411"                                 # Uncomment this to specify a total-conversion mod
+          ark_SessionName="$SERVER_ID"                                  # if your session name needs special characters please use the .ini instead
+          ark_ServerPassword=                            # ARK server password, empty: no password required to login
+          ark_ServerAdminPassword=password               # ARK server admin password, KEEP IT SAFE!
+          ark_MaxPlayers=100                                      # Number MAX of player
+          # ark_bRawSockets=""                                            # Uncomment if you want to use ark raw socket (instead of steam p2p) [Not recommended]
+          arkflag_log=""
+          
+          
+          # ----- Mods ----- #
+          #ark_GameModIds="487516323,487516324,487516325"                     # Uncomment to specify additional mods by Mod Id separated by commas
+          # Mod OS Selection
+          mod_branch=Windows
+          # Add mod-specific OS selection below:
+          #mod_branch_496735411=Windows
+          # ----------------#
+          
+          # ARK server flags - use arkflag_<optionname>=true
+          #arkflag_OnlyAdminRejoinAsSpectator=true                            # Uncomment to only allow admins to rejoin as spectator
+          #arkflag_DisableDeathSpectator=true                                 # Uncomment to disable players from becoming spectators when they die
+          
+          
+          # ark cluster settings
+          arkflag_NoTransferFromFiltering=""
+          arkopt_clusterid=$SERVER_ID
+          arkopt_ClusterDirOverride=/ark/clusters
+          
+          # ARK server options - i.e. for -optname=val, use arkopt_optname=val
+          #arkopt_StructureDestructionTag=DestroySwampSnowStructures
+          
+          #ark_AltSaveDirectoryName="SotF"                                    # Uncomment to specify a different save directory name
+          
+          # Update warning messages
+          # Modify as desired, putting the %d replacement operator where the number belongs
+          msgWarnUpdateMinutes="This ARK server will shutdown for an update in %d minutes"
+          msgWarnUpdateSeconds="This ARK server will shutdown for an update in %d seconds"
+          msgWarnRestartMinutes="This ARK server will shutdown for a restart in %d minutes"
+          msgWarnRestartSeconds="This ARK server will shutdown for a restart in %d seconds"
+          msgWarnShutdownMinutes="This ARK server will shutdown in %d minutes"
+          msgWarnShutdownSeconds="This ARK server will shutdown in %d seconds"
+          
+          # config environment
+          arkwarnminutes="60"                                                 # number of minutes to warn players when using update --warn
+          arkBackupPreUpdate="false"                                          # set this to true if you want to perform a backup before updating
+          
+          # Options to automatically remove old backups to keep backup size in check
+          # Each compressed backup is generally about 1-2MB in size.
+          arkMaxBackupSizeMB="500"                                            # Set to automatically remove old backups when size exceeds this limit
+          #arkMaxBackupSizeGB="2"                                             # Uncomment this and comment the above to specify the limit in whole GB
+          EOF
+          [ ! -f arkmanager.cfg ] && mv arkmanager_new.cfg arkmanager.cfg
+          
+          cat > GameUserSettings_new.ini << EOF
+          [ServerSettings]
+          ServerCrosshair=True
+          ServerPassword=
+          ServerAdminPassword=password
+          RCONEnabled=True
+          RCONPort=32330
+          TheMaxStructuresInRange=10500.000000
+          OxygenSwimSpeedStatMultiplier=1.000000
+          StructurePreventResourceRadiusMultiplier=1.000000
+          RaidDinoCharacterFoodDrainMultiplier=1.000000
+          PvEDinoDecayPeriodMultiplier=1.000000
+          KickIdlePlayersPeriod=3600.000000
+          PerPlatformMaxStructuresMultiplier=1.000000
+          AutoSavePeriodMinutes=30.000000
+          ListenServerTetherDistanceMultiplier=1.000000
+          MaxTamedDinos=5000.000000
+          RCONServerGameLogBuffer=600.000000
+          AllowHitMarkers=True
+          
+          [/Script/ShooterGame.ShooterGameUserSettings]
+          MasterAudioVolume=1.000000
+          MusicAudioVolume=1.000000
+          SFXAudioVolume=1.000000
+          VoiceAudioVolume=1.000000
+          UIScaling=1.000000
+          UIQuickbarScaling=1.000000
+          CameraShakeScale=1.000000
+          bFirstPersonRiding=False
+          bThirdPersonPlayer=False
+          bShowStatusNotificationMessages=True
+          TrueSkyQuality=0.000000
+          FOVMultiplier=1.000000
+          GroundClutterDensity=0.000000
+          bFilmGrain=False
+          bMotionBlur=False
+          bUseDFAO=False
+          bUseSSAO=False
+          bShowChatBox=True
+          bCameraViewBob=True
+          bInvertLookY=False
+          bFloatingNames=True
+          bChatBubbles=True
+          bHideServerInfo=False
+          bJoinNotifications=False
+          bCraftablesShowAllItems=False
+          bLocalInventoryItemsShowAllItems=False
+          bLocalInventoryCraftingShowAllItems=False
+          bRemoteInventoryItemsShowAllItems=False
+          bRemoteInventoryCraftingShowAllItems=False
+          bRemoteInventoryShowEngrams=True
+          LookLeftRightSensitivity=1.000000
+          LookUpDownSensitivity=1.000000
+          GraphicsQuality=1
+          ActiveLingeringWorldTiles=1
+          ClientNetQuality=3
+          LastServerSearchType=0
+          LastDLCTypeSearchType=-1
+          LastServerSearchHideFull=False
+          LastServerSearchProtected=False
+          HideItemTextOverlay=True
+          bDistanceFieldShadowing=False
+          LODScalar=0.780000
+          bToggleToTalk=False
+          HighQualityMaterials=True
+          HighQualitySurfaces=True
+          bTemperatureF=False
+          bDisableTorporEffect=False
+          bChatShowSteamName=False
+          bChatShowTribeName=True
+          EmoteKeyBind1=0
+          EmoteKeyBind2=0
+          bNoBloodEffects=False
+          bLowQualityVFX=False
+          bSpectatorManualFloatingNames=False
+          bSuppressAdminIcon=False
+          bUseSimpleDistanceMovement=False
+          bDisableMeleeCameraSwingAnims=False
+          bHighQualityAnisotropicFiltering=False
+          bUseLowQualityLevelStreaming=True
+          bPreventInventoryOpeningSounds=False
+          bPreventItemCraftingSounds=False
+          bPreventHitMarkers=False
+          bPreventCrosshair=False
+          bPreventColorizedItemNames=False
+          bHighQualityLODs=False
+          bExtraLevelStreamingDistance=False
+          bEnableColorGrading=True
+          DOFSettingInterpTime=0.000000
+          bDisableBloom=False
+          bDisableLightShafts=False
+          bDisableMenuTransitions=False
+          bEnableInventoryItemTooltips=True
+          bRemoteInventoryShowCraftables=False
+          LocalItemSortType=0
+          LocalCraftingSortType=0
+          RemoteItemSortType=0
+          RemoteCraftingSortType=0
+          LastPVESearchType=-1
+          VersionMetaTag=1
+          bUseVSync=False
+          MacroCtrl0=
+          MacroCtrl1=
+          MacroCtrl2=
+          MacroCtrl3=
+          MacroCtrl4=
+          MacroCtrl5=
+          MacroCtrl6=
+          MacroCtrl7=
+          MacroCtrl8=
+          MacroCtrl9=
+          ResolutionSizeX=1280
+          ResolutionSizeY=720
+          LastUserConfirmedResolutionSizeX=1280
+          LastUserConfirmedResolutionSizeY=720
+          WindowPosX=-1
+          WindowPosY=-1
+          bUseDesktopResolutionForFullscreen=False
+          FullscreenMode=2
+          LastConfirmedFullscreenMode=2
+          Version=5
+          
+          [ScalabilityGroups]
+          sg.ResolutionQuality=100
+          sg.ViewDistanceQuality=3
+          sg.AntiAliasingQuality=3
+          sg.ShadowQuality=3
+          sg.PostProcessQuality=3
+          sg.TextureQuality=3
+          sg.EffectsQuality=3
+          sg.TrueSkyQuality=3
+          sg.GroundClutterQuality=3
+          sg.IBLQuality=1
+          sg.HeightFieldShadowQuality=3
+          sg.GroundClutterRadius=10000
+          
+          [SessionSettings]
+          SessionName=$SERVER_ID
+          
+          [/Script/Engine.GameSession]
+          MaxPlayers=70
+          EOF
+          
+          [ ! -f GameUserSettings.ini ] && mv GameUserSettings_new.ini GameUserSettings.ini
+          [ ! -f Game.ini ] && touch Game.ini
+          [ ! -f AllowedCheaterSteamIDs.txt ] && touch AllowedCheaterSteamIDs.txt
+          
+          sed -i 's/${!SESSIONNAME}/${ServerID}/g' arkmanager.cfg
+          
+          #Backup fstab
+          cp -p /etc/fstab /etc/fstab.back-$(date +%F)
+          #Append line to fstab
+          echo -e "$DIR_SRC \t\t $DIR_TGT \t\t nfs \t\t defaults \t\t 0 \t\t 0" | tee -a /etc/fstab
+          --===============BOUNDARY==--
+  TaskDefinition:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties:
+      Family: "ark_server"
+      Volumes:
+      -
+        Host:
+          SourcePath: "/home/ec2-user/users.conf"
+        Name: "sftpconfig"
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark"
+        Name: "ark"
+      -
+        Host:
+          SourcePath: "/mnt/clusters"
+        Name: "clusters"
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark/server/ShooterGame/Saved/SavedArks"
+        Name: "SavedArks"
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark/arkmanager.cfg"
+        Name: "arkmanager"
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark/GameUserSettings.ini"
+        Name: "gameusersettings"
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark/Game.ini"
+        Name: "gameini"
+      -
+        Host:
+          SourcePath: "/mnt/efs/ark/AllowedCheaterSteamIDs.txt"
+        Name: "allowedcheaters"
+      ContainerDefinitions:
+      -
+        Name: "ftp"
+        Image: "atmoz/sftp"
+        PortMappings:
+          -
+            ContainerPort: 22
+            HostPort: 2222
+            Protocol: tcp
+        Essential: "true"
+        MemoryReservation: 128
+        MountPoints:
+        -
+          SourceVolume: "sftpconfig"
+          ContainerPath: "/etc/sftp-users.conf"
+        -
+          SourceVolume: "ark"
+          ContainerPath: "/home/msv"
+      -
+        Name: "ark"
+        Image: "297089873106.dkr.ecr.eu-west-1.amazonaws.com/ark:latest"
+        PortMappings:
+          -
+            ContainerPort: 7777
+            HostPort: 7777
+            Protocol: tcp
+          -
+            ContainerPort: 7777
+            HostPort: 7777
+            Protocol: udp
+          -
+            ContainerPort: 7778
+            HostPort: 7778
+            Protocol: tcp
+          -
+            ContainerPort: 7778
+            HostPort: 7778
+            Protocol: udp
+          -
+            ContainerPort: 32330
+            HostPort: 32330
+            Protocol: tcp
+          -
+            ContainerPort: 27015
+            HostPort: 27015
+            Protocol: tcp
+          -
+            ContainerPort: 27015
+            HostPort: 27015
+            Protocol: udp
+        MountPoints:
+        -
+          SourceVolume: "SavedArks"
+          ContainerPath: "/ark/server/ShooterGame/Saved/SavedArks"
+        -
+          SourceVolume: "clusters"
+          ContainerPath: "/ark/clusters"
+        -
+          SourceVolume: "arkmanager"
+          ContainerPath: "/ark/arkmanager.cfg"
+        -
+          SourceVolume: "gameusersettings"
+          ContainerPath: "/ark/GameUserSettings.ini"
+        -
+          SourceVolume: "gameini"
+          ContainerPath: "/ark/Game.ini"
+        -
+          SourceVolume: "allowedcheaters"
+          ContainerPath: "/ark/server/ShooterGame/Saved/AllowedCheaterSteamIDs.txt"
+        Essential: "true"
+        MemoryReservation: 3826
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref ArkLogGroup
+            awslogs-region: !Ref 'AWS::Region'
+            awslogs-stream-prefix: msv
+        Ulimits:
+          -
+            Name: nofile
+            HardLimit: 100000
+            SoftLimit: 100000
+  ArkLogGroup: 
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      RetentionInDays: 7
+      LogGroupName: !Join [ '', [ 'wsv-', !Ref ServerID ] ]
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: "ami-6411e20d"
+    us-west-1:
+      AMI: "ami-9398d3e0"
+    eu-west-1:
+      amazon: "ami-9398d3e0"
+      ubuntu: "ami-0d77397e"
+      ecsoptimized: "ami-809f84e6"
+    ap-southeast-1:
+      AMI: "ami-66f28c34"
+    ap-northeast-1:
+      AMI: "ami-9c03a89d"
+  Beanstalk2Route53HostedZoneId:
+    us-east-1:
+      HostedZoneId: Z3DZXE0Q79N41H
+    us-west-1:
+      HostedZoneId: Z1M58G0W56PQJA
+    us-west-2:
+      HostedZoneId: Z33MTJ483KN6FU
+    eu-west-1:
+      HostedZoneId: Z3NF1Z3NOM5OY2
+    ap-northeast-1:
+      HostedZoneId: Z2YN17T5R711GT
+    ap-southeast-1:
+      HostedZoneId: Z1WI8VXHPB1R38
+    sa-east-1:
+      HostedZoneId: Z2ES78Y61JGQKS
