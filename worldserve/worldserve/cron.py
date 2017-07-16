@@ -3,8 +3,9 @@ import datetime
 
 
 def check_servers():
+    print("Checking servers for expiry")
     for server in Server.objects.all():
         time_now = datetime.datetime.now(datetime.timezone.utc)
-        if (server.expiry_date > time_now):
+        if (time_now > server.expiry_date):
             server.delete()
             print(server.id + ' terminated.')
