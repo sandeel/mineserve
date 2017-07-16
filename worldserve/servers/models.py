@@ -3,6 +3,7 @@ import uuid
 import boto3
 from django.db.models.signals import pre_save, pre_delete
 from django.contrib.auth.models import User
+import datetime
 
 
 class Server(models.Model):
@@ -15,6 +16,8 @@ class Server(models.Model):
     server_type = models.CharField(max_length=20,
                                    default='ark',
                                    choices=[('ark', 'ark')])
+    expiry_date = models.DateTimeField(default=datetime.datetime.now(datetime.timezone.utc) +
+                                       datetime.timedelta(minutes=65))
 
     @property
     def ip(self):
@@ -47,7 +50,6 @@ class Server(models.Model):
 
     def create_stack(self):
         client = boto3.client('cloudformation', region_name=self.region)
-
         return client.create_stack(
             StackName='wsv-server-'+self.id,
             TemplateBody=open('cloudformation/servers/' +
@@ -65,9 +67,18 @@ class Server(models.Model):
         )
 
     def delete_stack(self):
+        client = boto3.client('cloudformation', region_name=self.region)
+        response = client.describe_stacks(
+            StackName='wsv-server-'+self.id,
+        )
+        outputs = response['Stacks'][0]['Outputs']
+        for output in outputs:
+            if output['OutputKey'] == 'AutoScalingGroupName':
+                autoscalinggroupname = output['OutputValue']
+
         client = boto3.client('autoscaling', region_name=self.region)
         client.delete_auto_scaling_group(
-            AutoScalingGroupName=self.id,
+            AutoScalingGroupName=autoscalinggroupname,
             ForceDelete=True
         )
 

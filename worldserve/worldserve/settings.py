@@ -27,10 +27,17 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['52.51.32.218']
 
+LOGIN_URL='/login/'
+LOGIN_REDIRECT_URL='/login/'
+
+CRONJOBS = [
+    ('* * * * *', 'worldserve.cron.check_servers')
+]
 
 # Application definition
 
 INSTALLED_APPS = [
+    'django_crontab',
     'servers.apps.ServersConfig',
     'users.apps.UsersConfig',
     'django.contrib.admin',

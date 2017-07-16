@@ -18,12 +18,13 @@ from django.contrib import admin
 from users import views
 from servers import views as servers_views
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import login_required
 
 
 urlpatterns = [
     url(r'^register/$', views.register, name='register'),
     url(r'^login/$', auth_views.login, {'template_name': 'users/login.html'}, name='login'),
-    url(r'^servers/$', servers_views.index, name='index'),
-    url(r'^servers/create/$', servers_views.ServerCreate.as_view(success_url="/servers/"), name='create'),
+    url(r'^servers/$', login_required(servers_views.index), name='index'),
+    url(r'^servers/create/$', login_required(servers_views.ServerCreate.as_view(success_url="/servers/")), name='create'),
     url(r'^admin/', admin.site.urls),
 ]

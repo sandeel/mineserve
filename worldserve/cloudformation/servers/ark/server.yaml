@@ -554,3 +554,7 @@ Mappings:
       HostedZoneId: Z1WI8VXHPB1R38
     sa-east-1:
       HostedZoneId: Z2ES78Y61JGQKS
+Outputs:
+  AutoScalingGroupName:
+    Description: Auto Scaling group name
+    Value: !Ref AutoScalingGroup
