@@ -34,6 +34,12 @@ CRONJOBS = [
     ('* * * * *', 'worldserve.cron.check_servers')
 ]
 
+EMAIL_HOST = 'localhost'
+EMAIL_SENDER = 'noreply@worldserve.com'
+DEFAULT_FROM_EMAIL = EMAIL_SENDER
+TERMINATION_EMAIL_SUBJECT = 'WorldServe Server Terminated. Thank you.'
+TERMINATION_EMAIL_BODY = 'Thanks for your custom.\n\nYour WorldServe server has now been terminated due to top-up balance expiry.\n\nKind Regards,\nWorldServe'
+
 # Application definition
 
 INSTALLED_APPS = [

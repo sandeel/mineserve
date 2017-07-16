@@ -15,7 +15,7 @@ class Server(models.Model):
                                        ('us-east-1', 'us-east-1')])
     server_type = models.CharField(max_length=20,
                                    default='ark',
-                                   choices=[('ark', 'ark')])
+                                   choices=[('ark', 'Ark: Survival Evolved')])
     expiry_date = models.DateTimeField(default=datetime.datetime.now(datetime.timezone.utc) +
                                        datetime.timedelta(minutes=65))
 
@@ -68,19 +68,19 @@ class Server(models.Model):
 
     def delete_stack(self):
         client = boto3.client('cloudformation', region_name=self.region)
-        response = client.describe_stacks(
-            StackName='wsv-server-'+self.id,
-        )
-        outputs = response['Stacks'][0]['Outputs']
-        for output in outputs:
-            if output['OutputKey'] == 'AutoScalingGroupName':
-                autoscalinggroupname = output['OutputValue']
-
-        client = boto3.client('autoscaling', region_name=self.region)
-        client.delete_auto_scaling_group(
-            AutoScalingGroupName=autoscalinggroupname,
-            ForceDelete=True
-        )
+        try:
+            response = client.describe_stack_resource(
+                StackName='wsv-server-'+self.id,
+                LogicalResourceId='AutoScalingGroup'
+            )
+            autoscalinggroupname = response['StackResourceDetail']['PhysicalResourceId']
+            client = boto3.client('autoscaling', region_name=self.region)
+            client.delete_auto_scaling_group(
+                AutoScalingGroupName=autoscalinggroupname,
+                ForceDelete=True
+            )
+        except:
+            pass
 
         client = boto3.client('ecs', region_name=self.region)
         services = client.describe_services( cluster=self.id, services=['server'] )['services']
