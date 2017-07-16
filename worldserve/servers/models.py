@@ -79,17 +79,17 @@ class Server(models.Model):
                 AutoScalingGroupName=autoscalinggroupname,
                 ForceDelete=True
             )
+
+            client = boto3.client('ecs', region_name=self.region)
+            services = client.describe_services( cluster=self.id, services=['server'] )['services']
+            if len(services) > 0 and services[0]['status'] == 'ACTIVE':
+                client.update_service(
+                        cluster=self.id,
+                        service='server',
+                        desiredCount=0
+                )
         except:
             pass
-
-        client = boto3.client('ecs', region_name=self.region)
-        services = client.describe_services( cluster=self.id, services=['server'] )['services']
-        if len(services) > 0 and services[0]['status'] == 'ACTIVE':
-            client.update_service(
-                    cluster=self.id,
-                    service='server',
-                    desiredCount=0
-            )
 
         client = boto3.client('cloudformation', region_name='eu-west-1')
         return client.delete_stack(
