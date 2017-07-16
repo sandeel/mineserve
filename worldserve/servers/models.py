@@ -1,14 +1,15 @@
 from django.db import models
 import uuid
 import boto3
-from django.db.models.signals import pre_save, pre_delete
+from django.db.models.signals import post_save, pre_delete
 from django.contrib.auth.models import User
 import datetime
 
 
 class Server(models.Model):
     id = models.CharField(primary_key=True,
-                          max_length=200)
+                          max_length=200,
+                          default = str(uuid.uuid4()))
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     region = models.CharField(max_length=20, default='eu-west-1',
                               choices=[('eu-west-1', 'eu-west-1'),
@@ -98,14 +99,14 @@ class Server(models.Model):
 
 
 def initServer(**kwargs):
-    instance = kwargs.get('instance')
-    instance.id = str(uuid.uuid4())
-    instance.create_stack()
+    if kwargs.get('created') == True:
+        instance = kwargs.get('instance')
+        instance.create_stack()
 
 def deleteServer(**kwargs):
     instance = kwargs.get('instance')
     instance.delete_stack()
 
 
-pre_save.connect(initServer, Server)
+post_save.connect(initServer, Server)
 pre_delete.connect(deleteServer, Server)
