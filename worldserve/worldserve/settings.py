@@ -39,6 +39,12 @@ EMAIL_SENDER = 'noreply@worldserve.com'
 DEFAULT_FROM_EMAIL = EMAIL_SENDER
 TERMINATION_EMAIL_SUBJECT = 'WorldServe Server Terminated. Thank you.'
 TERMINATION_EMAIL_BODY = 'Thanks for your custom.\n\nYour WorldServe server has now been terminated due to top-up balance expiry.\n\nKind Regards,\nWorldServe'
+TOPUP_EMAIL_SUBJECT = 'WorldServe Server Topped Up. Enjoy.'
+TOPUP_EMAIL_BODY = 'Thanks for your custom.\n\nYour WorldServe server has now been topped up.\n\nKind Regards,\nWorldServe'
+
+# settings.py
+STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY", "your test public key")
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "your test secret key")
 
 # Application definition
 

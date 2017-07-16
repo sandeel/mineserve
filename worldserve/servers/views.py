@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from .models import Server
 from django.views.generic.edit import CreateView
+from django.http import HttpResponse
+from users.forms import SalePaymentForm
 
 
 def index(request):
@@ -20,3 +22,14 @@ class ServerCreate(CreateView):
         obj = form.save(commit=False)
         obj.user = self.request.user
         return super(ServerCreate, self).form_valid(form)
+
+def topup(request, server_id):
+    if request.method == "POST":
+        form = SalePaymentForm(request.POST, user=request.user, server_id=server_id)
+
+        if form.is_valid(): # charges the card
+            return HttpResponse("Success! We've charged your card!")
+    else:
+        form = SalePaymentForm()
+
+    return render(request, "servers/topup.html", {'form': form} )

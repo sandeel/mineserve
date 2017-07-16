@@ -20,6 +20,9 @@ class Server(models.Model):
     expiry_date = models.DateTimeField(default=datetime.datetime.now(datetime.timezone.utc) +
                                        datetime.timedelta(minutes=65))
 
+    def __str__(self):
+        return self.id
+
     @property
     def ip(self):
         client = boto3.client('ec2', region_name=self.region)
